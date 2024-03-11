@@ -43,13 +43,12 @@ export default function SetAccount(){
             }),
         }).then(()=>{
             console.log("Saved!")
-            //router.push('general')
+            router.push('general')
         })
         .catch(error =>{
             console.log(error)
         })
     }
-    console.log(phoneNumber)
 
 
 
