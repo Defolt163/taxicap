@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "server": "node server.js"
   },
   "dependencies": {
     "@clerk/localizations": "^1.26.16",
@@ -28,7 +29,10 @@
     "react-leaflet": "^4.2.1",
     "react-map-gl": "^7.1.7",
     "react-swipeable": "^7.0.1",
-    "sass": "^1.71.1"
+    "sass": "^1.71.1",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5",
+    "ws": "^8.16.0"
   },
   "devDependencies": {
     "@types/react": "18.2.61",

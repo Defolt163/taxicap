@@ -8,6 +8,7 @@
     font-family: "Inter", sans-serif
     touch-action: pan-y
 body
+    overflow: hidden
     margin: 0
     overscroll-behavior: none
     touch-action: pan-y
@@ -130,3 +131,63 @@ form
 
 .ItemsHeader__center
     text-align: center
+
+.PageHeader
+    display: flex
+    align-items: center
+    position: relative
+    .ReturnButton
+        position: absolute
+        top: 50%
+        transform: translateY(-50%)
+        left: 0
+        display: flex
+        justify-content: center
+        align-items: center
+        height: 30px
+        width: 30px
+        border-radius: 10px
+        border: 0.06rem solid rgb(209, 209, 209)
+        text-decoration: none
+    h2
+        text-align: center
+        width: 100%
+        font-weight: 200
+// Checkbox
+.TogglerWrapper
+    display: block
+    width: 45px
+    height: 25px
+    cursor: pointer
+    position: relative
+
+    .TogglerChecker
+        display: none
+
+    .TogglerChecker
+        &:checked + .TogglerSlider
+            background-color: #44cc66
+            .TogglerKnob
+                left: calc(100% - 19px - 3px)
+
+    .TogglerSlider
+        background-color: #ccc
+        position: absolute
+        border-radius: 100px
+        top: 0
+        left: 0
+        width: 100%
+        height: 100%
+        transition: all 300ms ease
+        &:checked
+            background-color: #44cc66
+
+    .TogglerKnob
+        position: absolute
+        transition: all 300ms ease
+        width: calc(25px - 6px)
+        height: calc(25px - 6px)
+        border-radius: 50%
+        left: 3px
+        top: 3px
+        background-color: #fff

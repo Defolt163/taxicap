@@ -39,7 +39,7 @@ export default function SignInPage(){
     const [inputPasswordCode, setInputPasswordCode] = useState('') // Код подтверждения
     const [errorConfirmEmail, setErrorConfirmEmail] = useState('') // Сообщение об ошибке кода
     async function getUsersEmail(){
-        await fetch(`api/account-data/emails?inputEmails=${inputEmail}`,{
+        await fetch(`api/account-data/emails?inputEmail=${inputEmail}`,{
             method: 'GET'
         }).then((result)=>{
             console.log("OKAY")

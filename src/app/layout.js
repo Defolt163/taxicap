@@ -14,6 +14,7 @@ export default function RootLayout({ children }) {
     }, { passive: false });
   },[])
 
+
   return (
       <html lang="en">
         <body>

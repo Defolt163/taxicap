@@ -43,7 +43,7 @@ export default function SetAccount(){
             }),
         }).then(()=>{
             console.log("Saved!")
-            router.push('general')
+            router.push('/general')
         })
         .catch(error =>{
             console.log(error)
@@ -68,9 +68,9 @@ export default function SetAccount(){
                 <div className="GetStartedPageBlock">
                     <h1>Давайте настроим ваш аккаунт!</h1>
                 </div>
-                <button onClick={()=>{handleNextStep()}} className="Button GetStartedBtn">
+                <div onClick={()=>{handleNextStep()}} className="Button GetStartedBtn">
                     Начать!
-                </button>
+                </div>
                 </>
             )
         case 1:
@@ -99,9 +99,9 @@ export default function SetAccount(){
                         </div>
                     </form>
                 </div>
-                <button onClick={()=>{handleNextStep()}} className="Button GetStartedBtn">
+                <div onClick={()=>{handleNextStep()}} className="Button GetStartedBtn">
                 Продолжить
-                </button>
+                </div>
             </>
             );
         case 2:
@@ -122,12 +122,12 @@ export default function SetAccount(){
                     </form>
                 </div>
                 <div className='FormButtonBlock'>
-                    <button onClick={handlePrevStep} className="Button GetStartedBtn">
+                    <div onClick={handlePrevStep} className="Button GetStartedBtn">
                     Назад
-                    </button>
-                    <button onClick={()=>{phoneNumber === '' ? setInsertNumber("Введите номер телефона") : accountType === 1 ? handleNextStep() : updateSessionId()}} className="Button GetStartedBtn">
+                    </div>
+                    <div onClick={()=>{phoneNumber === '' ? setInsertNumber("Введите номер телефона") : accountType === 1 ? handleNextStep() : updateSessionId()}} className="Button GetStartedBtn">
                     Продолжить
-                    </button>
+                    </div>
                 </div>
             </>
             );
@@ -191,12 +191,12 @@ export default function SetAccount(){
                     </form>
                 </div>
                 <div className='FormButtonBlock'>
-                    <button onClick={handlePrevStep} className="Button GetStartedBtn">
+                    <div onClick={handlePrevStep} className="Button GetStartedBtn">
                         Назад
-                    </button>
-                    <button form="tel" className="Button GetStartedBtn" onClick={()=>{updateSessionId()}}>
+                    </div>
+                    <div form="tel" className="Button GetStartedBtn" onClick={()=>{updateSessionId()}}>
                         Начать!
-                    </button>
+                    </div>
                 </div>
             </>
         );

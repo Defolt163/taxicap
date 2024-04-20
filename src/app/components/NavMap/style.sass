@@ -12,7 +12,7 @@
         position: absolute
         top: 0
         right: 0
-        z-index: 9999
+        z-index: 9998
         font-size: 0.5rem
     .MapUi
         overflow: hidden
@@ -152,6 +152,8 @@
                         .PaymentInfo
                             color: $base-color
                             text-align: center
+        /* .OrderDriver
+            display: none */
         .OrderWrapper
             .OrderAddress
                 margin: 10px 0
@@ -172,6 +174,8 @@
                 display: flex
                 justify-content: space-between
                 align-items: center
+                &.order-active
+                    display: none
                 .OrderAction
                     display: flex
                     justify-content: center
@@ -184,7 +188,11 @@
                     color: #fff
                     &:first-child
                         background-color: red
-        //Открытие ордера
+            .Button
+                display: none
+                &.order-active
+                    display: block
+            //Открытие ордера
         .AccountBlock
             display: flex
             justify-content: space-between

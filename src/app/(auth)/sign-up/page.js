@@ -29,7 +29,7 @@ export default function SignInPage(){
     //Получение и сверка всех UserEmail
     const [togglerPopupInvalidEmail, setTogglerPopupInvalidEmail] = useState('')
     async function getUsersEmail(){
-        await fetch(`api/account-data/emails?inputEmails=${inputEmail}`,{
+        await fetch(`api/account-data/emails?inputEmail=${inputEmail}`,{
             method: 'GET'
         }).then((result)=>{
             console.log("OKAY")
