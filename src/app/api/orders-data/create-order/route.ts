@@ -69,7 +69,10 @@ export async function POST(request: NextRequest) {
       LonFrom,
       LatTo,
       LonTo,
-      Price
+      AddressFrom,
+      AddressTo,
+      Price,
+      CustomerImage
     } = await request.json();
 
     const values = [
@@ -81,12 +84,15 @@ export async function POST(request: NextRequest) {
       LonFrom,
       LatTo,
       LonTo,
-      Price
+      AddressFrom,
+      AddressTo,
+      Price,
+      CustomerImage
     ];
 
     const result: any = await new Promise((resolve, reject) => {
       accountDB.query(
-        "INSERT INTO orders (CustomerPhone, UserId, OrderStatus, CustomerName, LatFrom, LonFrom, LatTo, LonTo, Price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO orders (CustomerPhone, UserId, OrderStatus, CustomerName, LatFrom, LonFrom, LatTo, LonTo, AddressFrom, AddressTo, Price, CustomerImage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         values,
         (err: any, results: any) => {
           if (err) {

@@ -40,7 +40,10 @@ const io = require("socket.io")(3001, {
             "LonFrom": data.LonFrom,
             "LatTo": data.LatTo,
             "LonTo": data.LonTo,
-            "Price": data.Price
+            "AddressFrom": data.AddressFrom,
+            "AddressTo": data.AddressTo,
+            "Price": data.Price,
+            "CustomerImage": data.CustomerImage
           })
         );
         console.log("Данные успешно отправлены в базу данных");
@@ -57,7 +60,7 @@ const io = require("socket.io")(3001, {
       }
     });
     socket.on("orderUpdate", () => {
-      console.log("Обновление заказа")
+      console.log("Обновление заказа");
       io.emit("orderUpdatedByDriver");
     });
   });

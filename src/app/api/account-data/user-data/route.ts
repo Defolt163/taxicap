@@ -5,14 +5,15 @@ export async function GET(request: NextRequest) {
     try {
         const nextUrl = new URL(request.nextUrl);
         const sessionId = nextUrl.searchParams.get('sessionId');
-        const results = await new Promise<Array<{ UserId: string, ActiveOrder: string, DriverMode: string, UserName: string, UserPhone: string, UserEmail: string, VehicleBrand: string, VehicleModel: string, VehicleColor: string, VehicleNumber: string, }>>((resolve, reject) => {
-            accountDB.query(`SELECT UserId, ActiveOrder, DriverMode, UserName, UserPhone, UserEmail, VehicleBrand, VehicleModel, VehicleColor, VehicleNumber FROM accounts WHERE UserSessionId = '${sessionId}'`, (err: any, results: Array<
+        const results = await new Promise<Array<{ UserId: string, ActiveOrder: string, DriverMode: string, UserName: string, UserPhone: string, UserEmail: string, UserImage: string, VehicleBrand: string, VehicleModel: string, VehicleColor: string, VehicleNumber: string, }>>((resolve, reject) => {
+            accountDB.query(`SELECT UserId, ActiveOrder, DriverMode, UserName, UserPhone, UserEmail, UserImage, VehicleBrand, VehicleModel, VehicleColor, VehicleNumber FROM accounts WHERE UserSessionId = '${sessionId}'`, (err: any, results: Array<
                 {   UserId: string,
                     ActiveOrder: string,
                     DriverMode: string, 
                     UserName: string,
                     UserPhone: string,
                     UserEmail: string,
+                    UserImage: string,
                     VehicleBrand: string,
                     VehicleModel: string,
                     VehicleColor: string,

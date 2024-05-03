@@ -14,6 +14,11 @@ export default function RootLayout({ children }) {
     }, { passive: false });
   },[])
 
+  useEffect(() => {
+      setTimeout(() => {
+        window.scrollTo(0, 1);
+      }, 0);
+  }, []);
 
   return (
       <html lang="en">

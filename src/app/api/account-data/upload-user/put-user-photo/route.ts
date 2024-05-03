@@ -1,24 +1,24 @@
 import { NextRequest, NextResponse } from "next/server"
-import db from '../../accountDB'
+import db from '../../../accountDB'
 
 export async function PUT(request: NextRequest) {
   try {
     if (request.method === 'PUT') {
       const url = new URL(request.url);
       const params = new URLSearchParams(url.search);
-      const orderId = params.get('id');
+      const userId = params.get('UserId');
 
-      if (!orderId) {
-        return NextResponse.json({ message: "Invalid order id" }, { status: 400 });
+      if (!userId) {
+        return NextResponse.json({ message: "Invalid UserId" }, { status: 400 });
       }
 
-      const { DriverName, DriverId, DriverPhone, VehicleBrand, VehicleModel, VehicleColor, VehicleNumber, OrderStatus, DriverImage } = await request.json();
+      const { UserImage } = await request.json();
 
       const result: any = await new Promise((resolve, reject) => {
 
         db.query(
-            "UPDATE orders SET DriverName = ?, DriverId = ?, DriverPhone = ?, VehicleBrand = ?, VehicleModel = ?, VehicleColor = ?, VehicleNumber = ?, OrderStatus = ?, DriverImage = ? WHERE id = ?",
-            [DriverName, DriverId, DriverPhone, VehicleBrand, VehicleModel, VehicleColor, VehicleNumber, OrderStatus, DriverImage, orderId],
+            "UPDATE accounts SET UserImage = ? WHERE UserId = ?",
+            [UserImage, userId],
             (err: any, results: any) => {
                 if (err) {
                 reject(err);
@@ -30,9 +30,9 @@ export async function PUT(request: NextRequest) {
       });
 
       if (result && result.affectedRows === 1) {
-        return NextResponse.json({ message: "User updated successfully" });
+        return NextResponse.json({ message: "Фото обновлено" });
       } else {
-        return NextResponse.json({ message: "Failed to update user" }, { status: 400 });
+        return NextResponse.json({ message: "Ошибка обновления фото" }, { status: 400 });
       }
     } else {
       return NextResponse.json({ message: "Invalid method" }, { status: 405 });

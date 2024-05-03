@@ -27,7 +27,7 @@
     ".next/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx"
-, "src/app/api/socket/route.js"  ],
+, "src/app/api/socket/route.js", "src/app/api/get-api-key/route.ts", "src/app/api/get-api-key/route.ts"  ],
   "exclude": [
     "node_modules"
   ]

@@ -73,7 +73,7 @@ export default function SignInPage(){
             body: JSON.stringify({ "UserSessionId": sessionId }),
         }).then(()=>{
             console.log("Logged!")
-            router.push('/set-account')
+            router.push('/general')
         })
         .catch(error =>{
             console.log(error)

@@ -5,8 +5,8 @@ export async function GET(request: NextRequest) {
     try {
         const nextUrl = new URL(request.nextUrl);
         const userId = nextUrl.searchParams.get('userId');
-        const results = await new Promise<Array<{ id: string, OrderStatus: string }>>((resolve, reject) => {
-            accountDB.query(`SELECT id, OrderStatus FROM orders WHERE UserId = '${userId}'`, (err: any, results: Array<{ id: string, OrderStatus: string }>) => {
+        const results = await new Promise<Array<{ id: string, OrderStatus: string, Date: string }>>((resolve, reject) => {
+            accountDB.query(`SELECT id, OrderStatus, Date FROM orders WHERE UserId = '${userId}'`, (err: any, results: Array<{ id: string, OrderStatus: string, Date: string }>) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
             });
         });
         console.log(results);
-        const OrderStatus = results.map((result) => ({ id: result.id, OrderStatus: result.OrderStatus }));
+        const OrderStatus = results.map((result) => ({ id: result.id, OrderStatus: result.OrderStatus, date: result.Date }));
         return NextResponse.json(OrderStatus);
     } catch (error) {
         return NextResponse.json(

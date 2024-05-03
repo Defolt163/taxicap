@@ -1,13 +1,13 @@
 @import ../../../variables
 .BurgerItem
-    position: absolute
+    position: fixed
     top: 10px
     left: 20px
     padding: 12px
     background-color: #fff
     border-radius: 5px
     border: none
-    z-index: 99991
+    z-index: 9998
     i
         &:last-child
             display: none
@@ -22,8 +22,9 @@
                 
 .BurgerMenu
     display: none
+    box-shadow: 5px 0px 3rem
     padding: 70px 20px
-    position: absolute
+    position: fixed
     top: 0
     left: 0
     z-index: 9999
@@ -38,6 +39,9 @@
             height: 70px
             border-radius: 50%
             border: 2px solid #fff
+            background-repeat: no-repeat
+            background-position: center
+            background-size: cover
         .BurgerMenuAccountName
             margin: 0
             margin-top: 12px
@@ -61,3 +65,14 @@
     padding: 10px 0
     color: #fff
     z-index: 9999
+.BurgerMenuOverlay
+    display: none
+    backdrop-filter: blur(1.5px)
+    z-index: 9998
+    position: absolute
+    top: 0
+    left: 0
+    width: 100vw
+    height: 100vh
+    &.burger-open
+        display: block

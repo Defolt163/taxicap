@@ -5,6 +5,7 @@ import Image from 'next/image'
 import userIco from '/public/ico/man-user.svg'
 import { useEffect, useState } from 'react'
 import Cookies from 'js-cookie'
+import PagesHeader from '../../components/PagesHeader/PagesHeader'
 export default function MyAccountPage(){
     // Получение sessionId из кук
     const [sessionKey, setSessionKey] = useState('')
@@ -19,6 +20,7 @@ export default function MyAccountPage(){
 
     //Получение и сверка всех UserEmail
     const [userData, setUserData] = useState([])
+    const accountImage = userData.UserImage
     const [userName, setUserName] = useState('')
     function getUsersEmail(){
         fetch(`api/account-data/user-data?sessionId=${sessionKey}`,{
@@ -61,23 +63,23 @@ export default function MyAccountPage(){
     return(
         <div className="MyAccountPage">
             <div className="container">
-                <div className="PageHeader">
-                    <Link href="/general" className="ReturnButton">
-                        <i class="fa-solid fa-chevron-left"></i>
-                    </Link>
-                    <h2>Мой аккаунт</h2>
-                </div>
+                <PagesHeader ReturnBtn="/general" PageHeader="Мой аккаунт"/>
                 <div className='MyAccountPageAccount'>
                     <div className='AccountCard'>
-                        <Image className='AccountCardIco' src={userIco} alt='user ico'/>
+                        <div style={{backgroundImage: `url(${accountImage})`}} className='AccountCardIco' alt='user ico'/>
                         <div className='AccountCardData'>
                             <div className='AccountCardDataFirst'>{userName}</div>
                             <div className='AccountCardDataSecond'>{userData.UserEmail}</div>
                             <div className='AccountCardDataThird'><i class="fa-solid fa-phone"></i> +7 {userData.UserPhone}</div>
                         </div>
-                        <div className='AccountCardEdit'>
+                        <Link href='/my-account/account-edit' className='AccountCardEdit'>
                             <i class="fa-solid fa-pencil"></i>
-                        </div>
+                        </Link>
+                    </div>
+                </div>
+                <div className='MyAccountPageAccount'>
+                    <div className='AccountCard'>
+                        <Link href='/my-account/history'>История поездок</Link>
                     </div>
                 </div>
                 <div className='AccountToggleModeBox'>
