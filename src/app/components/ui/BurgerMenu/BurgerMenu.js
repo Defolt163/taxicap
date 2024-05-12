@@ -53,7 +53,10 @@ export default function BurgerMenu(){
     useEffect(()=>{
         getUsersEmail()
     }, [sessionKey])
-    const userImage = userData.UserImage
+    function userSignOut() {
+        document.cookie = `UserData=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/;`
+        router.push('/sign-in')
+      }
     return(
         <>
             <div className={`BurgerItem ${togglerBurgerMenu}`} onClick={()=>{setTogglerBurgerMenuBurgerMenu('burger-open')}}>
@@ -62,7 +65,7 @@ export default function BurgerMenu(){
             </div>
             <div className={`BurgerMenu ${togglerBurgerMenu}`}>
                 <div className='BurgerMenu-account'>
-                    <div className='BurgerMenuAccountImage' style={{backgroundImage: `url(${userImage})`}}></div>
+                    <div className='BurgerMenuAccountImage' style={{backgroundImage: `url(${userData.UserImage === '' ? '/ico/man-user.svg' : userData.UserImage})`}}></div>
                     {/* <Image src={profileImage} className='BurgerMenuAccountImage' alt='profile imeage'/> */}
                     <h3 className='BurgerMenuAccountName'>{userName}</h3>
                 </div>
@@ -72,7 +75,7 @@ export default function BurgerMenu(){
                     <li className='BurgerMenuItem'><Link href="/">Политика безопасности</Link></li>
                     <li className='BurgerMenuItem'><Link href="/">Конфиденциальность</Link></li>
                 </ul>
-                <div className='BurgerMenuLogout'>Выйти</div>
+                <div className='BurgerMenuLogout' onClick={()=>{userSignOut()}}>Выйти</div>
             </div>
             <div className={`BurgerMenuOverlay ${togglerBurgerMenu}`} onClick={()=>{setTogglerBurgerMenuBurgerMenu('')}}></div>
         </>

@@ -6,7 +6,7 @@ import Cookies from 'js-cookie'
 import Image from 'next/image';
 import cameraIco from '/public/ico/camera.svg'
 import emailjs from '@emailjs/browser';
-export default function editAccountPage(){
+export default function EditAccountPage(){
     // Получение sessionId из кук
     const [sessionKey, setSessionKey] = useState('')
     function myHandler() {
@@ -75,8 +75,6 @@ export default function editAccountPage(){
         }
     };
 
-    const bgc = userData.UserImage
-
     const inputFileRef = useRef(null);
     const handleEditPhotoClick = () => {
         // Программное нажатие на кнопку выбора файла
@@ -141,7 +139,7 @@ export default function editAccountPage(){
                             <input type="file" accept="image/jpeg, image/png" ref={inputFileRef} onChange={handleFileChange} />
                         </div>
                         <div className='edit-block'>
-                            <div style={{backgroundImage: `url(${bgc})`}} className='user-photo'>
+                            <div style={{backgroundImage: `url(${userData.UserImage === '' ? '/ico/man-user.svg' : userData.UserImage})`}} className='user-photo'>
                                 <div className='edit-photo'>
                                     <Image src={cameraIco} className='edit-photo_ico' onClick={handleEditPhotoClick}></Image>
                                 </div>

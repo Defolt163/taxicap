@@ -1,8 +1,10 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import accountDB from '../accountDB'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try{
+    const nextUrl = new URL(request.nextUrl);
+    const userId = nextUrl.searchParams.get('UserId');
     const results = await new Promise((resolve, reject) =>{
         accountDB.query("SELECT * FROM accounts", (err: any, results: []) =>{
         if(err){

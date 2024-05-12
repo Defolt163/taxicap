@@ -16,6 +16,7 @@ import { useRouter } from 'next/navigation';
 
 //const socket = io("http://localhost:3001");
 const mapApiKey = process.env.NEXT_PUBLIC_MAP_API_KEY
+const localHostApi = process.env.NEXT_PUBLIC_MYSQL_API
 export default function NavMap2(){
   const router = useRouter()
   
@@ -46,8 +47,9 @@ export default function NavMap2(){
     setSocket(newSocket);
   }, []) */
   const socketRef = useRef(null);
+  const [hasOrder, setHasOrder] = useState(false)
   useEffect(() => {
-    const newSocket = io("http://localhost:3001");
+    const newSocket = io(`ws://${localHostApi}:3001`);
     socketRef.current = newSocket;
 
     return () => {
@@ -96,19 +98,25 @@ export default function NavMap2(){
   const [orderIteration, setOrderIteration] = useState(0)
   function handleOrderIteration(){
     setOrderIteration(orderIteration + 1)
+    if(orderIteration >= orders.length-1){
+      setOrders([])
+      setOrderIteration(0)
+    }
   }
   //Хранение заказов
-  const defaultUserIco = '/ico/man-user.svg' // Иконка по умолчанию
   const [orders, setOrders] = useState([]);
+  const [activeDriverOrder, setActiveDriverOrder] = useState(false)
   const [hasAccepted, setHasAccepted] = useState(false) // Переменная для условия для лечения цикла
 
+  useEffect(()=>{
+    console.log("ORDER::", orders[orderIteration])
+  })
   // Функция получения заказов для водителя
   function fetchOrders(){
     console.log("Check if")
     if(userData && userData.DriverMode === 1){
       console.log("ВЫЗВАНо")
       console.log("ZAKAZI", orders)
-      if(orders.length <= 0){
         console.log("OPEN IF")
         fetch(`api/orders-data/get-orders`, {
           method: 'GET'
@@ -116,16 +124,21 @@ export default function NavMap2(){
           return result.json()
         }).then((res) => {
           console.log("Result", res)
+          console.log("Result2", activeDriverOrder)
           if(res.length !== 0){
             console.log("RESSS", res)
             setOrders(res)
             setTogglerOpenOrder('')
             setStep(1)
+          }if(res.length === 0 && activeDriverOrder === false){
+            console.log("REzzz", res)
+            setOrders(res)
+            setTogglerOpenOrder('')
+            setStep(0)
           }
         }).catch(error => {
           console.log(error)
         })
-      }
     }
   }
   useEffect(() => {
@@ -134,19 +147,6 @@ export default function NavMap2(){
       fetchOrders()
     }
   }, [userData])
-  /* useEffect(()=>{
-    if (socket) {
-      const handleOrderCreated = () => {
-          fetchOrders()
-          console.log('tr')
-      };
-      socket.on('orderCreated', handleOrderCreated);
-      
-      return () => {
-        socket.off('orderCreated', handleOrderCreated);
-      }
-    }
-  }, [socket]) */
 
   useEffect(() => {
     if (userData && userData.DriverMode === 1) {
@@ -172,6 +172,7 @@ export default function NavMap2(){
   }, [orders])
 
   // Создание заказа по вебсокету
+  const [activeOrder, setActiveOrder] = useState([])
   function openOrder(){
     const data = {
       "CustomerPhone": userData.UserPhone,
@@ -187,9 +188,13 @@ export default function NavMap2(){
       "Price": routePrice,
       "CustomerImage": userData.UserImage
     }
-    orderTimeOut()
+    setActiveOrder([data])
+    setHasOrder(true)
+    /* if(activeOrder.length !== 0){
+      orderTimeOut()
+    } */
     const socket = socketRef.current;
-      socket.emit("sendOrder", data);
+    socket.emit("sendOrder", data);
   }
   // Принятие заказа
   async function acceptOrder(){
@@ -208,16 +213,17 @@ export default function NavMap2(){
           "DriverImage": userData.UserImage
         }),
     }).then(()=>{
-        console.log("Saved!")
-        const socket = socketRef.current;
-        socket.emit("orderUpdate")
-        setTogglerOpenOrder('order-active')
         fetch(`api/orders-data/accept-order/update-active-order?UserId=${userData.UserId}`,{
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             "ActiveOrder": orders[orderIteration].id
           })
+        }).then(()=>{
+          setActiveDriverOrder(true)
+          setTogglerOpenOrder('order-active')
+          const socket = socketRef.current;
+          socket.emit("orderUpdate")
         })
     })
     .catch(error =>{
@@ -225,7 +231,7 @@ export default function NavMap2(){
     })
   }
   // Проверка активных заказов для водителя
-  useEffect(()=>{
+  function checkDriverOrders(){
     if(userData && userData.DriverMode === 1){
       if(userData.ActiveOrder !== 0){
         fetch(`api/orders-data/accept-order/update-active-order?id=${userData.ActiveOrder}`, {
@@ -236,6 +242,7 @@ export default function NavMap2(){
           if(res.length !== 0){
             console.log("1")
             setOrders(res)
+            setActiveDriverOrder(true)
             setStep(1)
             setTogglerOpenOrder('order-active')
           }
@@ -244,12 +251,14 @@ export default function NavMap2(){
         })
       }
     }
+  }
+  useEffect(()=>{
+    checkDriverOrders()
   },[userData])
   // Проверка заказа для пассажира
-  const [activeOrder, setActiveOrder] = useState([])
   function checkOrderPassenger(){
     if(userData && userData.DriverMode === 0){
-        fetch(`http://localhost:3000/api/orders-data/check-order?userId=${userData.UserId}`, {
+        fetch(`api/orders-data/check-order?userId=${userData.UserId}`, {
           method: 'GET'
         }).then((result) => {
           return result.json()
@@ -258,11 +267,15 @@ export default function NavMap2(){
           if(res.length !== 0){
             let checkOrderStatus = res.filter((item) => item.OrderStatus === 'active' || item.OrderStatus === 'created')
             if(checkOrderStatus.length > 0){
+              setHasOrder(true)
               if(checkOrderStatus[0].OrderStatus === 'created'){
                 setStep(2)
-                orderTimeOut()
+                setActiveOrder(checkOrderStatus)
+                /* if(activeOrder.length !== 0){
+                  orderTimeOut()
+                } */
               }if(checkOrderStatus[0].OrderStatus === 'active'){
-                fetch(`http://localhost:3000/api/orders-data/check-order/update-info?orderId=${checkOrderStatus[0].id}`, {
+                fetch(`api/orders-data/check-order/update-info?orderId=${checkOrderStatus[0].id}`, {
                 method: 'GET'
                 }).then((orderResult) => {
                   return orderResult.json()
@@ -280,14 +293,16 @@ export default function NavMap2(){
                 })
               }
             }if(checkOrderStatus.length <= 0){
+              setHasOrder(true)
               console.log("CHECK")
               fetch(`api/orders-data/accept-order/update-active-order?id=${userData.ActiveOrder}`, {
                 method: 'GET'
               }).then((result) => {
                 return result.json()
               }).then((res) => {
-                console.log("3")
-                if(res.length <= 0 || res[0].OrderStatus === 'completed'){
+                console.log("3", res)
+                console.log("32", userData)
+                if(res[0].OrderStatus === 'completed'){
                   setTogglerPopupDriverCloseOrder('popup-open')
                   console.log("USERDT", userData)
                 }
@@ -312,38 +327,40 @@ export default function NavMap2(){
   // Удаление заказа по таймеру
   const [closeOrderText, setCloseOrderText] = useState('')
   function orderTimeOut(){
-    setTimeout(() => {
-      if(userData && userData.DriverMode === 0){
-        fetch(`api/orders-data/check-order?userId=${userData.UserId}`, {
-          method: 'GET'
-        }).then((result) => {
-          return result.json()
-        }).then((res) => {
-          if(res.length !== 0){
-            let checkOrderStatus = res.filter((item) => item.OrderStatus === 'created')
-            if(checkOrderStatus.length > 0){
-              fetch(`api/orders-data/delete-order?id=${checkOrderStatus[0].id}`,{
-                method: 'DELETE'
-              }).then(() =>{
-                const socket = socketRef.current;
-                socket.emit("orderUpdate")
-                setStep(0)
-                setCloseOrderText('К сожалению мы не нашли водителя')
-                setTogglerPopupPassengerCloseOrder('popup-open')
-              }).catch(error =>{
-                console.log(error)
-              })
-            }
+    if(userData && userData.DriverMode === 0){
+      setHasOrder(false)
+      fetch(`api/orders-data/check-order?userId=${userData.UserId}`, {
+        method: 'GET'
+      }).then((result) => {
+        return result.json()
+      }).then((res) => {
+        if(res.length !== 0){
+          let checkOrderStatus = res.filter((item) => item.OrderStatus === 'created')
+          if(checkOrderStatus.length > 0){
+            fetch(`api/orders-data/delete-order?id=${checkOrderStatus[0].id}`,{
+              method: 'DELETE'
+            }).then(()=>{
+              setActiveOrder([])
+              const socket = socketRef.current;
+              socket.emit("orderUpdate");
+              setStep(0)
+              setCloseOrderText('К сожалению мы не нашли водителя')
+              setTogglerPopupPassengerCloseOrder('popup-open')
+            }).catch(error =>{
+              console.log(error)
+            })
           }
-        }).catch(error => {
-          console.log(error)
-        })
-      }
-    }, 80000)
+        }
+      }).catch(error => {
+        console.log(error)
+      })
+    }
   }
   // Удаление заказа по кнопке
   function deleteOrder(){
     if(userData && userData.DriverMode === 0){
+      setHasOrder(false)
+      const socket = socketRef.current;
       fetch(`api/orders-data/check-order?userId=${userData.UserId}`, {
         method: 'GET'
       }).then((result) => {
@@ -355,7 +372,6 @@ export default function NavMap2(){
             fetch(`api/orders-data/delete-order?id=${checkOrderStatus[0].id}`,{
               method: 'DELETE'
             }).then(() =>{
-              const socket = socketRef.current;
               socket.emit("orderUpdate")
               setStep(0)
               setCloseOrderText('Заказ отменен')
@@ -372,10 +388,10 @@ export default function NavMap2(){
   }
 
   useEffect(() => {
-    if (userData && userData.DriverMode === 0) {
+    if (userData && (userData.DriverMode === 0 && hasOrder)) {
       const handleOrderAcceptedByDriver = () => {
         setHasAccepted(true);
-        checkOrderPassenger();
+        getUsersAccountType()
         console.log("td");
       };
       
@@ -390,7 +406,11 @@ export default function NavMap2(){
     if (userData && userData.DriverMode === 1) {
       const handleOrderAcceptedByPassenger = () => {
         console.log("trrrrr")
-        fetchOrders()
+        if(orders.length <= 0){
+          fetchOrders()
+        }if(orders.length !== 0){
+          checkDriverOrders()
+        }
       };
       
       const socket = socketRef.current;
@@ -431,14 +451,15 @@ export default function NavMap2(){
             "ActiveOrder": 0
           })
         }).then(()=>{
-          console.log("4")
+          getUsersAccountType()
+          setActiveDriverOrder(false)
+          setTogglerPopupOrderClose('popup-open')
+          setGeoRes([])
+          setActiveOrder([])
+          setStep(0)
+          setOrders([])
         })
-        setTogglerPopupOrderClose('popup-open')
-        setGeoRes([])
-        setActiveOrder([])
-        setStep(0)
-        setOrders([])
-        fetchOrders()
+        //fetchOrders()
       })
       .catch(error =>{
           console.log(error)
@@ -510,9 +531,9 @@ export default function NavMap2(){
   function requestOptions(){
     if(userData.DriverMode === 1 && orders.length !== 0 && hasAccepted === false){
       fetch(`https://api.geoapify.com/v1/routing?waypoints=${
-      userData.DriverMode === 1 ? (orders.length >= 2 ? [orders[orderIteration].LatFrom,orders[orderIteration].LonFrom] : [orders[0].LatFrom,orders[0].LonFrom]) : 
+      userData.DriverMode === 1 ? (orders.length >= 2 && orderIteration <= orders.length-1 ? [orders[orderIteration].LatFrom,orders[orderIteration].LonFrom] : [orders[0].LatFrom,orders[0].LonFrom]) : 
       (userData.DriverMode === 0 && activeOrder.length > 0 ? [activeOrder[0].LatFrom,activeOrder[0].LonFrom] : addressFromCoordinate)}|${
-        userData.DriverMode === 1 ? (orders.length >= 2 ? [orders[orderIteration].LatTo,orders[orderIteration].LonTo] : [orders[0].LatTo,orders[0].LonTo] ) :
+        userData.DriverMode === 1 ? (orders.length >= 2 && orderIteration <= orders.length-1 ? [orders[orderIteration].LatTo,orders[orderIteration].LonTo] : [orders[0].LatTo,orders[0].LonTo] ) :
         (userData.DriverMode === 0 && activeOrder.length > 0 ? [activeOrder[0].LatTo,activeOrder[0].LonTo] : addressToCoordinate)}&mode=drive&apiKey=${mapApiKey}`)
       .then(response => response.json())
       .then((routeResult) =>{
@@ -719,7 +740,7 @@ export default function NavMap2(){
             <div className='AddressInputBlock DriveActive'>
               <h3 className='ItemsHeader ItemsHeader__center'>Водитель прибудет через <br/> 5 минут</h3>
               <div className='AccountBlock'>
-                <div className='AccountIco' style={{backgroundImage: `url(${activeOrder !== undefined ? activeOrder[0].DriverImage : defaultUserIco})`}}></div>
+                <div className='AccountIco' style={{backgroundImage: `url(${activeOrder !== undefined ? activeOrder[0].DriverImage : '/ico/man-user.svg'})`}}></div>
                 <div className='AccountBlockInfo'>
                   <h4 className='AccountName'>{activeOrder !== undefined ? activeOrder[0].DriverName : null}</h4>
                   <div className='CarInfo'>
@@ -774,7 +795,7 @@ export default function NavMap2(){
                 orders !== undefined && orderIteration >= 0 && orderIteration < orders.length ? (
                   <div className='OrderWrapper'>
                     <div className='AccountBlock'>
-                      <div className='AccountIco' style={{backgroundImage: `url(${orders[orderIteration].CustomerImage !== '' ? orders[orderIteration].CustomerImage : defaultUserIco})`}}></div>
+                      <div className='AccountIco' style={{backgroundImage: `url(${orders[orderIteration].CustomerImage !== '' ? orders[orderIteration].CustomerImage : '/ico/man-user.svg'})`}}></div>
                       <div className='AccountBlockInfo'>
                         <h4 className='AccountName'>{orders !== undefined ? orders[orderIteration].CustomerName : null}</h4>
                         <div className='OrderInfoBlock'>

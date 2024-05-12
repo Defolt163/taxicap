@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import './style.sass'
 import emailjs from '@emailjs/browser';
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 
 
@@ -105,87 +106,60 @@ export default function SignInPage(){
         switch (step) {
             case 0:
                 return(
-                    <div className="AuthForm">
-                        <label htmlFor="Name">Ваше имя</label>
-                        <input 
-                            type="text" 
-                            required 
-                            placeholder="Имя" 
-                            id="Name"
-                            value={inputName}
-                            onChange={(e)=>setInputName(e.target.value)}
-                        />
-                        <label htmlFor="Email">Email</label>
-                        <input 
-                            type="email" 
-                            required 
-                            placeholder="Email" 
-                            id="Email"
-                            value={inputEmail}
-                            onChange={(e)=>setInputEmail(e.target.value)}
-                        />
-                        <div className="Button" 
-                            onClick={()=>{
-                                inputName === "" || /\d/.test(inputName) || inputEmail === "" || 
-                                /\S+@\S+\.\S+/.test(inputEmail) === false ? 
-                                setTogglerPopup('popup-open') : !emailConfirmed ?
-                                getUsersEmail() : handleNextStep()}}>Продолжить</div>
-                        <>
-                            <div className={`popup popup-input-error ${togglerPopup}`}>
-                                <h3 className='popup-input-error__text'>Убедитесь, правильно ли вы ввели свои данные</h3>
-                            <div className='Button PopupButton' onClick={()=>{setTogglerPopup('')}}>Закрыть</div>
-                            </div>
-                            <div className={`popup-background ${togglerPopup}`}></div>
-                        </>
-                        <>
-                            <div className={`popup popup-input-error ${togglerPopupInvalidEmail}`}>
-                                <h3 className='popup-input-error__text'>Эта электронная почта уже используется</h3>
-                            <div className='Button PopupButton' onClick={()=>{setTogglerPopupInvalidEmail('')}}>Закрыть</div>
-                            </div>
-                            <div className={`popup-background ${togglerPopupInvalidEmail}`}></div>
-                        </>
-                        <>
-                            <div className={`popup popup-input-error ${togglerConfirmEmailPopup}`}>
-                                <div className="popup-close-x-mark" onClick={()=>{setTogglerConfirmEmailPopup("")}}><i className="fa-solid fa-xmark"></i></div>
-                                <h3 className='popup-input-error__text'>Введите код подтверждения</h3>
-                                <h4 className="popup-input-error__text">Код подтверждения отправлен вам на Email: {inputEmail}</h4>
-                                <input className="popup-input" type="number" required value={inputConfirmEmail} onChange={(e)=>{setInputConfirmEmail(e.target.value)}}/>
-                                <h4 className="popup-input-error__text popup-input-error__text_message">{errorConfirmEmail}</h4>
-                            <div className='Button PopupButton' onClick={()=>{inputConfirmEmail.trim() === emailCode.toString().trim() ? [setTogglerConfirmEmailPopup(""), setEmailConfirmed(true), handleNextStep()] : setErrorConfirmEmail("Неверный код")}}>Подтвердить</div>
-                            </div>
-                            <div className={`popup-background ${togglerConfirmEmailPopup}`}></div>
-                        </>
-                    </div>
-                )
-            case 1:
-                return(
-                    <div className="AuthForm">
-                        <label htmlFor="Password" name="Password">Пароль</label>
-                        <input 
-                            required 
-                            type="password" 
-                            id="Password"
-                            value={inputPassword}
-                            onChange={(e)=>setInputPassword(e.target.value)}
-                        />
-                        <label htmlFor="ConfirmPassword" name="ConfirmPassword">Подтвердите пароль</label>
-                        <input 
-                            required 
-                            type="password" 
-                            id="ConfirmPassword"
-                            value={inputConfirmPassword}
-                            onChange={(e)=>setInputConfirmPassword(e.target.value)}
-                        />
-                        <div className="AuthActions">
-                            <div className="Button GeneralButtonReturn" onClick={handlePrevStep}><i class="fa-solid fa-chevron-left"></i></div>
-                            <div className="Button" onClick={()=>{inputPassword !== inputConfirmPassword ? setTogglerPopup('popup-open') : [handleSubmit(), router.push('/set-account')]}}>Зарегистрироваться</div>
+                    <>
+                        <div className="AuthForm">
+                            <label htmlFor="Name">Ваше имя</label>
+                            <input 
+                                type="text" 
+                                required 
+                                placeholder="Имя" 
+                                id="Name"
+                                value={inputName}
+                                onChange={(e)=>setInputName(e.target.value)}
+                            />
+                            <label htmlFor="Email">Email</label>
+                            <input 
+                                type="email" 
+                                required 
+                                placeholder="Email" 
+                                id="Email"
+                                value={inputEmail}
+                                onChange={(e)=>setInputEmail(e.target.value)}
+                            />
+                            <div className="Button" 
+                                onClick={()=>{
+                                    inputName === "" || /\d/.test(inputName) || inputEmail === "" || 
+                                    /\S+@\S+\.\S+/.test(inputEmail) === false ? 
+                                    setTogglerPopup('popup-open') : !emailConfirmed ?
+                                    getUsersEmail() : handleNextStep()}}>Продолжить</div>
+                            <>
+                                <div className={`popup popup-input-error ${togglerPopup}`}>
+                                    <h3 className='popup-input-error__text'>Убедитесь, правильно ли вы ввели свои данные</h3>
+                                <div className='Button PopupButton' onClick={()=>{setTogglerPopup('')}}>Закрыть</div>
+                                </div>
+                                <div className={`popup-background ${togglerPopup}`}></div>
+                            </>
+                            <>
+                                <div className={`popup popup-input-error ${togglerPopupInvalidEmail}`}>
+                                    <h3 className='popup-input-error__text'>Эта электронная почта уже используется</h3>
+                                <div className='Button PopupButton' onClick={()=>{setTogglerPopupInvalidEmail('')}}>Закрыть</div>
+                                </div>
+                                <div className={`popup-background ${togglerPopupInvalidEmail}`}></div>
+                            </>
+                            <>
+                                <div className={`popup popup-input-error ${togglerConfirmEmailPopup}`}>
+                                    <div className="popup-close-x-mark" onClick={()=>{setTogglerConfirmEmailPopup("")}}><i className="fa-solid fa-xmark"></i></div>
+                                    <h3 className='popup-input-error__text'>Введите код подтверждения</h3>
+                                    <h4 className="popup-input-error__text">Код подтверждения отправлен вам на Email: {inputEmail}</h4>
+                                    <input className="popup-input" type="number" required value={inputConfirmEmail} onChange={(e)=>{setInputConfirmEmail(e.target.value)}}/>
+                                    <h4 className="popup-input-error__text popup-input-error__text_message">{errorConfirmEmail}</h4>
+                                <div className='Button PopupButton' onClick={()=>{inputConfirmEmail.trim() === emailCode.toString().trim() ? [setTogglerConfirmEmailPopup(""), setEmailConfirmed(true), handleSubmit(), router.push('/set-account')] : setErrorConfirmEmail("Неверный код")}}>Подтвердить</div>
+                                </div>
+                                <div className={`popup-background ${togglerConfirmEmailPopup}`}></div>
+                            </>
                         </div>
-                        <div className={`popup popup-input-error ${togglerPopup}`}>
-                            <h3 className='popup-input-error__text'>Пароли не совпадают</h3>
-                        <div className='Button PopupButton' onClick={()=>{setTogglerPopup('')}}>Закрыть</div>
-                        </div>
-                        <div className={`popup-background ${togglerPopup}`}></div>
-                    </div>
+                        <div className="AccountSign">Уже есть аккаунт? <Link href='/sign-in'>Войдите</Link></div>
+                    </>
                 )
         }}
     return(

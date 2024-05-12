@@ -6,12 +6,8 @@
 
 *
     font-family: "Inter", sans-serif
-    touch-action: pan-y
 body
-    overflow-x: hidden
     margin: 0
-    overscroll-behavior: none
-    touch-action: pan-y
 .container
     margin: 0 auto
     width: 90%
@@ -117,6 +113,13 @@ form
         height: 20px
         border-radius: 5px
         border: 0.06rem solid rgb(209, 209, 209)
+    .popup-button_block
+        display: flex
+        justify-content: space-between
+        .PopupButton
+            padding: 14px 20px
+            &:first-child
+                background-color: red
 .popup-background
     display: none
     position: absolute

@@ -26,8 +26,11 @@
     "next-env.d.ts",
     ".next/types/**/*.ts",
     "**/*.ts",
-    "**/*.tsx"
-, "src/app/api/socket/route.js", "src/app/api/get-api-key/route.ts", "src/app/api/get-api-key/route.ts"  ],
+    "**/*.tsx",
+    "src/app/api/**/*.ts",
+    "src/app/api/**/**/*.ts",
+    "src/app/api/**/**/**/*.ts",
+    ],
   "exclude": [
     "node_modules"
   ]

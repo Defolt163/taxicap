@@ -50,8 +50,6 @@ export default function SetAccount(){
         })
     }
 
-
-
     function handleNextStep(){
         setStep(step + 1);
     };

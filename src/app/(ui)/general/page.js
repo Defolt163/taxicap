@@ -4,10 +4,8 @@ import NavMap2 from '../../components/NavMap/NavMap2'
 import BurgerMenu from '../../components/ui/BurgerMenu/BurgerMenu'
 import './style.sass'
 import { Helmet } from 'react-helmet'
-export default function GeneralPage(){
-    
-    
 
+export default function GeneralPage(){
     return(
         <>  
             <Helmet>

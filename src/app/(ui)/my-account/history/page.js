@@ -4,6 +4,8 @@ import './style.sass'
 import { useEffect, useState } from 'react'
 import Cookies from 'js-cookie'
 import PagesHeader from '../../../components/PagesHeader/PagesHeader'
+
+const localHostApi = process.env.NEXT_PUBLIC_MYSQL_API
 export default function MyAccountPage(){
     // Получение sessionId из кук
     const [sessionKey, setSessionKey] = useState(null)
@@ -26,7 +28,7 @@ export default function MyAccountPage(){
     const [userOrders, setUserOrders] = useState([])
     
     useEffect(()=>{
-            fetch(`http://localhost:3000/api/account-data/user-data?sessionId=${sessionKey}`,{
+            fetch(`/api/account-data/user-data?sessionId=${sessionKey}`,{
                 method: 'GET'
             }).then((result)=>{
                 return result.json()
@@ -50,7 +52,7 @@ export default function MyAccountPage(){
     const [togglerType, setTogglerType] = useState('passenger')
     useEffect(()=>{
         if(togglerType === 'passenger'){
-            fetch(`http://localhost:3000/api/orders-data/get-orders-history?UserId=${userData.UserId}`)
+            fetch(`/api/orders-data/get-orders-history?UserId=${userData.UserId}`)
             .then((result)=>{
                 return result.json()
             }).then((res)=>{
@@ -61,7 +63,7 @@ export default function MyAccountPage(){
                 console.log("ОШИБКА получения заказов", error)
             })
         }else{
-            fetch(`http://localhost:3000/api/orders-data/get-orders-history/for-driver?DriverId=${userData.UserId}`)
+            fetch(`/api/orders-data/get-orders-history/for-driver?DriverId=${userData.UserId}`)
             .then((result)=>{
                 return result.json()
             }).then((res)=>{

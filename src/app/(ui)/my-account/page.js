@@ -20,10 +20,10 @@ export default function MyAccountPage(){
 
     //Получение и сверка всех UserEmail
     const [userData, setUserData] = useState([])
-    const accountImage = userData.UserImage
     const [userName, setUserName] = useState('')
+    const [togglerPopupLoadingData, setTogglerPopupLoadingData] = useState('popup-open')
     function getUsersEmail(){
-        fetch(`api/account-data/user-data?sessionId=${sessionKey}`,{
+        fetch(`/api/account-data/user-data?sessionId=${sessionKey}`,{
             method: 'GET'
         }).then((result)=>{
             console.log("OKAY")
@@ -31,6 +31,7 @@ export default function MyAccountPage(){
         }).then((res)=>{
             setUserName(res[0].UserName.split(' ')[0])
             setUserData(res[0])
+            setDriverMode(res[0].DriverMode);
         })
         .catch(error =>{
             console.log(error)
@@ -41,24 +42,49 @@ export default function MyAccountPage(){
     }, [sessionKey])
     // Обновление статуса аккаунта
     const [driverMode, setDriverMode] = useState(0)
-    async function updateDriverMode(){
-        await fetch(`api/account-data/change-driver-mode?UserSessionId=${sessionKey}`,{
+    function updateDriverMode(){
+        console.log(sessionKey)
+        fetch(`api/account-data/change-driver-mode?UserSessionId=${sessionKey}`,{
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ "DriverMode": driverMode }),
         }).then(()=>{
             console.log("Changed")
+            getUsersEmail()
         })
         .catch(error =>{
             console.log(error)
         })
     }
-    useEffect(() => {
-        setDriverMode(userData.DriverMode);
-      }, [userData])
+    useEffect(()=>{
+        setTogglerPopupLoadingData('')
+    }, [userData])
     useEffect(()=>{
         updateDriverMode()
-    },[driverMode])
+    },[driverMode, sessionKey])
+
+    const [togglerPopupDeleteCar, setTogglerPopupDeleteCar] = useState('')
+    const [togglerPopupSuccessDeleteCar, setTogglerPopupSuccessDeleteCar] = useState('')
+    const [togglerPopupErrorDeleteCar, setTogglerPopupErrorDeleteCar] = useState('')
+
+    function deleteCar(){
+        fetch(`/api/account-data/change-car/delete-car?sessionId=${sessionKey}`,{
+            method: "PUT",
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                "VehicleBrand": "",
+                "VehicleModel": "",
+                "VehicleColor": "",
+                "VehicleNumber": ""
+            })
+        }).then(()=>{
+            setTogglerPopupDeleteCar('')
+            setTogglerPopupSuccessDeleteCar('popup-open')
+        })
+        .catch(() => {
+            setTogglerPopupErrorDeleteCar('popup-open')
+        })
+    }
 
     return(
         <div className="MyAccountPage">
@@ -66,7 +92,7 @@ export default function MyAccountPage(){
                 <PagesHeader ReturnBtn="/general" PageHeader="Мой аккаунт"/>
                 <div className='MyAccountPageAccount'>
                     <div className='AccountCard'>
-                        <div style={{backgroundImage: `url(${accountImage})`}} className='AccountCardIco' alt='user ico'/>
+                        <div style={{backgroundImage: `url(${userData.UserImage === '' ? '/ico/man-user.svg' : userData.UserImage})`}} className='AccountCardIco' alt='user ico'/>
                         <div className='AccountCardData'>
                             <div className='AccountCardDataFirst'>{userName}</div>
                             <div className='AccountCardDataSecond'>{userData.UserEmail}</div>
@@ -77,7 +103,7 @@ export default function MyAccountPage(){
                         </Link>
                     </div>
                 </div>
-                <div className='MyAccountPageAccount'>
+                <div className='MyAccountPageAccount history'>
                     <div className='AccountCard'>
                         <Link href='/my-account/history'>История поездок</Link>
                     </div>
@@ -85,8 +111,8 @@ export default function MyAccountPage(){
                 <div className='AccountToggleModeBox'>
                     <label className='AccountToggleMode' htmlFor='driver-mode'>Режим водителя</label>
                     <label class="TogglerWrapper">
-                        <input id='driver-mode' className='TogglerChecker' type="checkbox" checked={driverMode === 1 } onChange={(e) => {
-                            if (e.target.checked) {
+                        <input id='driver-mode' className='TogglerChecker' type="checkbox" checked={userData && userData.DriverMode === 1 ||  driverMode === 1} onChange={(e) => {
+                            if (e.target.checked && userData.DriverMode === 0) {
                                 setDriverMode(1)
                             } else {
                                 setDriverMode(driverMode === 1 ? 0 : 1)
@@ -110,8 +136,11 @@ export default function MyAccountPage(){
                                     <div className='AccountCardDataSecond'>Цвет: {userData.VehicleColor}</div>
                                     <div className='AccountCardDataThird'>{userData.VehicleNumber}</div>
                                 </div>
-                                <div className='AccountCardEdit'>
-                                    <i class="fa-solid fa-pencil"></i>
+                                <Link href='/my-account/add-car' className='AccountCardEdit'>
+                                    <i className="fa-solid fa-pencil"></i>
+                                </Link>
+                                <div onClick={()=>{setTogglerPopupDeleteCar('popup-open')}} className='AccountCardEdit AccountCardEditTrash'>
+                                    <i className="fa-solid fa-trash"></i>
                                 </div>
                             </div>
                         </div>
@@ -128,6 +157,35 @@ export default function MyAccountPage(){
                     </> : null
                 }
             </div>
+            <div className={`popup-background ${togglerPopupDeleteCar}`}></div>
+            <div className={`popup popup-input-error ${togglerPopupDeleteCar}`}>
+                <h3 className='popup-input-error__text'>Вы действительно хотите удалить автомобиль?</h3>
+                <div className='popup-button_block'>
+                    <div className='Button PopupButton' onClick={()=>{deleteCar()}}>Удалить</div>
+                    <div className='Button PopupButton' onClick={()=>{setTogglerPopupDeleteCar('')}}>Отмена</div>
+                </div>
+            </div>
+            <div className={`popup-background ${togglerPopupDeleteCar}`}></div>
+            {/* Суккес */}
+            <div className={`popup-background ${togglerPopupSuccessDeleteCar}`}></div>
+            <div className={`popup popup-input-error ${togglerPopupSuccessDeleteCar}`}>
+                <h3 className='popup-input-error__text'>Автомобиль удален</h3>
+                <div className='Button PopupButton' onClick={()=>{setTogglerPopupSuccessDeleteCar('')}}>Закрыть</div>
+            </div>
+            <div className={`popup-background ${togglerPopupSuccessDeleteCar}`}></div>
+            {/* Error */}
+            <div className={`popup-background ${togglerPopupErrorDeleteCar}`}></div>
+            <div className={`popup popup-input-error ${togglerPopupErrorDeleteCar}`}>
+                <h3 className='popup-input-error__text'>Ошибка удаления</h3>
+                <div className='Button PopupButton' onClick={()=>{setTogglerPopupErrorDeleteCar('')}}>Закрыть</div>
+            </div>
+            <div className={`popup-background ${togglerPopupErrorDeleteCar}`}></div>
+            {/* Loading */}
+            <div className={`popup-background ${togglerPopupLoadingData}`}></div>
+            <div className={`popup popup-input-error ${togglerPopupLoadingData}`}>
+                <h3 className='popup-input-error__text'>Загрузка</h3>
+            </div>
+            <div className={`popup-background ${togglerPopupLoadingData}`}></div>
         </div>
     )
 }

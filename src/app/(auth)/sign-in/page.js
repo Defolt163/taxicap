@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react"
 import emailjs from '@emailjs/browser';
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function SignInPage(){
     const router = useRouter()
@@ -120,6 +121,7 @@ export default function SignInPage(){
                         <div className={`popup-background ${togglerSendEmail}`}></div>
                     </>
                 </div>
+                <div className="AccountSign">Нет аккаунта? <Link href='/sign-up'>Зарегистрируйтесь</Link></div>
             </div>
         </div>
     )
