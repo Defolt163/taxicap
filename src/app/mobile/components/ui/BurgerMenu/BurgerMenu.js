@@ -63,10 +63,9 @@ export default function BurgerMenu(){
     function userSignOut() {
         document.cookie = `UserData=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/;`
         localStorage.removeItem('accountData')
-        localStorage.removeItem('activeOrder')
+        localStorage.removeItem('accountSessionId')
         router.push('/mobile/sign-in')
       }
-      console.log(JSON.parse(localStorage.getItem('activeOrder')))
     return(
         <>
             <div className={`BurgerItem ${togglerBurgerMenu}`} onClick={()=>{setTogglerBurgerMenuBurgerMenu('burger-open')}}>

@@ -240,7 +240,6 @@ export default function NavMap2(){
           setTogglerOpenOrder('order-active')
           const socket = socketRef.current;
           socket.emit("orderUpdate", orders[orderIteration].UserId)
-          localStorage.setItem('activeOrder', orders[orderIteration].UserId)
         })
     })
     .catch(error =>{
@@ -475,9 +474,6 @@ export default function NavMap2(){
           setActiveOrder([])
           setStep(0)
           setOrders([])
-          userData.ActiveOrder = 0
-          localStorage.setItem('accountData', JSON.stringify(userData))
-          localStorage.removeItem('activeOrder')
         })
         //fetchOrders()
       })
