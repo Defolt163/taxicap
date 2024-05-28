@@ -1,0 +1,229 @@
+@import ../../../animations
+@import ../../../variables
+.Map
+    height: 100vh
+    overflow: hidden
+    position: relative
+    .MapWrapper
+        height: 100vh
+    .mapboxgl-canvas
+        width: 100% !important
+    .mapboxgl-control-container
+        position: absolute
+        top: 0
+        right: 0
+        z-index: 9998
+        font-size: 0.5rem
+    .MapUi
+        overflow: hidden
+        border-radius: 1.88rem 1.88rem 0rem 0rem
+        box-shadow: 0rem 0rem 1.88rem 0rem rgba(0, 0, 0, 0.15)
+        padding: 24px
+        z-index: 999
+        position: absolute
+        bottom: 0
+        left: 0
+        background-color: #fff
+        width: -webkit-fill-available
+        .AddressInputBlock
+            width: 100%
+            .AddressInputBlockItem
+                position: relative
+                display: flex
+                justify-content: space-between
+                align-items: center
+                border-bottom: 0.06rem solid rgb(223, 233, 240)
+                &.AddressFuckedInputBlockItem
+                    border-bottom: none
+                    margin-bottom: 20px
+                .AddressInputLabel
+                    width: 20%
+                    .AddressInputIco
+                        width: 100%
+                        padding: 12.5px 0
+                        border: 0.06rem solid rgb(209, 209, 209)
+                        border-radius: 10px
+                        text-align: center
+                .InputErrorAddress
+                    top: 0
+        .CarVariant
+            .CarVariantBlock
+                .CarVariantBlockItem
+                    display: flex
+                    justify-content: space-between
+                    align-items: center
+                    border: 0.06rem solid rgb(244, 245, 246)
+                    border-radius: 1rem
+                    background: rgb(255, 255, 255)
+                    padding: 12px 22px
+                    .CarVariantBlockItemWrapper
+                        display: flex
+                        .CarVariantBlockItemDescr
+                            margin-left: 13.75px
+                            .CarVariantBlockItemHeader
+                                font-weight: 500
+                                line-height: 1.5rem
+                            .CarVariantBlockItemPlaces
+                                font-size: 0.75rem
+                                font-weight: 300
+                                line-height: 1.13rem
+                .PaymentMethod
+                    .PaymentMethodItem
+                        display: flex
+                        align-items: center
+                        box-shadow: 0rem 0.25rem 0.63rem 0rem rgba(52, 34, 242, 0.07)
+                        background: $base-color
+                        border-radius: 1rem
+                        padding: 12px 22px
+                        margin-bottom: 20px
+                        .PaymentMethodItemIcoWrapper
+                            display: flex
+                            justify-content: center
+                            align-content: center
+                            padding: 15px 9px
+                            border-radius: 50%
+                            background-color: #fff
+                        .PaymentMethodItemText
+                            margin-left: 16px
+                            color: rgb(255, 255, 255)
+                            font-size: 1rem
+                            font-weight: 600
+                            line-height: 1.5rem
+                            text-align: left
+        .SearchCar
+            display: flex
+            flex-direction: column
+            align-items: center
+            .SearchCarIco
+                width: 70%
+                height: auto
+                margin: 0 auto
+            .SearchCarDetail
+                margin-bottom: 20px
+                .SearchCarDetailLoading
+                    margin: 37px 0 18px
+                    height: 0.5rem
+                    border-radius: 3.13rem
+                    background: rgb(245, 244, 255)
+                    position: relative
+                    &::after
+                        height: 100%
+                        width: 0
+                        animation: loading 80s infinite
+                        content: ''
+                        position: absolute
+                        top: 0
+                        left: 0
+                        border-radius: 3.13rem
+                        background: $base-color
+                .SearchCarDetailDescr
+                    color: rgb(40, 39, 47)
+                    font-size: 1.13rem
+                    font-weight: 400
+                    line-height: 1.69rem
+                    text-align: center
+        .DriveActive
+            .AddressOrderBlock
+                margin-top: 10px
+                .AddressOrderItem
+                    display: flex
+                    align-items: center
+                    .AddressOrderText
+                        font-size: 0.75rem
+                        font-weight: 400
+                        line-height: 1rem
+                        margin-left: 5px
+                    &:first-child
+                        margin-bottom: 5px
+                        .AddressInputIco
+                            color: $base-color
+            .Payment
+                margin-top: 10px
+                display: flex
+                justify-content: space-between
+                .PaymentItem
+                    .PaymentHeader
+                        font-size: 0.88rem
+                        font-weight: 500
+                        line-height: 1.31rem
+                    .PaymentInfo
+                        margin: 0
+                    &:last-child
+                        .PaymentInfo
+                            color: $base-color
+                            text-align: center
+        /* .OrderDriver
+            display: none */
+        .OrderWrapper
+            .OrderAddress
+                margin: 10px 0
+                padding: 1rem 0
+                border-top: 0.06rem solid rgb(223, 233, 240)
+                border-bottom: 0.06rem solid rgb(223, 233, 240)
+                .OrderAddressItem
+                    display: flex
+                    align-items: center
+                    .AddressHeader
+                        width: 20%
+                        margin: 0
+                    .Address
+                        width: 80%
+                    &:first-child
+                        margin-bottom: 10px
+            .OrderActions
+                display: flex
+                justify-content: space-between
+                align-items: center
+                &.order-active
+                    display: none
+                .OrderAction
+                    display: flex
+                    justify-content: center
+                    align-items: center
+                    width: 4rem
+                    height: 4rem
+                    border-radius: 50%
+                    background-color: green
+                    font-size: 2rem
+                    color: #fff
+                    &:first-child
+                        background-color: red
+            .Button
+                display: none
+                &.order-active
+                    display: block
+            //Открытие ордера
+        .AccountBlock
+            display: flex
+            justify-content: space-between
+            align-items: center
+            .AccountIco
+                width: 3.44rem
+                height: 3.44rem
+                background-position: center
+                background-size: cover
+                background-repeat: no-repeat
+                border-radius: 50%
+            .AccountBlockInfo
+                margin-left: 13px
+                .AccountName
+                    margin: 0
+                    margin-bottom: 2px
+                .OrderInfoBlock
+                    .OrderInfo
+                        font-size: 0.75rem
+                        font-weight: 600
+                        line-height: 1.13rem
+                        color: #585858
+                        strong
+                            color: #000
+            .CallUser
+                color: #fff
+                width: 2rem
+                height: 2rem
+                display: flex
+                justify-content: center
+                align-items: center
+                border-radius: 50%
+                background-color: $base-color
+                text-decoration: none

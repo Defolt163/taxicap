@@ -1,0 +1,78 @@
+@import ../../../../variables
+.BurgerItem
+    position: fixed
+    top: 10px
+    left: 20px
+    padding: 12px
+    background-color: #fff
+    border-radius: 5px
+    border: none
+    z-index: 9998
+    i
+        &:last-child
+            display: none
+    &.burger-open
+        background: none
+        font-size: 30px
+        left: 10px
+        i
+            color: #fff
+            &:first-child
+                display: none
+                
+.BurgerMenu
+    display: none
+    box-shadow: 5px 0px 3rem
+    padding: 70px 20px
+    position: fixed
+    top: 0
+    left: 0
+    z-index: 9999
+    height: calc( 100% - 140px )
+    width: 70vw
+    background-color: $base-color
+    &.burger-open
+        display: block
+    .BurgerMenu-account
+        .BurgerMenuAccountImage
+            width: 70px
+            height: 70px
+            border-radius: 50%
+            border: 2px solid #fff
+            background-repeat: no-repeat
+            background-position: center
+            background-size: cover
+        .BurgerMenuAccountName
+            margin: 0
+            margin-top: 12px
+            color: rgb(255, 255, 255)
+            font-size: 20px
+            font-weight: 700
+            line-height: 30px
+            text-align: left
+    .BurgerMenuItems
+        padding: 0
+        .BurgerMenuItem
+            list-style: none
+            padding: 10px 0
+            a
+                color: #fff
+                text-decoration: none
+.BurgerMenuLogout
+    position: absolute
+    bottom: 30px
+    left: 20px
+    padding: 10px 0
+    color: #fff
+    z-index: 9999
+.BurgerMenuOverlay
+    display: none
+    backdrop-filter: blur(1.5px)
+    z-index: 9998
+    position: absolute
+    top: 0
+    left: 0
+    width: 100vw
+    height: 100vh
+    &.burger-open
+        display: block

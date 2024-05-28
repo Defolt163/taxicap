@@ -1,0 +1,61 @@
+@import ../../variables
+
+.privacy-page
+    background: #f5f4f4 !important
+body
+    overflow-x: hidden
+
+.private-policy
+    color: #000
+    padding-top: 150px
+    h1
+        font-size: 55px
+        font-weight: 600
+        text-align: center
+    .accordion_block
+        min-height: calc( 100vh - 432px )
+        background-color: rgb(248, 248, 255)
+        padding: 30px
+        box-shadow: 0px 0px 3px rgb(248, 248, 255)
+        .accordion_item
+            margin-bottom: 20px
+            .accordion_item__header
+                display: flex
+                align-items: center
+                justify-content: center
+                color: #fff
+                height: 40px
+                background-color: #3421f2
+                cursor: pointer
+                text-align: center
+                padding: 10px 0
+                border-radius: 15px
+                transition: border-radius 1s
+            .accordion_item__body
+                padding: 0 30px
+                overflow: hidden
+                background-color: #315dd91f
+                max-height: 0px
+                transition: max-height .8s
+                &.accordion-open
+                    max-height: 3000px
+                    transition: max-height 1s
+            &.accordion-open
+                .accordion_item__header
+                    border-radius: 15px 15px 0 0
+                    transition: border-radius .5s
+
+@media screen and ( max-width: 992px )
+    .private-policy 
+        padding-top: 0
+@media screen and ( max-width: 730px )
+    .private-policy 
+        h1
+            font-size: 41px
+
+@media screen and ( max-width: 544px )
+    .private-policy 
+        h1
+            font-size: 32px
+        .accordion_block
+            padding: 5px

@@ -1,0 +1,39 @@
+@import ./variables
+.not-found
+    height: 100vh
+    display: flex
+    justify-content: center
+    align-items: center
+    .not-found_text
+        color: #fff
+        display: flex
+        flex-direction: column
+        align-items: center
+        h1
+            text-align: center
+            margin: 0
+        h3
+            text-align: center
+.not-found_bg
+    position: absolute
+    z-index: -1
+    top: 50%
+    left: 0
+    transform: translateY(-50%)
+    text-align: center
+    font-size: 22rem
+    font-weight: 900
+    color: #86868626
+    width: 100%
+
+@media screen and ( max-width: 992px )
+    .not-found_bg
+        font-size: 17rem
+
+@media screen and ( max-width: 740px )
+    .not-found_bg
+        font-size: 11rem
+
+@media screen and ( max-width: 460px )
+    .not-found_bg
+        font-size: 7rem

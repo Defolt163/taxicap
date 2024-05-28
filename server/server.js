@@ -59,9 +59,9 @@ const io = require("socket.io")(3001, {
         console.error("Ошибка отправки данных в базу данных:", error);
       }
     });
-    socket.on("orderUpdate", () => {
-      console.log("Обновление заказа");
-      io.emit("orderUpdatedByDriver");
+    socket.on("orderUpdate", (userId) => {
+      console.log("Обновление заказа", userId);
+      io.emit("orderUpdatedByDriver", userId);
     });
   });
 

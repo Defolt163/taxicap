@@ -1,0 +1,314 @@
+@import ./variables
+    
+body
+    overflow-x: hidden
+.promo_block
+    border-radius: 42px
+    background-color: $blocks-bgc
+    &__container
+        padding: 10px 10px 0 10%
+
+.btn_open__app
+    overflow: hidden
+    position: relative
+    z-index: 0
+    margin-top: 32px
+    display: flex
+    align-items: center
+    width: max-content
+    padding: 14px 16px
+    border: 1px solid rgb(255, 255, 255)
+    border-radius: 50px
+    color: #fff
+    text-decoration: none
+    text-transform: uppercase
+    transition: color, border .5s
+    .btn-app
+        margin-left: 23px
+    &.btn_open__about
+        padding: 14px 26px
+    &::before
+        z-index: -1
+        content: ''
+        position: absolute
+        border-radius: 50px
+        left: 0
+        height: 100%
+        width: 0
+        background-color: #fff
+        transition: width .5s
+    &:hover
+        color: #000
+        transition: color, border .5s
+        border: 1px solid rgba(255, 255, 255, 0)
+        &::before
+            width: 100%
+            transition: width .5s
+
+.MainPage
+    color: $text-color
+    .promo_blocks
+        height: 100vh
+        display: flex
+        gap: 10px
+        .promo_block
+            width: 50%
+            height: 100%
+        .promo_left
+            background-color: $blocks-bgc
+            .promo_block__container
+                display: flex
+                flex-direction: column
+                justify-content: center
+                height: 100%
+                h1
+                    font-size: 72px
+                    font-weight: 700
+                    line-height: 115%
+                    letter-spacing: 1%
+                    text-align: left
+        .promo_right
+            position: relative
+            overflow: hidden
+            background: linear-gradient(135.87deg, rgba(215, 48, 214, .6) 0%,rgba(49, 32, 243, .4) 70.037%)
+            .music-playlist
+                position: absolute
+                z-index: 1
+                left: 20px
+                top: 30%
+                border:none
+                width:281px
+                height:80px
+                border-radius: 15px 
+            &__image
+                position: absolute
+                right: 0
+                bottom: 0%
+                width: 80vh
+                height: auto
+            .promo_right__bg-image
+                z-index: -1
+                position: absolute
+                width: 90%
+                height: auto
+                left: 50%
+                top: 50%
+                transform: translate(-50%, -50%)
+    .qr-block
+        margin-top: 10px
+        height: 100vh
+        .promo_block
+            position: relative
+            height: 100%
+            overflow: hidden
+            .promo_block__container
+                padding: 0
+                h2
+                    position: relative
+                    z-index: 2
+                    font-size: 72px
+                    font-weight: 700
+                    line-height: 115%
+                    letter-spacing: 1%
+                    text-align: center
+                .phone_qr-code
+                    z-index: 1
+                    position: absolute
+                    width: 60vh
+                    height: auto
+                    bottom: -50%
+                    left: 50%
+                    transform: translateX(-50%)
+                    border-radius: 9vh
+                    box-shadow: 0px 0px 78px 8px #b30c628f
+            .video-bg
+                position: absolute
+                z-index: 0
+                top: 0
+                left: 0
+                width: 100vw
+                height: 100%
+                object-fit: cover
+                &::after
+                    content: ''
+                    position: absolute
+                    top: 0
+                    left: 0
+                    width: 100%
+                    height: 100%
+                    background-color: rgba(0, 0, 0, .75)
+    .features
+        min-height: 50vh
+        h2
+            font-size: 2rem
+        .features_block
+            display: flex
+            justify-content: space-between
+            gap: 10px
+            .features_block__side
+                cursor: pointer
+                position: relative
+                padding: 15px 15px 25px 25px
+                border-radius: 42px
+                background: url('/landing/image/cards/driver.webp') center center/cover no-repeat
+                width: 50%
+                &:first-child
+                    background: url('/landing/image/cards/passenger.webp') center center/cover no-repeat
+                &::after
+                    content: ''
+                    opacity: 0
+                    position: absolute
+                    border-radius: 45px
+                    top: 0
+                    left: 0
+                    inset: -5px
+                    transform: translate3d(0px, 0px, 0px)
+                    filter: blur(10px)
+                    background: linear-gradient(135.87deg, rgba(215, 48, 214, .4) 0%,rgba(49, 32, 243, .4) 70.037%)
+                    transition: opacity .5s
+                &:hover
+                    &::after
+                        opacity: 1
+                        transition: opacity .5s
+                &::before
+                    content: ''
+                    position: absolute
+                    border-radius: 40px
+                    top: 0
+                    left: 0
+                    width: 100%
+                    height: 100%
+                    background-color: rgba(0,0,0, .965)
+                    z-index: 1
+                .features_block__side-text
+                    position: relative
+                    z-index: 1
+                    h3
+                        font-weight: 300
+                        font-size: 1.5rem
+                        text-decoration: underline
+                    .features_block__side_text
+                        font-weight: 200
+    .about
+        min-height: 50vh
+        h2
+            font-size: 2rem
+        .about-text
+            color: rgb(204, 204, 204)
+            font-size: 16px
+            font-weight: 600
+            line-height: 175%
+            letter-spacing: 0%
+        .about_links
+            display: flex
+            justify-content: space-between
+            width: 50%
+
+@media screen and ( max-width: 1440px )
+    .MainPage 
+        .promo_blocks 
+            .promo_left 
+                .promo_block__container 
+                    h1
+                        font-size: 48px
+        .qr-block 
+            .promo_block 
+                .promo_block__container 
+                    h2
+                        font-size: 48px
+        .about 
+            .about-text
+                font-size: 14px
+
+@media screen and ( max-width: 1080px )
+    .btn_open__app
+        font-size: 14px
+    .MainPage 
+        .about 
+            .about_links
+                width: 60%
+
+@media screen and ( max-width: 832px )
+    .MainPage 
+        .promo_blocks
+            min-height: 1248px
+            flex-direction: column
+            .promo_block
+                width: 100%
+                .promo_block__container
+                    padding: 20px
+    
+
+@media screen and ( max-height: 574px )
+    .MainPage 
+        .promo_blocks 
+            .promo_left 
+                .promo_block__container 
+                    h1
+                        font-size: 35px
+                    h3
+                        font-size: 15px
+        .qr-block 
+            .promo_block 
+                .promo_block__container 
+                    h2
+                        font-size: 35px
+    
+@media screen and ( max-width: 606px )
+    .MainPage 
+        .promo_blocks 
+            .promo_left 
+                .promo_block__container 
+                    h1
+                        font-size: 42px
+                        text-align: center
+                    h3
+                        font-size: 15px
+            .promo_right 
+                .music-playlist
+                    display: none
+                    visibility: hidden
+                .promo_right__image
+                    width: 95vw
+        .qr-block 
+            .promo_block 
+                .promo_block__container 
+                    h2
+                        font-size: 42px
+                    .phone_qr-code
+                        width: 85vw
+        .features 
+            .features_block
+                flex-direction: column
+                .features_block__side
+                    width: auto
+        .about 
+            .about_links
+                width: 100%
+
+@media screen and ( max-width: 557px )
+    .MainPage 
+        .promo_blocks 
+            .promo_left
+                .promo_block__container
+                    align-items: center
+            .promo_right 
+                .promo_right__image
+                    width: 100vw
+
+@media screen and ( max-width: 415px )
+    .MainPage 
+        .promo_blocks 
+            min-height: 950px
+            .promo_left 
+                padding-bottom: 20px
+                .promo_block__container 
+                    h1
+                        font-size: 35px
+        .qr-block 
+            height: 79vh
+            .promo_block 
+                height: 96%
+                .promo_block__container 
+                    h2
+                        font-size: 35px

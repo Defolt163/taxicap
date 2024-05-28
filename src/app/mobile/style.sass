@@ -1,0 +1,64 @@
+@import ../variables
+.welcome-app
+    .stat-bar
+        position: absolute
+        top: 10px
+        left: 5%
+        width: 90%
+        height: 6px
+        border-radius: 10px
+        border: solid 1px rgb(82, 82, 82)
+        overflow: hidden
+        &::before
+            position: absolute
+            content: ''
+            top: 0
+            left: 0
+            height: 10px
+            width: 0
+            background-color: $base-color
+            transition: width .5s
+.WelcomePage
+    .HaveAccount
+        cursor: pointer
+        font-size: 1rem
+        color: $base-color-text
+        span
+            color: $base-color
+    .StartButtonBlock
+        width: 100%
+        height: 100%   
+        .BtnStart
+            position: absolute   
+            width: max-content
+            left: 50%
+            top: 50%  
+            transform: translate(-50%, -50%)
+            text-decoration: none
+.reels-style
+    height: 100vh
+    overflow-x: hidden
+    position: relative
+    .reels-style-text
+        h1
+            font-weight: 300
+            text-align: center
+            line-height: 48px
+            letter-spacing: 0%
+        h3
+            font-weight: 300
+            text-align: center
+            line-height: 30px
+            letter-spacing: 0%
+            color: rgb(82, 82, 82)
+            a
+                color: blue
+    .reels-other
+        position: absolute
+        bottom: 10px
+        left: 0
+        width: 100%
+        .reels-style-image
+            margin-bottom: 10px
+            width: 100%
+            height: auto

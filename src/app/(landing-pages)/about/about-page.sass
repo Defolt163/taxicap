@@ -1,0 +1,95 @@
+@import ../../variables
+:root
+    background-color: $root-bgc
+    color: $text-color
+body
+    overflow-x: hidden
+.about
+    .about_blocks
+        display: flex
+        gap: 10px
+        padding: 10px 10px 0
+        overflow: hidden
+        .about_block
+            min-height: 70vh
+            border-radius: 42px
+            background-color: $blocks-bgc
+            &.about_left
+                width: 35%
+                background: url('/landing/image/AppMockup.png') center center/cover no-repeat
+            &__container
+                z-index: 1
+                position: relative
+                h4
+                    font-weight: 300
+                    backdrop-filter: blur(10px)
+                .promo_right__bg-image
+                    z-index: -1
+                    width: 70%
+                    height: auto
+                    position: absolute
+                    top: 0
+                    left: 50%
+                    transform: translateX(-50%)
+            &.about_right
+                padding-top: 138px
+                padding: 138px 20px 20px 20px
+                width: 65%
+    .marquee_adverse
+        margin: 10px 0
+        height: 50px
+        display: flex
+        align-items: center
+        background-color: red
+        font-size: 42px
+        font-weight: 600
+    .main-block
+        .about_block
+            overflow: hidden
+            min-height: 30vh
+            border-radius: 42px
+            padding: 20px 20px
+            background-color: $blocks-bgc
+            display: flex
+            justify-content: space-between
+            align-items: center
+            .about_block__container
+                width: 60%
+                position: relative
+                z-index: 1
+                h4
+                    font-weight: 300
+                .fa-shield-halved
+                    position: absolute
+                    bottom: 0
+                    left: 0
+                    font-size: 20rem
+                    z-index: -1
+                    color: #a4a4a447
+            .adverse_map
+                width: 39%
+                border-radius: 25px
+
+@media screen and ( max-width: 992px )
+    .about 
+        .about_blocks
+            flex-direction: column-reverse
+            .about_block
+                width: calc( 100% - 40px ) !important
+                padding: 20px !important
+                h4
+                    font-size: 14px
+                .promo_right__bg-image
+                    top: 50%
+                    transform: translate(-50%, -50%)
+        .main-block 
+            .about_block
+                flex-direction: column
+                .about_block__container
+                    width: 100%
+                    h4
+                        font-size: 14px
+                .adverse_map
+                    width: 100%
+                .fa-shield-halved
+                    transform: translateY(-40%)
