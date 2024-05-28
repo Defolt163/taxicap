@@ -61,10 +61,8 @@ export default function NavMap2(){
 
   // Получение статуса аккаунта
   const [userData, setUserData] = useState([])
-  function getUsersAccountType(){
-    if(localStorage.getItem('accountData')){
-      setUserData(JSON.parse(localStorage.getItem('accountData')))
-    }else if(sessionKey !== ''){
+  async function getUsersAccountType(){
+    if(sessionKey !== ''){
       fetch(`/api/account-data/user-data?sessionId=${sessionKey}`,{
         method: 'GET'
       }).then((result)=>{
@@ -242,6 +240,7 @@ export default function NavMap2(){
           setTogglerOpenOrder('order-active')
           const socket = socketRef.current;
           socket.emit("orderUpdate", orders[orderIteration].UserId)
+          localStorage.setItem('activeOrder', orders[orderIteration].UserId)
         })
     })
     .catch(error =>{
@@ -267,7 +266,7 @@ export default function NavMap2(){
         }).catch(error => {
           console.log(error)
         })
-      }else{
+      }else if(userData.ActiveOrder === 0){
         fetchOrders()
       }
     }
@@ -476,6 +475,9 @@ export default function NavMap2(){
           setActiveOrder([])
           setStep(0)
           setOrders([])
+          userData.ActiveOrder = 0
+          localStorage.setItem('accountData', JSON.stringify(userData))
+          localStorage.removeItem('activeOrder')
         })
         //fetchOrders()
       })

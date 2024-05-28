@@ -39,6 +39,7 @@ export default function BurgerMenu(){
     function getUsersEmail(){
         if(localStorage.getItem('accountData')){
             setUserData(JSON.parse(localStorage.getItem('accountData')))
+            setUserName(JSON.parse(localStorage.getItem('accountData')).UserName.split(' ')[0])
         }else if(sessionKey !== ''){
             fetch(`/api/account-data/user-data?sessionId=${sessionKey}`,{
                 method: 'GET'
@@ -62,8 +63,10 @@ export default function BurgerMenu(){
     function userSignOut() {
         document.cookie = `UserData=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/;`
         localStorage.removeItem('accountData')
+        localStorage.removeItem('activeOrder')
         router.push('/mobile/sign-in')
       }
+      console.log(JSON.parse(localStorage.getItem('activeOrder')))
     return(
         <>
             <div className={`BurgerItem ${togglerBurgerMenu}`} onClick={()=>{setTogglerBurgerMenuBurgerMenu('burger-open')}}>
