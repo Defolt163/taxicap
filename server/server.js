@@ -42,6 +42,7 @@ const io = require("socket.io")(3001, {
             "AddressFrom": data.AddressFrom,
             "AddressTo": data.AddressTo,
             "Price": data.Price,
+            "PaymentMethod": data.PaymentMethod,
             "CustomerImage": data.CustomerImage
           })
         );

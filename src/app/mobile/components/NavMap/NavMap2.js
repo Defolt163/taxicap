@@ -1,66 +1,88 @@
 'use client'
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react'
 import ReactMapGL, { Source, Layer, Map, Marker } from "react-map-gl"
-import 'maplibre-gl/dist/maplibre-gl.css';
+import 'maplibre-gl/dist/maplibre-gl.css'
 import './style.sass'
 import carIco from '/public/ico/car.png'
 import cashIco from '/public/ico/cash-ico.svg'
 import SearchCarIco from '/public/image/carAndMap.svg'
+import scooterIco from '/public/image/scooter.png'
 import userIco from '/public/ico/man-user.svg'
-import Image from 'next/image';
-import Link from 'next/link';
+import Image from 'next/image'
+import Link from 'next/link'
 import Cookies from 'js-cookie'
-import io from 'socket.io-client';
-import { useRouter } from 'next/navigation';
+import io from 'socket.io-client'
+import { useRouter } from 'next/navigation'
 import { Howl } from 'howler'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 //import defaultUserIco from '/public/ico/man-user.svg'
 
-//const socket = io("http://localhost:3001");
+//const socket = io("http://localhost:3001")
 const mapApiKey = process.env.NEXT_PUBLIC_MAP_API_KEY
 const localHostApi = process.env.NEXT_PUBLIC_MYSQL_API
 export default function NavMap2(){
   const router = useRouter()
-  
+
   // Получение sessionId из кук
   const [sessionKey, setSessionKey] = useState('')
+  const [userData, setUserData] = useState([])
   function myHandler() {
     if(sessionKey === ''){
-      const cookieValue = Cookies.get('UserData');
+      const cookieValue = Cookies.get('UserData')
       if (cookieValue) {
           try {
-              const userData = JSON.parse(cookieValue);
-              setSessionKey(userData.session_key);
+              const userData = JSON.parse(cookieValue)
+              setSessionKey(userData.session_key)
           } catch (error) {
-              console.error("Ошибка при парсинге данных пользователя из cookie:", error);
+              console.error("Ошибка при парсинге данных пользователя из cookie:", error)
           }
       } else {
           router.push('/mobile/sign-in')
       }
     }
   }
+  const [mapInfo, setMapInfo] = useState([])
+  useEffect(()=>{
+    fetch('/api/mapGl/getMap',{
+      method: 'GET'
+    }).then((result)=>{
+      return result.json()
+    }).then((res)=>{
+      console.log(res.result)
+      setMapInfo(res.result)
+    })
+  },[])
   
   useEffect(()=>{
       myHandler()
   }, [])
   
   // Открытие веб сокета
-  /* const [socket, setSocket] = useState(null);
+  /* const [socket, setSocket] = useState(null)
   useEffect(()=>{
-    const newSocket = io("http://localhost:3001");
-    setSocket(newSocket);
+    const newSocket = io("http://localhost:3001")
+    setSocket(newSocket)
   }, []) */
-  const socketRef = useRef(null);
+  const socketRef = useRef(null)
   useEffect(() => {
-    const newSocket = io(`ws://${localHostApi}:3001`);
-    socketRef.current = newSocket;
+    const newSocket = io(`ws://${localHostApi}:3001`)
+    socketRef.current = newSocket
 
     return () => {
-      newSocket.disconnect(); // Отключаем сокет при размонтировании компонента
-    };
-  }, []);
+      newSocket.disconnect() // Отключаем сокет при размонтировании компонента
+    }
+  }, [])
 
   // Получение статуса аккаунта
-  const [userData, setUserData] = useState([])
+  
   async function getUsersAccountType(){
     if(sessionKey !== ''){
       fetch(`/api/account-data/user-data?sessionId=${sessionKey}`,{
@@ -97,6 +119,7 @@ export default function NavMap2(){
   const [togglerPopupDriverCloseOrder, setTogglerPopupDriverCloseOrder] = useState('') // водитель завершил заказ
   const [togglerOpenOrder, setTogglerOpenOrder] = useState('')
   const [togglerPopupPassengerCloseOrder, setTogglerPopupPassengerCloseOrder] = useState('')
+  const [togglerPopupVehicleNotFound, setTogglerPopupVehicleNotFound] = useState('')
 
   // Открытие вебсокета
   const [orderIteration, setOrderIteration] = useState(0)
@@ -108,7 +131,7 @@ export default function NavMap2(){
     }
   }
   //Хранение заказов
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState([])
   const [activeDriverOrder, setActiveDriverOrder] = useState(false)
   const [hasAccepted, setHasAccepted] = useState(false) // Переменная для условия для лечения цикла
 
@@ -119,9 +142,8 @@ export default function NavMap2(){
   function fetchOrders(){
     console.log("Check if")
     if(userData && userData.DriverMode === 1){
-      console.log("ВЫЗВАНо")
-      console.log("ZAKAZI", orders)
-        console.log("OPEN IF")
+      if(userData.VehicleBrand !== null){
+        console.log("НАХУЯ")
         fetch(`/api/orders-data/get-orders`, {
           method: 'GET'
         }).then((result) => {
@@ -143,6 +165,9 @@ export default function NavMap2(){
         }).catch(error => {
           console.log(error)
         })
+      }else if(userData.VehicleBrand === null){
+        setTogglerPopupVehicleNotFound('popup-open')
+      }
     }
   }
   useEffect(() => {
@@ -152,7 +177,7 @@ export default function NavMap2(){
     }
   }, [userData])
 
-  const [orderCreatedSound, setOrderCreatedSound] = useState(null);
+  const [orderCreatedSound, setOrderCreatedSound] = useState(null)
 
   useEffect(() => {
     setOrderCreatedSound(
@@ -160,27 +185,27 @@ export default function NavMap2(){
         src: '/songs/order-created.mp3',
         volume: 1,
       })
-    );
+    )
   }, [])
   useEffect(() => {
     if (userData && userData.DriverMode === 1) {
       const handleOrderCreated = () => {
         fetchOrders()
         if (orderCreatedSound) {
-          orderCreatedSound.play();
+          orderCreatedSound.play()
         }
-        console.log("tr");
-      };
+        console.log("tr")
+      }
       
-      const socket = socketRef.current;
+      const socket = socketRef.current
   
-      socket.on("orderCreated", handleOrderCreated);
+      socket.on("orderCreated", handleOrderCreated)
   
       return () => {
-        socket.off("orderCreated", handleOrderCreated);
-      };
+        socket.off("orderCreated", handleOrderCreated)
+      }
     }
-  });
+  })
 
   useEffect(()=>{
     if(orders.length > 0 && userData.DriverMode === 1){
@@ -190,6 +215,10 @@ export default function NavMap2(){
 
   // Создание заказа по вебсокету
   const [activeOrder, setActiveOrder] = useState([])
+  const [paymentMethodValue, setPaymentMethodValue] = useState("Наличные");
+  useEffect(()=>{
+    console.log("METODA", paymentMethodValue)
+  },[paymentMethodValue])
   function openOrder(){
     const data = {
       "CustomerPhone": userData.UserPhone,
@@ -203,14 +232,15 @@ export default function NavMap2(){
       "AddressFrom": addressFrom,
       "AddressTo": addressTo,
       "Price": routePrice,
+      "PaymentMethod": paymentMethodValue,
       "CustomerImage": userData.UserImage
     }
     setActiveOrder([data])
     /* if(activeOrder.length !== 0){
       orderTimeOut()
     } */
-    const socket = socketRef.current;
-    socket.emit("sendOrder", data);
+    const socket = socketRef.current
+    socket.emit("sendOrder", data)
   }
   // Принятие заказа
   async function acceptOrder(){
@@ -229,6 +259,7 @@ export default function NavMap2(){
           "DriverImage": userData.UserImage
         }),
     }).then(()=>{
+        setActiveDriverOrder(true)
         fetch(`/api/orders-data/accept-order/update-active-order?UserId=${userData.UserId}`,{
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -236,9 +267,8 @@ export default function NavMap2(){
             "ActiveOrder": orders[orderIteration].id
           })
         }).then(()=>{
-          setActiveDriverOrder(true)
           setTogglerOpenOrder('order-active')
-          const socket = socketRef.current;
+          const socket = socketRef.current
           socket.emit("orderUpdate", orders[orderIteration].UserId)
         })
     })
@@ -356,8 +386,8 @@ export default function NavMap2(){
               method: 'DELETE'
             }).then(()=>{
               setActiveOrder([])
-              const socket = socketRef.current;
-              socket.emit("orderUpdate");
+              const socket = socketRef.current
+              socket.emit("orderUpdate")
               setStep(0)
               setCloseOrderText('К сожалению мы не нашли водителя')
               setTogglerPopupPassengerCloseOrder('popup-open')
@@ -374,7 +404,7 @@ export default function NavMap2(){
   // Удаление заказа по кнопке
   function deleteOrder(){
     if(userData && userData.DriverMode === 0){
-      const socket = socketRef.current;
+      const socket = socketRef.current
       fetch(`/api/orders-data/check-order?userId=${userData.UserId}`, {
         method: 'GET'
       }).then((result) => {
@@ -386,7 +416,7 @@ export default function NavMap2(){
             fetch(`/api/orders-data/delete-order?id=${checkOrderStatus[0].id}`,{
               method: 'DELETE'
             }).then(() =>{
-              socket.emit("orderUpdate");
+              socket.emit("orderUpdate")
               setStep(0)
               setCloseOrderText('Заказ отменен')
               setTogglerPopupPassengerCloseOrder('popup-open')
@@ -405,19 +435,19 @@ export default function NavMap2(){
     if (userData && userData.DriverMode === 0) {
       const handleOrderAcceptedByDriver = (userId) => {
         if(userId === userData.UserId){
-          setHasAccepted(true);
+          setHasAccepted(true)
           getUsersAccountType()
-          console.log("td");
+          console.log("td")
         }
-      };
+      }
       
-      const socket = socketRef.current;
+      const socket = socketRef.current
   
-      socket.on("orderUpdatedByDriver", handleOrderAcceptedByDriver);
+      socket.on("orderUpdatedByDriver", handleOrderAcceptedByDriver)
   
       return () => {
-        socket.off("orderUpdatedByDriver", handleOrderAcceptedByDriver);
-      };
+        socket.off("orderUpdatedByDriver", handleOrderAcceptedByDriver)
+      }
     }
     if (userData && userData.DriverMode === 1) {
       const handleOrderAcceptedByPassenger = () => {
@@ -427,23 +457,23 @@ export default function NavMap2(){
         }if(orders.length !== 0){
           checkDriverOrders()
         }
-      };
+      }
       
-      const socket = socketRef.current;
+      const socket = socketRef.current
   
-      socket.on("orderUpdatedByDriver", handleOrderAcceptedByPassenger);
+      socket.on("orderUpdatedByDriver", handleOrderAcceptedByPassenger)
   
       return () => {
-        socket.off("orderUpdatedByDriver", handleOrderAcceptedByPassenger);
-      };
+        socket.off("orderUpdatedByDriver", handleOrderAcceptedByPassenger)
+      }
     }
-  });
+  })
 
 
   // Завершение заказа
   function orderCompletion(){
     if(userData && userData.DriverMode === 1){
-      const socket = socketRef.current;
+      const socket = socketRef.current
       socket.emit("orderUpdate", orders[0].UserId)
       fetch(`/api/orders-data/accept-order?id=${orders[orderIteration].id}`,{
         method: 'PUT',
@@ -506,6 +536,50 @@ export default function NavMap2(){
   const [addressToCoordinate, setAddressToCoordinate] = useState([1.1,1.1])
   const [addressFromCoordinate, setAddressFromCoordinate] = useState([1.1,1.1])
 
+  // Начальный адрес по координатам браузера
+  const [location, setLocation] = useState();
+
+    useEffect(() => {
+        if('geolocation' in navigator) {
+            // Retrieve latitude & longitude coordinates from `navigator.geolocation` Web API
+            navigator.geolocation.getCurrentPosition(({ coords }) => {
+                const { latitude, longitude } = coords;
+                setLocation({ latitude, longitude });
+            })
+        }
+    }, []);
+    useEffect(()=>{
+      console.log("LOCATSIA:", location)
+      if(location !== undefined){
+        fetch(`https://api.geoapify.com/v1/geocode/reverse?lat=${location.latitude}&lon=${location.longitude}&format=json&apiKey=${mapApiKey}`)
+        .then(response => response.json())
+        .then(result => 
+          setAddressFrom(result.results[0].address_line1)
+        )
+        .catch(setAddressFrom(""));
+      }
+    },[location])
+    // Маркер пользователя Не готово
+    const userPositionFrom = {
+      type: 'FeatureCollection',
+      features: [
+        { type: 'Feature', 
+          geometry: {
+            type: 'Point', 
+            coordinates: location !== undefined ? [location.longitude,location.latitude] : null,
+          }
+        }
+      ]
+    }
+
+  // Быстрый доступ
+  async function getFastAddress(coords, address) {
+    setAddressToCoordinate([location.latitude,location.longitude])
+    setAddress(address)
+    setAddressFromCoordinate(coords)
+    handleNextStep()
+  }  
+
   //Построение маршрута
   async function getAddress() {
     if (addressTo !== "") {
@@ -513,27 +587,27 @@ export default function NavMap2(){
         .then(response => response.json())
         .then((result) => {
           console.log("6")
-          console.log("2324", result.results[0].lat !== addressToCoordinate[0]);
+          console.log("2324", result.results[0].lat !== addressToCoordinate[0])
           if (result.results[0].lat !== addressToCoordinate[0] || result.results[0].lon !== addressToCoordinate[1]) {
-            setAddressToCoordinate([result.results[0].lat, result.results[0].lon]);
-            console.log(`To: ${result.results[0].lat}, ${result.results[0].lon}`);
+            setAddressToCoordinate([result.results[0].lat, result.results[0].lon])
+            console.log(`To: ${result.results[0].lat}, ${result.results[0].lon}`)
           }
         })
-        .catch(error => console.log('Ошибка получения адреса', error));
+        .catch(error => console.log('Ошибка получения адреса', error))
     }
     if (addressFrom !== "") {
       await fetch(`https://api.geoapify.com/v1/geocode/search?text=${encodedAddressTo}&filter=rect:51.25456616016618,54.330347902222314,51.629709692889264,54.5140980931572&format=json&apiKey=${mapApiKey}`)
         .then(response => response.json())
         .then((result) => {
-          console.log("2323", result.results[0].lat !== addressFromCoordinate[0]);
+          console.log("2323", result.results[0].lat !== addressFromCoordinate[0])
           if (result.results[0].lat !== addressFromCoordinate[0] || result.results[0].lon !== addressFromCoordinate[1]) {
-            setAddressFromCoordinate([result.results[0].lat, result.results[0].lon]);
-            console.log(`From: ${result.results[0].lat}, ${result.results[0].lon}`);
+            setAddressFromCoordinate([result.results[0].lat, result.results[0].lon])
+            console.log(`From: ${result.results[0].lat}, ${result.results[0].lon}`)
           }
         })
-        .catch(error => console.log('Ошибка получения адреса', error));
+        .catch(error => console.log('Ошибка получения адреса', error))
     }
-    handleNextStep();
+    handleNextStep()
   }
   
   
@@ -562,7 +636,7 @@ export default function NavMap2(){
           console.log("ROUTE", routeResult)
         }
       })
-      .catch(error => console.log('Ошибка установки маршрута', error));         /* Здлесь скобки */
+      .catch(error => console.log('Ошибка установки маршрута', error))         /* Здлесь скобки */
     }if(userData.DriverMode === 0 && (addressFromCoordinate.length !== 0 || (activeOrder.length !== 0 && hasAccepted === false))){
       fetch(`https://api.geoapify.com/v1/routing?waypoints=${userData.DriverMode === 0 && activeOrder.length > 0 ? [activeOrder[0].LatFrom,activeOrder[0].LonFrom] : addressFromCoordinate}|${userData.DriverMode === 0 && activeOrder.length > 0 ? [activeOrder[0].LatTo,activeOrder[0].LonTo] : addressToCoordinate}&mode=drive&apiKey=${mapApiKey}`)
       .then(response => response.json())
@@ -580,7 +654,7 @@ export default function NavMap2(){
         }
       })
     }
-  };
+  }
   
   useEffect(()=>{
     requestOptions()
@@ -594,7 +668,7 @@ export default function NavMap2(){
               type: 'LineString',
               coordinates: coordinates[0]
             }
-          };
+          }
       }
       setGeoJSONRoute(createGeoJSON([geoRes]))
   }, [geoRes])
@@ -606,7 +680,7 @@ export default function NavMap2(){
           'line-color': '#2196F3',
           'line-width': 5,
         }
-  };
+  }
 
   // Обратное геокодирование (Отключено)
   const [deliveryAddressFrom, setDeliveryAddressFrom] = useState('')
@@ -653,19 +727,7 @@ export default function NavMap2(){
     }
   }, [activeOrder]) */
   ///////////////////////////////
-  // Маркер пользователя Не готово
-  const userPositionFrom = {
-    type: 'FeatureCollection',
-    features: [
-      { type: 'Feature', 
-        geometry: {
-          type: 'Point', 
-          coordinates: orders.length !== 0 ? (userData.DriverMode === 1 ? (orders.length >= 2 && orderIteration <= orders.length-1 ? [orders[orderIteration].LonTo,orders[orderIteration].LatTo] : [orders[0].LonTo,orders[0].LatTo]) : 
-          (userData.DriverMode === 0 && activeOrder.length > 0 ? [activeOrder[0].LatTo,activeOrder[0].LonTo] : addressToCoordinate)) : null 
-        }
-      }
-    ]
-  };
+
   /* const userPositionTo = {
     type: 'FeatureCollection',
     features: [
@@ -677,7 +739,7 @@ export default function NavMap2(){
         }
       }
     ]
-  }; */
+  } */
   const markerUserFromStyle = {
     id: 'point',
     type: 'circle',
@@ -685,7 +747,7 @@ export default function NavMap2(){
       'circle-radius': 10,
       'circle-color': '#2196F3'
     }
-  };
+  }
   /* const markerUserToStyle = {
     id: 'point',
     type: 'circle',
@@ -698,16 +760,18 @@ export default function NavMap2(){
   //Шаги оформления заказа
   const [step, setStep] = useState(0)
   function handleNextStep(){
-    setStep(step + 1);
-  };
+    setStep(step + 1)
+  }
 
   function handlePrevStep(){
-    setStep(step - 1);
-  };
+    setStep(step - 1)
+  }
 
   useEffect(()=>{
     console.log(orders)
   },[orders])
+
+
 
   const renderStepClient = () => {
     switch (step) {
@@ -723,6 +787,26 @@ export default function NavMap2(){
                 <div className='AddressInputBlockItem AddressFuckedInputBlockItem'>
                     <label className='AddressInputLabel' htmlFor="input-to"><i className="fa-solid AddressInputIco fa-shop"></i></label>
                     <input className='InputUiMap' placeholder='Куда поедете?' id='input-to' value={addressTo} onChange={(e)=>setAddress(e.target.value)}/>
+                </div>
+                <div className='AdvancedMenu'>
+                  <div className='FastAddressBlock'>
+                    <div className='FastAddressBlockItem' onClick={()=>{getFastAddress([54.423565,51.484111],"Больница")}}>
+                      <i class="fa-solid fa-hospital FastAddressBlockItemIco"></i>
+                      <div className='FastAddressBlockItemHeader'>Больница</div>
+                      <div className='FastAddressBlockItemSubHeader'>Больничная ул. 4</div>
+                    </div>
+                    <div className='FastAddressBlockItem' onClick={()=>{getFastAddress([54.431643,51.466389], "МФЦ")}}>
+                    <i class="fa-regular fa-flag FastAddressBlockItemIco"></i>
+                      <div className='FastAddressBlockItemHeader'>МФЦ</div>
+                      <div className='FastAddressBlockItemSubHeader'>Советская ул. 11</div>
+                    </div>
+                  </div>
+                  <div className='EatBlock'>
+                    <Link className='FastAddressBlockItem' href={'/delivery-meal'}>
+                      <Image src={scooterIco} alt="scooter"/>
+                      <div className='text-center'><strong>Еда</strong></div>
+                    </Link>
+                  </div>
                 </div>
                 <div className='Button' onClick={()=>{addressFrom === "" || addressTo === "" ? setTogglerPopup('popup-open') : getAddress()}}>Поиск</div>
               </div>
@@ -749,12 +833,25 @@ export default function NavMap2(){
                   </div>
                   <div className='PaymentMethod'>
                     <h4>Способ оплаты</h4>
-                    <div className='PaymentMethodItem'>
-                      <div className='PaymentMethodItemIcoWrapper'>
-                        <Image className='PaymentMethodItemIco' alt='cashIco' src={cashIco}/>
-                      </div>
-                      <div className='PaymentMethodItemText'>Наличные</div>
-                    </div>
+                    <Select value={paymentMethodValue} onValueChange={setPaymentMethodValue}>
+                      <SelectTrigger className="w-[100%] PaymentSelectedMethodItem">
+                        <SelectValue aria-label={paymentMethodValue}/>
+                      </SelectTrigger>
+                      <SelectContent style={{zIndex: 9999}}>
+                        <SelectItem className='PaymentMethodItem ' value="Наличные" defaultOpen>
+                          <div className='PaymentMethodItemIcoWrapper'>
+                            <Image className='PaymentMethodItemIco' alt='cashIco' src={cashIco}/>
+                          </div>
+                          <div className='PaymentMethodItemText'>Наличные</div>
+                        </SelectItem>
+                        <SelectItem className='PaymentMethodItem' value="Перевод">
+                          <div className='PaymentMethodItemIcoWrapper'>
+                            <i class="PaymentMethodItemIco fa-solid fa-money-bill-transfer"></i>
+                          </div>
+                          <div className='PaymentMethodItemText'>Перевод</div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className='Button' onClick={()=>{[handleNextStep(), openOrder()]}}>Подтвердить</div>
                 </div>
@@ -802,7 +899,7 @@ export default function NavMap2(){
               <div className='Payment'>
                 <div className='PaymentItem'>
                   <div className='PaymentHeader'>Способ оплаты:</div>
-                  <h4 className='PaymentInfo'>Наличные</h4>
+                  <h4 className='PaymentInfo'>{activeOrder !== undefined ? activeOrder[0].PaymentMethod : null}</h4>
                 </div>
                 <div className='PaymentItem'>
                   <div className='PaymentHeader'>Стоимость:</div>
@@ -841,7 +938,7 @@ export default function NavMap2(){
                         <div className='OrderInfoBlock'>
                           <div className='OrderInfo'>Дистанция: {orders !== undefined ? Math.round(routeDistance * 10)/10 : 0}км</div>
                           <div className='OrderInfo'>Стоимость: {orders !== undefined ? Math.round(orders[orderIteration].Price) : 0}₽</div>
-                          <div className='OrderInfo'>Способ оплаты: Наличные</div>
+                          <div className='OrderInfo'>Способ оплаты: {orders !== undefined ? orders[orderIteration].PaymentMethod : "Ошибка"}</div>
                         </div>
                       </div>
                       <Link href={`tel:${orders !== undefined ? orders[orderIteration].CustomerPhone : null}`} className='CallUser'><i className="fa-solid fa-phone"></i></Link>
@@ -888,7 +985,7 @@ export default function NavMap2(){
                   zoom: 13
               }}
               style={{width: '100vw', height: '100vh'}}
-              mapStyle={`https://maps.geoapify.com/v1/styles/osm-bright/style.json?apiKey=${mapApiKey}`}
+              mapStyle={mapInfo}
           >
               <Source id="my-data" type="geojson" data={geoJSONRoute}>
                 <Layer {...layerStyle} />
@@ -929,7 +1026,14 @@ export default function NavMap2(){
             <div className='Button PopupButton' onClick={()=>{setTogglerPopupPassengerCloseOrder('')}}>Закрыть</div>
           </div>
           <div className={`popup-background ${togglerPopupPassengerCloseOrder}`}></div>
+          {/* попап о пустом значении транспорта */}
+          <div className={`popup-background ${togglerPopupVehicleNotFound}`}></div>
+          <div className={`popup popup-input-error ${togglerPopupVehicleNotFound}`}>
+            <h3 className='popup-input-error__text'>Для продолжения, добавьте автомобиль</h3>
+            <Link className='Button PopupButton' href='/mobile/my-account'>Добавить</Link>
+          </div>
+          <div className={`popup-background ${togglerPopupPassengerCloseOrder}`}></div>
       </div>
-    );
-  };
+    )
+  }
   

@@ -35,7 +35,7 @@
                 border-bottom: 0.06rem solid rgb(223, 233, 240)
                 &.AddressFuckedInputBlockItem
                     border-bottom: none
-                    margin-bottom: 20px
+                    margin-bottom: 10px
                 .AddressInputLabel
                     width: 20%
                     .AddressInputIco
@@ -46,6 +46,46 @@
                         text-align: center
                 .InputErrorAddress
                     top: 0
+            .AdvancedMenu
+                display: flex
+                gap: 10px
+                margin-bottom: 20px
+                .EatBlock
+                    width: 50%
+                    border-radius: 10px
+                    position: relative
+                    overflow: hidden
+                    color: $text-color
+                    &::before
+                        content: ''
+                        position: absolute
+                        bottom: 0
+                        left: 0
+                        z-index: -1
+                        height: 65%
+                        width: 100%
+                        background-color: $base-color
+                .FastAddressBlock
+                    width: 50%
+                    .FastAddressBlockItem
+                        padding: 10px 0
+                        display: flex
+                        flex-direction: column
+                        align-items: center
+                        width: 100%
+                        border: 0.5px solid rgba(0, 0, 0, 0.15)
+                        border-radius: 10px
+                        &:first-child
+                            margin-bottom: 10px
+                        .FastAddressBlockItemIco
+                            font-size: 2rem
+                            color: $base-color
+                        .FastAddressBlockItemHeader
+                            font-weight: 500
+                        .FastAddressBlockItemSubHeader
+                            text-align: center
+                            color: rgb(165, 165, 165)
+                            font-size: 0.88rem
         .CarVariant
             .CarVariantBlock
                 .CarVariantBlockItem
@@ -68,7 +108,8 @@
                                 font-weight: 300
                                 line-height: 1.13rem
                 .PaymentMethod
-                    .PaymentMethodItem
+                    .PaymentSelectedMethodItem
+                        height: 100%
                         display: flex
                         align-items: center
                         box-shadow: 0rem 0.25rem 0.63rem 0rem rgba(52, 34, 242, 0.07)
@@ -76,13 +117,22 @@
                         border-radius: 1rem
                         padding: 12px 22px
                         margin-bottom: 20px
+                        span
+                            display: flex
+                            align-items: center
+                        svg
+                            color: #fff
                         .PaymentMethodItemIcoWrapper
                             display: flex
                             justify-content: center
-                            align-content: center
-                            padding: 15px 9px
+                            align-items: center
+                            width: 45px
+                            height: 45px
                             border-radius: 50%
                             background-color: #fff
+                            .PaymentMethodItemIco
+                                font-size: 23px
+                                color: $base-color
                         .PaymentMethodItemText
                             margin-left: 16px
                             color: rgb(255, 255, 255)
@@ -227,3 +277,30 @@
                 border-radius: 50%
                 background-color: $base-color
                 text-decoration: none
+
+.PaymentMethodItem
+    height: 100%
+    display: flex
+    align-items: center
+    border-radius: 10px
+    padding: 12px 22px
+    span
+        display: flex
+        align-items: center
+    .PaymentMethodItemIcoWrapper
+        display: flex
+        justify-content: center
+        align-items: center
+        width: 45px
+        height: 45px
+        border-radius: 50%
+        background-color: #fff
+        .PaymentMethodItemIco
+            font-size: 23px
+            color: $base-color
+    .PaymentMethodItemText
+        margin-left: 16px
+        font-size: 1rem
+        font-weight: 600
+        line-height: 1.5rem
+        text-align: left

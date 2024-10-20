@@ -12,12 +12,12 @@ import { useEffect } from 'react'
 
 export default function MainPage(){
     useEffect(() => {
-        const htmlElement = document.documentElement;
-        htmlElement.classList.add('black-bg');
+        const htmlElement = document.documentElement
+        htmlElement.classList.add('black-bg')
     
         return () => {
-          htmlElement.classList.remove('black-bg');
-        };
+          htmlElement.classList.remove('black-bg')
+        }
       }, [])
     return(
         <div className="MainPage">

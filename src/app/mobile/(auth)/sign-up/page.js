@@ -1,9 +1,9 @@
 'use client'
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"
 import './style.sass'
-import emailjs from '@emailjs/browser';
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import emailjs from '@emailjs/browser'
+import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 
 
@@ -13,12 +13,12 @@ export default function SignInPage(){
     const [togglerPopup, setTogglerPopup] = useState('')
     const [togglerConfirmEmailPopup, setTogglerConfirmEmailPopup] = useState('')
     function handleNextStep(){
-        setStep(step + 1);
-    };
+        setStep(step + 1)
+    }
 
     const handlePrevStep = () => {
-        setStep(step - 1);
-    };
+        setStep(step - 1)
+    }
 
     const [inputName, setInputName] = useState('')
     const [inputEmail, setInputEmail] = useState('')
@@ -51,16 +51,16 @@ export default function SignInPage(){
 
     // Регистрация
     async function handleSubmit() {
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let sessionId = '';
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+        let sessionId = ''
         for (let i = 0; i < 39; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        sessionId += characters[randomIndex];
+        const randomIndex = Math.floor(Math.random() * characters.length)
+        sessionId += characters[randomIndex]
         }
         console.log(sessionId)
         setCookie('UserData', JSON.stringify({
                 session_key: sessionId
-            }), 30);
+            }), 30)
         await fetch('/api/account-data/sign-up', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -78,9 +78,9 @@ export default function SignInPage(){
         let expires = ""
         let date = new Date()
         date.setTime(date.getTime() + (7 * 24 * 60 * 60 * 1000))
-        expires = "; expires=" + date.toUTCString()
+        expires = " expires=" + date.toUTCString()
     
-        document.cookie = name + "=" + decodeURIComponent(value) + expires + "; path=/"
+        document.cookie = name + "=" + decodeURIComponent(value) + expires + " path=/"
     }
 
     // Отправка кода на Email
@@ -95,10 +95,10 @@ export default function SignInPage(){
             'email-to': `${inputEmail}`
         }, "L1XK15ZnEN_oq838c")
         .then((result) => {
-            console.log(result);
+            console.log(result)
         }, (error) => {
-            console.log(error);
-        });
+            console.log(error)
+        })
     }
 
 

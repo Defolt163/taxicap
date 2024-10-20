@@ -37,10 +37,7 @@ export default function BurgerMenu(){
     const [userName, setUserName] = useState('')
     const [userData, setUserData] = useState([])
     function getUsersEmail(){
-        if(localStorage.getItem('accountData')){
-            setUserData(JSON.parse(localStorage.getItem('accountData')))
-            setUserName(JSON.parse(localStorage.getItem('accountData')).UserName.split(' ')[0])
-        }else if(sessionKey !== ''){
+        if(sessionKey !== ''){
             fetch(`/api/account-data/user-data?sessionId=${sessionKey}`,{
                 method: 'GET'
             }).then((result)=>{

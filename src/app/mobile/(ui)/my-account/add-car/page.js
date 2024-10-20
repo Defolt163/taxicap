@@ -8,7 +8,7 @@ export default function AddCarPage(){
     // Получение sessionId из кук
     const [sessionKey, setSessionKey] = useState('')
     useEffect(()=>{
-        const cookieValue = Cookies.get('UserData'); // Замените cookieName на имя необходимой вам cookie
+        const cookieValue = Cookies.get('UserData') // Замените cookieName на имя необходимой вам cookie
         const userData = JSON.parse(cookieValue)
         setSessionKey(userData.session_key)
     }, [])
@@ -35,23 +35,33 @@ export default function AddCarPage(){
     const [vehicleId, setVehicleId] = useState("")
     const [togglerPopupChangeSuccess, setTogglerPopupChangeSuccess] = useState('')
     const [togglerPopupChangeError, setTogglerPopupChangeError] = useState('')
+    const [togglerPopupInputError, setTogglerPopupInputError] = useState('')
 
     function changeCar(){
-        fetch(`/api/account-data/change-car?sessionId=${sessionKey}`,{
-            method: "PUT",
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                "VehicleBrand": vehicleBrand,
-                "VehicleModel": vehicleModel,
-                "VehicleColor": vehicleColor,
-                "VehicleNumber": vehicleId
+        const allFieldsValid = ([vehicleBrand, vehicleModel, vehicleColor, vehicleId]
+            .every(field => field !== '' && field !== null))
+        const allFieldDatabase =([userData.VehicleBrand, userData.VehicleModel, userData.VehicleColor, userData.VehicleId]
+            .every(field => field !== '' && field !== null)
+        )
+        if(allFieldsValid || allFieldDatabase){
+            fetch(`/api/account-data/change-car?sessionId=${sessionKey}`,{
+                method: "PUT",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    "VehicleBrand": vehicleBrand,
+                    "VehicleModel": vehicleModel,
+                    "VehicleColor": vehicleColor,
+                    "VehicleNumber": vehicleId
+                })
+            }).then(()=>{
+                setTogglerPopupChangeSuccess('popup-open')
             })
-        }).then(()=>{
-            setTogglerPopupChangeSuccess('popup-open')
-        })
-        .catch(() => {
-            setTogglerPopupChangeError('popup-open')
-        })
+            .catch(() => {
+                setTogglerPopupChangeError('popup-open')
+            })
+        }else{
+            setTogglerPopupInputError('popup-open')
+        }
     }
 
     return(
@@ -92,15 +102,15 @@ export default function AddCarPage(){
                                     value={vehicleColor}
                                     onChange={(e) => setVehicleColor(e.target.value)}
                                 >
-                                    <option value="Black">Черный</option>
-                                    <option value="Gray">Серый</option>
-                                    <option value="Silver">Серебряный</option>
-                                    <option value="White">Белый</option>
-                                    <option value="Green">Зеленый</option>
-                                    <option value="Blue">Синий</option>
-                                    <option value="Red">Красный</option>
-                                    <option value="Brown">Коричневый</option>
-                                    <option value="Yellow">Желтый</option>
+                                    <option value="Черный">Черный</option>
+                                    <option value="Серый">Серый</option>
+                                    <option value="Серебряный">Серебряный</option>
+                                    <option value="Белый">Белый</option>
+                                    <option value="Зеленый">Зеленый</option>
+                                    <option value="Синий">Синий</option>
+                                    <option value="Красный">Красный</option>
+                                    <option value="Коричневый">Коричневый</option>
+                                    <option value="Желтый">Желтый</option>
                                 </select>
                             </div>
                             <div className='GetStartedFormItem VehicleParams'>
@@ -133,6 +143,13 @@ export default function AddCarPage(){
                 <div className='Button PopupButton' onClick={()=>{setTogglerPopupChangeError('')}}>Закрыть</div>
             </div>
             <div className={`popup-background ${togglerPopupChangeError}`}></div>
+            {/* Попап пустых инпутов */}
+            <div className={`popup-background ${togglerPopupInputError}`}></div>
+            <div className={`popup popup-input-error ${togglerPopupInputError}`}>
+                <h3 className='popup-input-error__text'>Проверьте правильность данных</h3>
+                <div className='Button PopupButton' onClick={()=>{setTogglerPopupInputError('')}}>Закрыть</div>
+            </div>
+            <div className={`popup-background ${togglerPopupInputError}`}></div>
         </>
     )
 }

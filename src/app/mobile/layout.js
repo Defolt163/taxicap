@@ -1,9 +1,9 @@
 'use client'
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation'
 import '../global.sass'
-import Script from 'next/script';
-import { useEffect, useState } from 'react';
-import { Helmet } from "react-helmet";
+import Script from 'next/script'
+import { useEffect, useState } from 'react'
+import { Helmet } from "react-helmet"
 import Cookies from 'js-cookie'
 import manifest from '/public/manifest.json'
 
@@ -12,15 +12,15 @@ export default function AppLayout({ children }) {
   /* useEffect(()=>{
     window.addEventListener('touchmove', function(event) {
       if (event.scale !== 1) {
-        event.preventDefault();
+        event.preventDefault()
       }
-    }, { passive: false });
+    }, { passive: false })
   },[]) */
  
   const router = useRouter()
 
   /* useEffect(() => {
-    const platform = navigator.platform;
+    const platform = navigator.platform
     if(['Android', 'iPhone', 'iOS', 'iPad', 'iPod', 'BlackBerry'].includes(platform)){
       console.log('Mobile!')
     }else{
@@ -32,32 +32,32 @@ export default function AppLayout({ children }) {
     let expires = ""
     let date = new Date()
     date.setTime(date.getTime() + (7 * 24 * 60 * 60 * 1000))
-    expires = "; expires=" + date.toUTCString()
+    expires = " expires=" + date.toUTCString()
 
-    document.cookie = name + "=" + decodeURIComponent(value) + expires + "; path=/"
+    document.cookie = name + "=" + decodeURIComponent(value) + expires + " path=/"
     localStorage.setItem('accountSessionId', value)
 }
   // Получение sessionId из кук
   const [sessionKey, setSessionKey] = useState('')
   function myHandler() {
     if(sessionKey === ''){
-      const cookieValue = Cookies.get('UserData');
+      const cookieValue = Cookies.get('UserData')
       if (cookieValue) {
           try {
-              const userData = JSON.parse(cookieValue);
-              setSessionKey(userData.session_key);
+              const userData = JSON.parse(cookieValue)
+              setSessionKey(userData.session_key)
           } catch (error) {
-              console.error("Ошибка при парсинге данных пользователя из cookie:", error);
+              console.error("Ошибка при парсинге данных пользователя из cookie:", error)
           }
       }if(!cookieValue){
         try {
-          const userData = JSON.parse(localStorage.getItem('accountSessionId'));
+          const userData = JSON.parse(localStorage.getItem('accountSessionId'))
           setCookie('UserData', JSON.stringify({
             session_key: userData.session_key
-        }), 30)
-          setSessionKey(userData.session_key);
+        }))
+          setSessionKey(userData.session_key)
         } catch (error) {
-            console.error("Ошибка при парсинге данных пользователя из localstorage:", error);
+            console.error("Ошибка при парсинге данных пользователя из localstorage:", error)
         }
       }
     }
@@ -74,9 +74,10 @@ export default function AppLayout({ children }) {
           return result.json()
       }).then((res)=>{
         if(res.length !== 0){
-            if(res[0].UserPhone === 0){
+          console.log("MYYYY DATTATA",res[0])
+            if(res[0].UserPhone === null){
               router.push('/mobile/set-account')
-            }if(res[0].UserPhone !== 0){
+            }else if(res[0].UserPhone !== null){
               router.push('/mobile/general')
               localStorage.setItem('accountData', JSON.stringify(res[0]))
             }
@@ -96,9 +97,9 @@ export default function AppLayout({ children }) {
 
   useEffect(() => {
       setTimeout(() => {
-        window.scrollTo(0, 1);
-      }, 0);
-  }, []);
+        window.scrollTo(0, 1)
+      }, 0)
+  }, [])
 
 
   return (
@@ -111,5 +112,5 @@ export default function AppLayout({ children }) {
         </body>
         <Script src="https://kit.fontawesome.com/073ad96d9b.js" crossorigin="anonymous"></Script>
       </html>
-  );
+  )
 }

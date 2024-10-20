@@ -1,9 +1,9 @@
 'use client'
-import Image from 'next/image';
+import Image from 'next/image'
 import './style.sass'
-import Link from "next/link";
+import Link from "next/link"
 import logo from '/public/logo/swift-logo.svg'
-import { useState } from 'react';
+import { useState } from 'react'
 import driverImg from '/public/image/startpage/driver.png'
 import driver2Img from '/public/image/startpage/driver2.png'
 import passengerImg from '/public/image/startpage/passenger.png'
@@ -93,10 +93,10 @@ export default function Home() {
     <div className="welcome-app">
       <div className='stat-bar'><style jsx>{`
         .stat-bar::before {
-          width: ${step === 0 ? '25%;' : step === 1 ? '50%;' : step === 2 ? '75%;' : '100%;'}
+          width: ${step === 0 ? '25%' : step === 1 ? '50%' : step === 2 ? '75%' : '100%'}
         }
         .stat-bar{
-          display: ${step === 4 ? 'none;' : 'block;'}
+          display: ${step === 4 ? 'none' : 'block'}
         }
       `}</style></div>
         {renderStepContent()}

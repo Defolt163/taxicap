@@ -1,16 +1,16 @@
 'use client'
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react'
 import PagesHeader from '../../../components/PagesHeader/PagesHeader'
 import './style.sass'
 import Cookies from 'js-cookie'
-import Image from 'next/image';
+import Image from 'next/image'
 import cameraIco from '/public/ico/camera.svg'
-import emailjs from '@emailjs/browser';
+import emailjs from '@emailjs/browser'
 export default function EditAccountPage(){
     // Получение sessionId из кук
     const [sessionKey, setSessionKey] = useState('')
     function myHandler() {
-        const cookieValue = Cookies.get('UserData'); // Замените cookieName на имя необходимой вам cookie
+        const cookieValue = Cookies.get('UserData') // Замените cookieName на имя необходимой вам cookie
         const userData = JSON.parse(cookieValue)
         setSessionKey(userData.session_key)
       }
@@ -20,7 +20,7 @@ export default function EditAccountPage(){
 
     //Получение и сверка всех UserEmail
     const [userData, setUserData] = useState([])
-    const [userName, setUserName] = useState('')
+    const [userPhone, setUserPhone] = useState('')
     function getUsersEmail(){
         if(sessionKey !== ''){
             fetch(`/api/account-data/user-data?sessionId=${sessionKey}`,{
@@ -29,9 +29,9 @@ export default function EditAccountPage(){
                 console.log("OKAY")
                 return result.json()
             }).then((res)=>{
-                setUserName(res[0].UserName.split(' ')[0])
                 if(userData.length <= 0){
                     setUserData(res[0])
+                    setUserPhone(res[0].UserPhone)
                 }
             })
             .catch(error =>{
@@ -46,20 +46,20 @@ export default function EditAccountPage(){
         console.log(userData)
     }, [userData])
     // Загрузка фото профиля
-    const [selectedFile, setSelectedFile] = useState(null);
+    const [selectedFile, setSelectedFile] = useState(null)
 
     const handleFileChange = (event) => {
-        setSelectedFile(event.target.files[0]);
-    };
+        setSelectedFile(event.target.files[0])
+    }
 
     const handleUpload = async () => {
         if (!selectedFile) {
-            alert("Выберите файл для загрузки");
-            return;
+            alert("Выберите файл для загрузки")
+            return
         }
 
-        const formData = new FormData();
-        formData.append("file", selectedFile);
+        const formData = new FormData()
+        formData.append("file", selectedFile)
         formData.append("userData", JSON.stringify(userData.UserId))
 
         try {
@@ -73,15 +73,15 @@ export default function EditAccountPage(){
         getUsersEmail()
         window.location.reload()
         } catch (error) {
-        console.error("Ошибка при загрузке файла:", error);
+        console.error("Ошибка при загрузке файла:", error)
         }
-    };
+    }
 
-    const inputFileRef = useRef(null);
+    const inputFileRef = useRef(null)
     const handleEditPhotoClick = () => {
         // Программное нажатие на кнопку выбора файла
-        inputFileRef.current.click();
-    };
+        inputFileRef.current.click()
+    }
 
     // Изменение данных
     const [editName, setEditName] = useState('')
@@ -96,7 +96,7 @@ export default function EditAccountPage(){
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 "UserName": editName, 
-                "UserPhone": editPhone, 
+                "UserPhone": "8"+editPhone,
                 "UserEmail": editEmail
             })
         })
@@ -114,6 +114,7 @@ export default function EditAccountPage(){
     const [errorConfirmEmail, setErrorConfirmEmail] = useState('')
     const [togglerSendEmail, setTogglerSendEmail] = useState('') // Открытие popup С кодом
     const [togglerPopupInvalidEmail, setTogglerPopupInvalidEmail] = useState('')
+    const [togglerPhoneNumberErrorPopup, setTogglerPhoneNumberErrorPopup] = useState('')
 
     useEffect(()=>{
         setEmailCode(Math.floor(1000 + Math.random() * 9000))
@@ -125,10 +126,10 @@ export default function EditAccountPage(){
             'email-to': `${editEmail}`
         }, "L1XK15ZnEN_oq838c")
         .then((result) => {
-            console.log(result);
+            console.log(result)
         }, (error) => {
-            console.log(error);
-        });
+            console.log(error)
+        })
     }
 
     return(
@@ -148,13 +149,23 @@ export default function EditAccountPage(){
                             </div>
                             {selectedFile && (<button className={`Button upload-btn`} onClick={handleUpload}>Загрузить</button>)}
                             <input className='input-field' placeholder={userData.UserName} value={editName} onChange={(e)=>{setEditName(e.target.value)}}/>
-                            <input className='input-field' placeholder={userData.UserPhone} value={editPhone} onChange={(e)=>{setEditPhone(e.target.value)}}/>
+                            <div className='input-field_phone'>
+                                <input className='input-field_phone__mask' placeholder={userPhone.toString().substring(1)} value={editPhone} 
+                                    onChange={(e)=>{let inputValue = e.target.value
+                                    if ( inputValue.startsWith("8") ||
+                                        inputValue.startsWith("7") ||
+                                        inputValue.startsWith("+")
+                                        ){
+                                        inputValue = inputValue.substring(1)
+                                    }
+                                    setEditPhone(inputValue)}}/>
+                            </div>
                             <input className='input-field' placeholder={userData.UserEmail} value={editEmail} onChange={(e)=>{setEditEmail(e.target.value)}}/>
                         </div>
                         <div className='Button' onClick={()=>{
                             editEmail !== '' ? 
-                            (editEmail === userData.UserEmail ? setTogglerPopupInvalidEmail('popup-open') : sendEmail()) 
-                            : editInfoProfile()}}>Сохранить</div>
+                            (editEmail === userData.UserEmail ? setTogglerPopupInvalidEmail('popup-open') : sendEmail()) :
+                            editPhone.length < 10 ? setTogglerPhoneNumberErrorPopup('popup-open') : editInfoProfile()}}>Сохранить</div>
                     </div>
                 </div>
             </div>
@@ -170,6 +181,13 @@ export default function EditAccountPage(){
                 <div className={`popup popup-input-error ${togglerChangingPopup}`}>
                     <h3 className='popup-input-error__text'>Данные изменены!</h3>
                     <div className='Button PopupButton' onClick={()=>{setTogglerChangingPopup('')}}>Закрыть</div>
+                </div>
+            </>
+            <>
+                <div className={`popup-background ${togglerPhoneNumberErrorPopup}`}></div>
+                <div className={`popup popup-input-error ${togglerPhoneNumberErrorPopup}`}>
+                    <h3 className='popup-input-error__text'>Проверьте правильность введенного номера</h3>
+                    <div className='Button PopupButton' onClick={()=>{setTogglerPhoneNumberErrorPopup('')}}>Закрыть</div>
                 </div>
             </>
             <>

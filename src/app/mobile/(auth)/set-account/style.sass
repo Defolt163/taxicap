@@ -6,8 +6,18 @@
     .GetStartedPageBlock
         margin-bottom: 2rem
         .GetStartedForm
+            position: relative
             display: flex
             flex-direction: column
+            &.GetStartedForm-phone
+                &::after
+                    content: '+7'
+                    top: 50%
+                    left: 30px
+                    transform: translateY(-50%)
+                    position: absolute
+            .GetStartedForm-phone_input
+                padding-left: 55px
             .GetStartedFormItem
                 margin-bottom: 1rem
                 width: max-content

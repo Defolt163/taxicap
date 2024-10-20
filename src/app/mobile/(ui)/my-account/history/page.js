@@ -10,17 +10,17 @@ export default function MyAccountPage(){
     // Получение sessionId из кук
     const [sessionKey, setSessionKey] = useState(null)
     useEffect(()=>{
-            const cookieValue = Cookies.get('UserData');
+            const cookieValue = Cookies.get('UserData')
             if (cookieValue) {
                 try {
-                    const userData = JSON.parse(cookieValue);
+                    const userData = JSON.parse(cookieValue)
                     const sessionKey = userData.session_key.trim()
                     if(sessionKey){
-                        setSessionKey(userData.session_key);
+                        setSessionKey(userData.session_key)
                         console.log("dsaghaskh")
                     }
                 } catch (error) {
-                    console.error("Ошибка при парсинге данных пользователя из cookie:", error);
+                    console.error("Ошибка при парсинге данных пользователя из cookie:", error)
                 }
             }
     }, [])
@@ -93,17 +93,17 @@ export default function MyAccountPage(){
                     </div>
                     <div className='history-block'>
                         {userOrders.map((OrderItem) =>{
-                            const orderDate = new Date(OrderItem.Date);
+                            const orderDate = new Date(OrderItem.Date)
     
                             // Используем методы объекта Date для получения компонентов даты и времени
-                            const year = orderDate.getFullYear();
-                            const month = String(orderDate.getMonth() + 1).padStart(2, '0'); // добавляем нули к месяцу, если нужно
-                            const day = String(orderDate.getDate()).padStart(2, '0'); // добавляем нули к дню, если нужно
-                            const hours = String(orderDate.getHours()).padStart(2, '0'); // добавляем нули к часам, если нужно
-                            const minutes = String(orderDate.getMinutes()).padStart(2, '0'); // добавляем нули к минутам, если нужно
+                            const year = orderDate.getFullYear()
+                            const month = String(orderDate.getMonth() + 1).padStart(2, '0') // добавляем нули к месяцу, если нужно
+                            const day = String(orderDate.getDate()).padStart(2, '0') // добавляем нули к дню, если нужно
+                            const hours = String(orderDate.getHours()).padStart(2, '0') // добавляем нули к часам, если нужно
+                            const minutes = String(orderDate.getMinutes()).padStart(2, '0') // добавляем нули к минутам, если нужно
 
                             // Формируем строку в нужном формате
-                            const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
+                            const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`
                             if(togglerType !== 'driver'){
                                 return(
                                     <div key={OrderItem.id} className='history-card'>

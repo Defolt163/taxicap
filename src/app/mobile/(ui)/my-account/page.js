@@ -11,7 +11,7 @@ export default function MyAccountPage(){
     const [sessionKey, setSessionKey] = useState('')
     function myHandler() {
         if(sessionKey === ''){
-            const cookieValue = Cookies.get('UserData'); // Замените cookieName на имя необходимой вам cookie
+            const cookieValue = Cookies.get('UserData') // Замените cookieName на имя необходимой вам cookie
             const userData = JSON.parse(cookieValue)
             setSessionKey(userData.session_key)
         }
@@ -23,6 +23,7 @@ export default function MyAccountPage(){
     //Получение и сверка всех UserEmail
     const [userData, setUserData] = useState([])
     const [userName, setUserName] = useState('')
+    const [userPhone, setUserPhone] = useState('')
     const [togglerPopupLoadingData, setTogglerPopupLoadingData] = useState('popup-open')
     function getUsersEmail(){
         if(sessionKey !== '' && userData.length === 0){
@@ -34,8 +35,9 @@ export default function MyAccountPage(){
             }).then((res)=>{
                 setUserName(res[0].UserName.split(' ')[0])
                 setUserData(res[0])
+                setUserPhone(res[0].UserPhone)
                 setTogglerPopupLoadingData('')
-                setDriverMode(res[0].DriverMode);
+                setDriverMode(res[0].DriverMode)
             })
             .catch(error =>{
                 console.log(error)
@@ -77,10 +79,10 @@ export default function MyAccountPage(){
                 method: "PUT",
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    "VehicleBrand": "",
-                    "VehicleModel": "",
-                    "VehicleColor": "",
-                    "VehicleNumber": ""
+                    "VehicleBrand": null,
+                    "VehicleModel": null,
+                    "VehicleColor": null,
+                    "VehicleNumber": null
                 })
             }).then(()=>{
                 setTogglerPopupDeleteCar('')
@@ -102,7 +104,7 @@ export default function MyAccountPage(){
                         <div className='AccountCardData'>
                             <div className='AccountCardDataFirst'>{userName}</div>
                             <div className='AccountCardDataSecond'>{userData.UserEmail}</div>
-                            <div className='AccountCardDataThird'><i class="fa-solid fa-phone"></i> +7 {userData.UserPhone}</div>
+                            <div className='AccountCardDataThird'><i class="fa-solid fa-phone"></i> +7 {userPhone.toString().substring(1)}</div>
                         </div>
                         <Link href='/mobile/my-account/account-edit' className='AccountCardEdit'>
                             <i class="fa-solid fa-pencil"></i>
@@ -129,7 +131,7 @@ export default function MyAccountPage(){
                         </div>
                     </label>
                 </div>
-                {driverMode !== 0 && userData.VehicleBrand !== ""? 
+                {driverMode !== 0 && userData.VehicleBrand !== null? 
                     <>
                         <div className="PageHeader">
                         <h2>Моя машина</h2>
@@ -150,13 +152,13 @@ export default function MyAccountPage(){
                                 </div>
                             </div>
                         </div>
-                    </> : driverMode !== 0 && userData.VehicleBrand === "" ?
+                    </> : driverMode !== 0 && userData.VehicleBrand === null ?
                     <>
                         <div className="PageHeader">
                             <h2>Моя машина</h2>
                         </div>
                         <div className='MyAccountPageAccount'>
-                            <Link href='/my-account/add-car' className='AccountCard'>
+                            <Link href='/mobile/my-account/add-car' className='AccountCard'>
                                 Добавить авто
                             </Link>
                         </div>

@@ -1,7 +1,8 @@
 'use client'
-import Script from 'next/script';
+import Script from 'next/script'
 import './global.sass'
-import { Helmet } from "react-helmet";
+import './global.css'
+import { Helmet } from "react-helmet"
 
 
 export default function RootLayout({ children }) {
@@ -20,5 +21,5 @@ export default function RootLayout({ children }) {
         </body>
         <Script src="https://kit.fontawesome.com/073ad96d9b.js" crossorigin="anonymous"></Script>
       </html>
-  );
+  )
 }

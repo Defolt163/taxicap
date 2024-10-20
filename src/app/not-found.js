@@ -1,18 +1,18 @@
 'use client'
-import { useEffect } from 'react';
+import { useEffect } from 'react'
 import './not-found-style.sass'
-import Link from 'next/link';
+import Link from 'next/link'
 import HeaderPageComponent from './components/Header/Header'
 import FooterPageComponent from './components/Footer/Footer'
  
 export default function NotFound() {
     useEffect(() => {
-        const htmlElement = document.documentElement;
-        htmlElement.classList.add('black-bg');
+        const htmlElement = document.documentElement
+        htmlElement.classList.add('black-bg')
     
         return () => {
-          htmlElement.classList.remove('black-bg');
-        };
+          htmlElement.classList.remove('black-bg')
+        }
     }, [])
   return (
     <>

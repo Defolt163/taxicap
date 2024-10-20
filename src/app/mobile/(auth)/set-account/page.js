@@ -1,8 +1,8 @@
 'use client'
 import Image from 'next/image'
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react'
 import './style.sass'
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie'
 
 export default function SetAccount(){
@@ -16,10 +16,14 @@ export default function SetAccount(){
     const [vehicleId, setVehicleId] = useState("")
     const [insertNumber, setInsertNumber] = useState("")
 
+    useEffect(()=>{
+        console.log("Color:", vehicleColor)
+    }, [vehicleColor])
+
     // Получение sessionId из кук
     const [sessionKey, setSessionKey] = useState('')
     async function myHandler() {
-        const cookieValue = Cookies.get('UserData'); // Замените cookieName на имя необходимой вам cookie
+        const cookieValue = Cookies.get('UserData') // Замените cookieName на имя необходимой вам cookie
         const userData = JSON.parse(cookieValue)
         setSessionKey(userData.session_key)
       }
@@ -51,12 +55,12 @@ export default function SetAccount(){
     }
 
     function handleNextStep(){
-        setStep(step + 1);
-    };
+        setStep(step + 1)
+    }
 
     const handlePrevStep = () => {
-        setStep(step - 1);
-    };
+        setStep(step - 1)
+    }
 
     const renderStepContent = () => {
         switch (step) {
@@ -101,19 +105,26 @@ export default function SetAccount(){
                 Продолжить
                 </div>
             </>
-            );
+            )
         case 2:
             return (
             <>
                 <div className="GetStartedPageBlock">
                     <h1 className="GetStartedPageHeader">Ваш номер телефона</h1>
                     <h3>Это позволит {accountType !== 1 ? 'водителю' : 'пассажиру'}, в случае необходимости, связаться с вами</h3>
-                    <form className="GetStartedForm" id="tel">
+                    <form className="GetStartedForm GetStartedForm-phone" id="tel">
                         <input
+                        className='GetStartedForm-phone_input'
                         type="number"
                         required
                         value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        onChange={(e) =>{let inputValue = e.target.value
+                            if (inputValue.startsWith("8") || inputValue.startsWith("7") || inputValue.startsWith("+")) {
+                                inputValue = inputValue.substring(1)
+                            }
+                            inputValue = inputValue.replace(/\D/g, "")
+                            setPhoneNumber(inputValue)
+                        }}
                         onClick={()=>{setInsertNumber("")}}
                         />
                         <div className='InputError'>{insertNumber}</div>
@@ -123,12 +134,12 @@ export default function SetAccount(){
                     <div onClick={handlePrevStep} className="Button GetStartedBtn">
                     Назад
                     </div>
-                    <div onClick={()=>{phoneNumber === '' ? setInsertNumber("Введите номер телефона") : accountType === 1 ? handleNextStep() : updateSessionId()}} className="Button GetStartedBtn">
+                    <div onClick={()=>{phoneNumber.length < 10 ? setInsertNumber("Введите номер телефона") : accountType === 1 ? handleNextStep() : updateSessionId()}} className="Button GetStartedBtn">
                     Продолжить
                     </div>
                 </div>
             </>
-            );
+            )
         case 3:
             return (
             <>
@@ -165,15 +176,15 @@ export default function SetAccount(){
                                 value={vehicleColor}
                                 onChange={(e) => setVehicleColor(e.target.value)}
                             >
-                                <option value="Black">Черный</option>
-                                <option value="Gray">Серый</option>
-                                <option value="Silver">Серебряный</option>
-                                <option value="White">Белый</option>
-                                <option value="Green">Зеленый</option>
-                                <option value="Blue">Синий</option>
-                                <option value="Red">Красный</option>
-                                <option value="Brown">Коричневый</option>
-                                <option value="Yellow">Желтый</option>
+                                <option value="Черный">Черный</option>
+                                <option value="Серый">Серый</option>
+                                <option value="Серебристый">Серебристый</option>
+                                <option value="Белый">Белый</option>
+                                <option value="Зеленый">Зеленый</option>
+                                <option value="Синий">Синий</option>
+                                <option value="Красный">Красный</option>
+                                <option value="Коричневый">Коричневый</option>
+                                <option value="Желтый">Желтый</option>
                             </select>
                         </div>
                         <div className='GetStartedFormItem VehicleParams'>
@@ -197,7 +208,7 @@ export default function SetAccount(){
                     </button>
                 </div>
             </>
-        );
+        )
     }}
 
     return(

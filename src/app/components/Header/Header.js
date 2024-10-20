@@ -14,6 +14,7 @@ export default function HeaderPageComponent(props){
                 <ul className={`header_link_block ${togglerSidebar}`}>
                     <li className="header_link__wrapper"><Link href={props.FirstLink} className="header_link">{props.FirstLabel}</Link></li>
                     <li className="header_link__wrapper"><Link href='/privacy-policy' className="header_link">Условия использования</Link></li>
+                    <li className="header_link__wrapper"><Link href='/delivery-meal' className="header_link">Доставка еды</Link></li>
                     <li className="header_link__wrapper"><Link href='/mobile' className="header_link">Приложение</Link></li>
                     <div className="devices-btn" onClick={()=>{togglerSidebar === '' ? setTogglerSidebar('sidebar-open') : setTogglerSidebar('')}}></div>
                 </ul>
