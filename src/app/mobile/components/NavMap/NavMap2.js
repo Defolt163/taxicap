@@ -574,10 +574,19 @@ export default function NavMap2(){
 
   // Быстрый доступ
   async function getFastAddress(coords, address) {
-    setAddressToCoordinate([location.latitude,location.longitude])
-    setAddress(address)
-    setAddressFromCoordinate(coords)
-    handleNextStep()
+    if(
+      location.latitude > 51.25456616016618 || 
+      location.longitude > 54.330347902222314 ||
+      location.latitude > 51.629709692889264 || 
+      location.longitude > 54.5140980931572
+    ){
+      alert("Извините, Но мы пока не можем подать машину так далеко :(")
+    }else{
+      setAddressToCoordinate(coords)
+      setAddress(address)
+      setAddressFromCoordinate([location.latitude,location.longitude])
+      handleNextStep()
+    }
   }  
 
   //Построение маршрута
@@ -589,8 +598,21 @@ export default function NavMap2(){
           console.log("6")
           console.log("2324", result.results[0].lat !== addressToCoordinate[0])
           if (result.results[0].lat !== addressToCoordinate[0] || result.results[0].lon !== addressToCoordinate[1]) {
-            setAddressToCoordinate([result.results[0].lat, result.results[0].lon])
-            console.log(`To: ${result.results[0].lat}, ${result.results[0].lon}`)
+            console.log(`ADRESS To: ${result.results[0].lat}, ${result.results[0].lon}`)
+            if(
+              (result.results[0].lat > 51.25456616016618 || 
+              result.results[0].lon > 54.330347902222314 ||
+              result.results[0].lat > 51.629709692889264 || 
+              result.results[0].lon > 54.5140980931572) ||
+              (location.latitude > 51.25456616016618 ||
+                location.longitude > 54.330347902222314 ||
+                location.latitude > 51.629709692889264 || 
+                location.longitude > 54.5140980931572)
+            ){
+              alert(`Мы пока не можем подать машину так далеко :(`)
+            }else{
+              setAddressFromCoordinate([result.results[0].lat, result.results[0].lon])
+            }
           }
         })
         .catch(error => console.log('Ошибка получения адреса', error))
@@ -601,8 +623,21 @@ export default function NavMap2(){
         .then((result) => {
           console.log("2323", result.results[0].lat !== addressFromCoordinate[0])
           if (result.results[0].lat !== addressFromCoordinate[0] || result.results[0].lon !== addressFromCoordinate[1]) {
-            setAddressFromCoordinate([result.results[0].lat, result.results[0].lon])
-            console.log(`From: ${result.results[0].lat}, ${result.results[0].lon}`)
+            if((result.results[0].lat > 51.25456616016618 || 
+              result.results[0].lon > 54.330347902222314 ||
+              result.results[0].lat > 51.629709692889264 || 
+              result.results[0].lon > 54.5140980931572) ||
+              (location.latitude > 51.25456616016618 || 
+              location.longitude > 54.330347902222314 ||
+              location.latitude > 51.629709692889264 || 
+              location.longitude > 54.5140980931572)
+            ){
+              alert("Мы пока не можем отправить машину так далеко :(", (result.results[0].lat*result.results[0].lon))
+            }else{
+              setAddressToCoordinate([result.results[0].lat, result.results[0].lon])
+            }
+            
+            console.log(`ADRESS From: ${result.results[0].lat}, ${result.results[0].lon}`)
           }
         })
         .catch(error => console.log('Ошибка получения адреса', error))

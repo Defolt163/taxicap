@@ -2,12 +2,13 @@
 .welcome-app
     .stat-bar
         position: absolute
+        z-index: 1
         top: 10px
         left: 5%
         width: 90%
-        height: 6px
+        height: 9px
         border-radius: 10px
-        border: solid 1px rgb(82, 82, 82)
+        border: solid 0.4px rgb(82, 82, 82)
         overflow: hidden
         &::before
             position: absolute
@@ -18,14 +19,11 @@
             width: 0
             background-color: $base-color
             transition: width .5s
-.WelcomePage
-    .HaveAccount
-        cursor: pointer
-        font-size: 1rem
-        color: $base-color-text
-        span
-            color: $base-color
     .StartButtonBlock
+        position: absolute
+        top: 50%
+        left: 50%
+        transform: translate(-50%, -50%)
         width: 100%
         height: 100%   
         .BtnStart
@@ -37,11 +35,15 @@
             text-decoration: none
 .reels-style
     height: 100vh
+    padding-top: 30px
     overflow-x: hidden
     position: relative
     .reels-style-text
+        color: #dedede
+        text-shadow: 0px 0px 9px #382525
         h1
             font-weight: 300
+            font-size: 26px
             text-align: center
             line-height: 48px
             letter-spacing: 0%
@@ -50,9 +52,10 @@
             text-align: center
             line-height: 30px
             letter-spacing: 0%
-            color: rgb(82, 82, 82)
+            color: #d8b2b2
             a
-                color: blue
+                color: #c1c1ff
+                text-decoration: underline
     .reels-other
         position: absolute
         bottom: 10px
@@ -62,3 +65,14 @@
             margin-bottom: 10px
             width: 100%
             height: auto
+
+.container-settings-page
+    position: relative
+    &::before
+        content: ''
+        position: absolute
+        top: 0
+        left: 0
+        width: 100%
+        height: 100%
+        background-color: rgba(0, 0, 0, .54)

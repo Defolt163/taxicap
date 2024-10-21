@@ -4,6 +4,11 @@ import './style.sass'
 import emailjs from '@emailjs/browser'
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import {
+    InputOTP,
+    InputOTPGroup,
+    InputOTPSlot,
+  } from "@/components/ui/input-otp"
 
 
 
@@ -101,6 +106,9 @@ export default function SignInPage(){
         })
     }
 
+    useEffect(()=>{
+        console.log(inputConfirmEmail)
+    },[inputConfirmEmail])
 
     function renderStepContent(){
         switch (step) {
@@ -147,13 +155,20 @@ export default function SignInPage(){
                                 <div className={`popup-background ${togglerPopupInvalidEmail}`}></div>
                             </>
                             <>
-                                <div className={`popup popup-input-error ${togglerConfirmEmailPopup}`}>
+                                <div className={`popup popup-input-error popup-email-code ${togglerConfirmEmailPopup}`}>
                                     <div className="popup-close-x-mark" onClick={()=>{setTogglerConfirmEmailPopup("")}}><i className="fa-solid fa-xmark"></i></div>
                                     <h3 className='popup-input-error__text'>Введите код подтверждения</h3>
-                                    <h4 className="popup-input-error__text">Код подтверждения отправлен вам на Email: {inputEmail}</h4>
-                                    <input className="popup-input" type="number" required value={inputConfirmEmail} onChange={(e)=>{setInputConfirmEmail(e.target.value)}}/>
+                                    <h4 style={{marginBottom: '10px'}} className="popup-input-error__text">Код подтверждения отправлен вам на Email: {inputEmail}</h4>
+                                    <InputOTP className="popup-input" maxLength={4} value={inputConfirmEmail} onChange={(value)=>{setInputConfirmEmail(value)}}>
+                                        <InputOTPGroup>
+                                            <InputOTPSlot index={0}/>
+                                            <InputOTPSlot index={1}/>
+                                            <InputOTPSlot index={2}/>
+                                            <InputOTPSlot index={3}/>
+                                        </InputOTPGroup>
+                                    </InputOTP>
                                     <h4 className="popup-input-error__text popup-input-error__text_message">{errorConfirmEmail}</h4>
-                                <div className='Button PopupButton' onClick={()=>{inputConfirmEmail.trim() === emailCode.toString().trim() ? [setTogglerConfirmEmailPopup(""), setEmailConfirmed(true), handleSubmit(), router.push('/mobile/set-account')] : setErrorConfirmEmail("Неверный код")}}>Подтвердить</div>
+                                <div style={{marginTop: '10px'}} className='Button PopupButton' onClick={()=>{inputConfirmEmail.trim() === emailCode.toString().trim() ? [setTogglerConfirmEmailPopup(""), setEmailConfirmed(true), handleSubmit(), router.push('/mobile/set-account')] : setErrorConfirmEmail("Неверный код")}}>Подтвердить</div>
                                 </div>
                                 <div className={`popup-background ${togglerConfirmEmailPopup}`}></div>
                             </>

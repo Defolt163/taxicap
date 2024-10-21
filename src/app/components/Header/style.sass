@@ -28,29 +28,35 @@ body
             border-radius: 34px
             background-color: rgba(18, 18, 18, .5)
             line-height: 4
-            width: 40%
+            width: max-content
             display: flex
             justify-content: space-between
             list-style: none
-            .header_link
-                position: relative
-                text-decoration: none
-                color: $text-color
-                &::after
-                    content: ''
-                    position: absolute
-                    bottom: -5px
-                    left: 0
-                    width: 0
-                    height: 2px
-                    background-color: #fff
-                    transition: width .5s
-                &:hover
+            .header_link__wrapper
+                margin-right: 15px
+                &:last-child
+                    margin: 0
+                .header_link
+                    display: block
+                    width: max-content
+                    position: relative
+                    text-decoration: none
+                    color: $text-color
                     &::after
-                        width: 100%
+                        content: ''
+                        position: absolute
+                        bottom: -5px
+                        left: 0
+                        width: 0
+                        height: 2px
+                        background-color: #fff
                         transition: width .5s
-            .devices-btn
-                display: none
+                    &:hover
+                        &::after
+                            width: 100%
+                            transition: width .5s
+                .devices-btn
+                    display: none
 
 @media screen and ( max-width: 1200px )
     .header 

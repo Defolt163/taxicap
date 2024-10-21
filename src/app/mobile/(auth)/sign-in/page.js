@@ -3,6 +3,11 @@ import { useEffect, useState } from "react"
 import emailjs from '@emailjs/browser';
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import {
+    InputOTP,
+    InputOTPGroup,
+    InputOTPSlot,
+  } from "@/components/ui/input-otp"
 
 export default function SignInPage(){
     const router = useRouter()
@@ -109,13 +114,20 @@ export default function SignInPage(){
                         <div className={`popup-background ${togglerPopup}`}></div>
                     </>
                     <>
-                        <div className={`popup popup-input-error ${togglerSendEmail}`}>
+                        <div className={`popup popup-input-error popup-email-code ${togglerSendEmail}`}>
                             <div className="popup-close-x-mark" onClick={()=>{setTogglerSendEmail("")}}><i className="fa-solid fa-xmark"></i></div>
                             <h3 className='popup-input-error__text'>Введите код подтверждения</h3>
-                            <h4 className="popup-input-error__text">Код подтверждения отправлен вам на Email: {inputEmail}</h4>
-                            <input className="popup-input" type="number" required value={inputPasswordCode} onChange={(e)=>{setInputPasswordCode(e.target.value)}}/>
+                            <h4 style={{marginBottom: '10px'}} className="popup-input-error__text">Код подтверждения отправлен вам на Email: {inputEmail}</h4>
+                            <InputOTP className="popup-input" maxLength={4} value={inputPasswordCode} onChange={(value)=>{setInputPasswordCode(value)}}>
+                                <InputOTPGroup>
+                                    <InputOTPSlot index={0}/>
+                                    <InputOTPSlot index={1}/>
+                                    <InputOTPSlot index={2}/>
+                                    <InputOTPSlot index={3}/>
+                                </InputOTPGroup>
+                            </InputOTP>
                             <h4 className="popup-input-error__text popup-input-error__text_message">{errorConfirmEmail}</h4>
-                        <div className='Button PopupButton' 
+                        <div style={{marginTop: '10px'}} className='Button PopupButton' 
                             onClick={()=>{inputPasswordCode.trim() === emailCode.toString().trim() ? 
                             [setTogglerSendEmail(""), updateSessionId()] : setErrorConfirmEmail("Неверный код")}}>Войти</div>
                         </div>
