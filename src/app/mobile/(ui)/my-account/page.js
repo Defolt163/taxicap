@@ -104,10 +104,10 @@ export default function MyAccountPage(){
                         <div className='AccountCardData'>
                             <div className='AccountCardDataFirst'>{userName}</div>
                             <div className='AccountCardDataSecond'>{userData.UserEmail}</div>
-                            <div className='AccountCardDataThird'><i class="fa-solid fa-phone"></i> +7 {userPhone.toString().substring(1)}</div>
+                            <div className='AccountCardDataThird'><i className="fa-solid fa-phone"></i> +7 {userPhone.toString().substring(1)}</div>
                         </div>
                         <Link href='/mobile/my-account/account-edit' className='AccountCardEdit'>
-                            <i class="fa-solid fa-pencil"></i>
+                            <i className="fa-solid fa-pencil"></i>
                         </Link>
                     </div>
                 </div>
@@ -118,7 +118,7 @@ export default function MyAccountPage(){
                 </div>
                 <div className='AccountToggleModeBox'>
                     <label className='AccountToggleMode' htmlFor='driver-mode'>Режим водителя</label>
-                    <label class="TogglerWrapper">
+                    <label className="TogglerWrapper">
                         <input id='driver-mode' className='TogglerChecker' type="checkbox" checked={userData && userData.DriverMode === 1 ||  driverMode === 1} onChange={(e) => {
                             if (e.target.checked && userData.DriverMode === 0) {
                                 setDriverMode(1)
@@ -126,8 +126,8 @@ export default function MyAccountPage(){
                                 setDriverMode(driverMode === 1 ? 0 : 1)
                             }
                         }}/>
-                        <div class="TogglerSlider">
-                            <div class="TogglerKnob"></div>
+                        <div className="TogglerSlider">
+                            <div className="TogglerKnob"></div>
                         </div>
                     </label>
                 </div>

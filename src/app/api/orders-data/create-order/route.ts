@@ -61,6 +61,7 @@ import accountDB from '../../accountDB';
 export async function POST(request: NextRequest) {
   try {
     const {
+      OrderKey,
       CustomerPhone,
       UserId,
       OrderStatus,
@@ -77,6 +78,7 @@ export async function POST(request: NextRequest) {
     } = await request.json();
 
     const values = [
+      OrderKey,
       CustomerPhone,
       UserId,
       OrderStatus,
@@ -94,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     const result: any = await new Promise((resolve, reject) => {
       accountDB.query(
-        "INSERT INTO orders (CustomerPhone, UserId, OrderStatus, CustomerName, LatFrom, LonFrom, LatTo, LonTo, AddressFrom, AddressTo, Price, PaymentMethod, CustomerImage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO orders (OrderKey, CustomerPhone, UserId, OrderStatus, CustomerName, LatFrom, LonFrom, LatTo, LonTo, AddressFrom, AddressTo, Price, PaymentMethod, CustomerImage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         values,
         (err: any, results: any) => {
           if (err) {

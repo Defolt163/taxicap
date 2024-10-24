@@ -36,7 +36,7 @@ export default function SignInPage(){
         .then((result) => {
             console.log(result);
         }, (error) => {
-            console.log(error);
+            console.error(error);
         });
     }
 

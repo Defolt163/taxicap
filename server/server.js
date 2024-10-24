@@ -16,6 +16,7 @@ io.on("connection", (socket) => {
     socket.emit("orderCreated", data); // отправляем заказ обратно на клиентскую сторону
   });
 }); */
+
 const axios = require("axios")
 const io = require("socket.io")(3001, {
     cors: {
@@ -23,6 +24,7 @@ const io = require("socket.io")(3001, {
       methods: ["GET", "POST"]
     }
   });
+  console.log("Server started")
   io.on("connection", (socket) => {
     console.log("A user is connected");
     socket.on("sendOrder", async (data) => {
@@ -31,6 +33,7 @@ const io = require("socket.io")(3001, {
       try {
         const response = await axios.post("http://localhost:3000/api/orders-data/create-order",
         JSON.stringify({ 
+            "OrderKey": data.OrderKey,
             "CustomerPhone": data.CustomerPhone,
             "UserId": data.UserId,
             "OrderStatus": data.OrderStatus,
@@ -64,6 +67,25 @@ const io = require("socket.io")(3001, {
       console.log("Обновление заказа", userId);
       io.emit("orderUpdatedByDriver", userId);
     });
+    //
+    socket.on("joinOrder", (orderId) => {
+      if(orderId !== null || orderId !== 0){
+        socket.join(`order_${orderId}`);
+        console.log(`Driver joined order room: order_${orderId}`);
+      }
+    });
+
+    socket.on("joinOrderClient", (orderId) => {
+      if(orderId !== null || orderId !== 0){
+        socket.join(`order_${orderId}`);
+        console.log(`Passenger joined order room: order_${orderId}`);
+      }
+    });
+
+    socket.on("sendGeoResToClient", (orderId, pos) => {
+      socket.to(`order_${orderId}`).emit("driverPosition", pos);
+      console.log("Gotcha", pos)
+    });  
   });
 
 /*   const axios = require("axios");
@@ -74,8 +96,8 @@ const io = require("socket.io")(3001, {
   const { Server } = require('socket.io');
   
   const options = {
-    key: fs.readFileSync('../certificates/key2/privatekey.key'),
-    cert: fs.readFileSync('../certificates/key2/cert.crt')
+    key: fs.readFileSync('./mykey.pem', 'utf8'),
+    cert: fs.readFileSync('./mycsr.csr', 'utf8')
   };
   
   app.get('/', (req, res) => {
@@ -85,7 +107,7 @@ const io = require("socket.io")(3001, {
   const server = https.createServer(options, app);
   const io = new Server(server, {
     cors: {
-      origin: "https://192.168.0.5:3000",
+      origin: "https://192.168.0.110:3000",
       methods: ["GET", "POST"]
     }
   });
@@ -123,6 +145,21 @@ const io = require("socket.io")(3001, {
       console.log("Обновление заказа");
       io.emit("orderUpdatedByDriver");
     });
+    //
+    socket.on("joinOrder", (orderId) => {
+      socket.join(`order_${orderId}`);
+      console.log(`Driver joined order room: order_${orderId}`);
+    });
+
+    socket.on("joinOrderClient", (orderId) => {
+      socket.join(`order_${orderId}`);
+      console.log(`Client joined order room: order_${orderId}`)
+    });
+
+    socket.on("sendGeoResToClient", (orderId, pos) => {
+      socket.to(`order_${orderId}`).emit("driverPosition", pos);
+      console.log("Gotcha", pos)
+    }); 
   });
   
   server.listen(3001, () => {

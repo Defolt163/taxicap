@@ -75,14 +75,8 @@ export default function AccountLayout({ children }) {
 
 
   return (
-      <html lang="ru">
-        <body>
-          <Helmet>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-          </Helmet>
-          {children}
-        </body>
-        <Script src="https://kit.fontawesome.com/073ad96d9b.js" crossorigin="anonymous"></Script>
-      </html>
+      <>
+        {children}
+      </>
   )
 }

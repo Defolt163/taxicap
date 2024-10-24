@@ -86,7 +86,7 @@ export default function Home() {
           )
   }}
   return(
-    <div className="welcome-app" style={{background: 'url(/settings-bg/bg-s-4.jpg) center center/cover no-repeat'}}>
+    <div className="welcome-app" style={{backgroundColor: "rgb(28 27 27)"}}>
       <div className='stat-bar'><style jsx>{`
         .stat-bar::before {
           width: ${step === 0 ? '25%' : step === 1 ? '50%' : step === 2 ? '75%' : '100%'}

@@ -34,6 +34,7 @@ export default function NavMap2(){
   // Получение sessionId из кук
   const [sessionKey, setSessionKey] = useState('')
   const [userData, setUserData] = useState([])
+  const [driverPos, setDriverPos] = useState([])
   function myHandler() {
     if(sessionKey === ''){
       const cookieValue = Cookies.get('UserData')
@@ -73,7 +74,7 @@ export default function NavMap2(){
   }, []) */
   const socketRef = useRef(null)
   useEffect(() => {
-    const newSocket = io(`ws://${localHostApi}:3001`)
+    const newSocket = io(`http://${localHostApi}:3001/`)
     socketRef.current = newSocket
 
     return () => {
@@ -143,25 +144,20 @@ export default function NavMap2(){
     console.log("Check if")
     if(userData && userData.DriverMode === 1){
       if(userData.VehicleBrand !== null){
-        console.log("НАХУЯ")
         fetch(`/api/orders-data/get-orders`, {
           method: 'GET'
         }).then((result) => {
           return result.json()
         }).then((res) => {
-          console.log("Result", res)
-          console.log("Result2", activeDriverOrder)
           if(res.length !== 0){
-            console.log("RESSS", res)
             setOrders(res)
             setTogglerOpenOrder('')
             setStep(1)
-          }if(res.length === 0 && activeDriverOrder === false){
-            console.log("REzzz", res)
+          }/* if((res.length === 0) && activeDriverOrder === false){
             setOrders(res)
             setTogglerOpenOrder('')
             setStep(0)
-          }
+          } */
         }).catch(error => {
           console.log(error)
         })
@@ -220,7 +216,15 @@ export default function NavMap2(){
     console.log("METODA", paymentMethodValue)
   },[paymentMethodValue])
   function openOrder(){
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let orderKey = '';
+    for (let i = 0; i < 65; i++) {
+      const randomIndex = Math.floor(Math.random() * characters.length);
+      orderKey += characters[randomIndex];
+    }
+    console.log(orderKey)
     const data = {
+      "OrderKey": orderKey,
       "CustomerPhone": userData.UserPhone,
       "UserId": userData.UserId,
       "OrderStatus": "created",
@@ -236,13 +240,11 @@ export default function NavMap2(){
       "CustomerImage": userData.UserImage
     }
     setActiveOrder([data])
-    /* if(activeOrder.length !== 0){
-      orderTimeOut()
-    } */
     const socket = socketRef.current
     socket.emit("sendOrder", data)
   }
   // Принятие заказа
+  const [activeOrderId, setActiveOrderId] = useState(0)
   async function acceptOrder(){
     await fetch(`/api/orders-data/accept-order?id=${orders[orderIteration].id}`,{
         method: 'PUT',
@@ -268,8 +270,12 @@ export default function NavMap2(){
           })
         }).then(()=>{
           setTogglerOpenOrder('order-active')
+          setActiveOrderId(orders[orderIteration].id)
           const socket = socketRef.current
+          socket.emit("joinOrder", orders[orderIteration].id)
           socket.emit("orderUpdate", orders[orderIteration].UserId)
+        }).then(()=>{
+          //
         })
     })
     .catch(error =>{
@@ -288,9 +294,11 @@ export default function NavMap2(){
           if(res.length !== 0){
             console.log("1")
             setOrders(res)
+            setActiveOrderId(userData.ActiveOrder)
             setActiveDriverOrder(true)
             setStep(1)
             setTogglerOpenOrder('order-active')
+            socket.emit("joinOrder", userData.ActiveOrder)
           }
         }).catch(error => {
           console.log(error)
@@ -322,6 +330,7 @@ export default function NavMap2(){
                   orderTimeOut()
                 } */
               }if(checkOrderStatus[0].OrderStatus === 'active'){
+                console.log("BIG DICK")
                 fetch(`/api/orders-data/check-order/update-info?orderId=${checkOrderStatus[0].id}`, {
                 method: 'GET'
                 }).then((orderResult) => {
@@ -337,6 +346,9 @@ export default function NavMap2(){
                     })
                   })
                   setStep(3)
+                  setActiveOrderId(passengerOrder[0].id)
+                  const socket = socketRef.current
+                  socket.emit("joinOrderClient", passengerOrder[0].id)
                 })
               }
             }if(checkOrderStatus.length <= 0){
@@ -350,6 +362,9 @@ export default function NavMap2(){
                 console.log("32", userData)
                 if(res[0].OrderStatus === 'completed'){
                   setTogglerPopupDriverCloseOrder('popup-open')
+                  setActiveOrderId(0)
+                  setDriverPos([1.1,1.1])
+                  socket.disconnect("joinOrderClient")
                   console.log("USERDT", userData)
                 }
               }).catch(error => {
@@ -430,19 +445,16 @@ export default function NavMap2(){
       })
     }
   }
-
+// Сокет
   useEffect(() => {
     if (userData && userData.DriverMode === 0) {
       const handleOrderAcceptedByDriver = (userId) => {
         if(userId === userData.UserId){
           setHasAccepted(true)
           getUsersAccountType()
-          console.log("td")
         }
       }
-      
       const socket = socketRef.current
-  
       socket.on("orderUpdatedByDriver", handleOrderAcceptedByDriver)
   
       return () => {
@@ -468,7 +480,6 @@ export default function NavMap2(){
       }
     }
   })
-
 
   // Завершение заказа
   function orderCompletion(){
@@ -504,6 +515,8 @@ export default function NavMap2(){
           setActiveOrder([])
           setStep(0)
           setOrders([])
+          socket.disconnect("joinOrder")
+          setActiveOrderId(0)
         })
         //fetchOrders()
       })
@@ -539,15 +552,16 @@ export default function NavMap2(){
   // Начальный адрес по координатам браузера
   const [location, setLocation] = useState();
 
-    useEffect(() => {
-        if('geolocation' in navigator) {
-            // Retrieve latitude & longitude coordinates from `navigator.geolocation` Web API
-            navigator.geolocation.getCurrentPosition(({ coords }) => {
-                const { latitude, longitude } = coords;
-                setLocation({ latitude, longitude });
-            })
-        }
-    }, []);
+  useEffect(()=>{
+    if('geolocation' in navigator) {
+      // Retrieve latitude & longitude coordinates from `navigator.geolocation` Web API
+      navigator.geolocation.watchPosition(({ coords }) => {
+          const { latitude, longitude } = coords;
+          setLocation({ latitude, longitude });
+      })
+    }
+  })
+
     useEffect(()=>{
       console.log("LOCATSIA:", location)
       if(location !== undefined){
@@ -575,11 +589,9 @@ export default function NavMap2(){
   // Быстрый доступ
   async function getFastAddress(coords, address) {
     if(
-      location.latitude > 51.25456616016618 || 
-      location.longitude > 54.330347902222314 ||
-      location.latitude > 51.629709692889264 || 
-      location.longitude > 54.5140980931572
-    ){
+      (location.latitude < 51.25456616016618 ||  location.latitude > 51.629709692889264) ||
+      (location.longitude < 54.330347902222314 || location.longitude > 54.5140980931572)
+  ){
       alert("Извините, Но мы пока не можем подать машину так далеко :(")
     }else{
       setAddressToCoordinate(coords)
@@ -588,6 +600,32 @@ export default function NavMap2(){
       handleNextStep()
     }
   }  
+
+  // Геопозиция водителей
+    // Сторона водителей
+    function driverGeo(){
+      const socket = socketRef.current
+      socket.emit("sendGeoResToClient", activeOrderId, location)
+    }
+  
+    useEffect(()=>{
+      if(activeOrderId !== 0){
+        driverGeo()
+      }
+    }, [location])
+    // Сторона клиента (Пассажир)
+  
+  useEffect(()=>{
+    const socket = socketRef.current
+    if(userData.DriverMode === 0 && activeOrderId !== 0){
+      socket.on("driverPosition", (pos) => {
+        setDriverPos(pos.longitude !== null ? [pos.longitude,pos.latitude] : [1.1,1.1])
+      });
+    }
+  })
+  useEffect(()=>{
+    console.log("DriverPoss",driverPos)
+  },[driverPos])
 
   //Построение маршрута
   async function getAddress() {
@@ -599,20 +637,7 @@ export default function NavMap2(){
           console.log("2324", result.results[0].lat !== addressToCoordinate[0])
           if (result.results[0].lat !== addressToCoordinate[0] || result.results[0].lon !== addressToCoordinate[1]) {
             console.log(`ADRESS To: ${result.results[0].lat}, ${result.results[0].lon}`)
-            if(
-              (result.results[0].lat > 51.25456616016618 || 
-              result.results[0].lon > 54.330347902222314 ||
-              result.results[0].lat > 51.629709692889264 || 
-              result.results[0].lon > 54.5140980931572) ||
-              (location.latitude > 51.25456616016618 ||
-                location.longitude > 54.330347902222314 ||
-                location.latitude > 51.629709692889264 || 
-                location.longitude > 54.5140980931572)
-            ){
-              alert(`Мы пока не можем подать машину так далеко :(`)
-            }else{
-              setAddressFromCoordinate([result.results[0].lat, result.results[0].lon])
-            }
+            setAddressFromCoordinate([result.results[0].lat, result.results[0].lon])
           }
         })
         .catch(error => console.log('Ошибка получения адреса', error))
@@ -623,20 +648,7 @@ export default function NavMap2(){
         .then((result) => {
           console.log("2323", result.results[0].lat !== addressFromCoordinate[0])
           if (result.results[0].lat !== addressFromCoordinate[0] || result.results[0].lon !== addressFromCoordinate[1]) {
-            if((result.results[0].lat > 51.25456616016618 || 
-              result.results[0].lon > 54.330347902222314 ||
-              result.results[0].lat > 51.629709692889264 || 
-              result.results[0].lon > 54.5140980931572) ||
-              (location.latitude > 51.25456616016618 || 
-              location.longitude > 54.330347902222314 ||
-              location.latitude > 51.629709692889264 || 
-              location.longitude > 54.5140980931572)
-            ){
-              alert("Мы пока не можем отправить машину так далеко :(", (result.results[0].lat*result.results[0].lon))
-            }else{
-              setAddressToCoordinate([result.results[0].lat, result.results[0].lon])
-            }
-            
+            setAddressToCoordinate([result.results[0].lat, result.results[0].lon])
             console.log(`ADRESS From: ${result.results[0].lat}, ${result.results[0].lon}`)
           }
         })
@@ -666,7 +678,7 @@ export default function NavMap2(){
         console.log("7")
         if(routeResult.features[0].geometry.coordinates[0] !== geoRes){
           setGeoRes(routeResult.features[0].geometry.coordinates[0])
-          setRoutePrice(routeResult.features[0].properties.distance * 0.045)
+          setRoutePrice(routeResult.features[0].properties.distance * 0.045 + 45)
           setRouteDistance(routeResult.features[0].properties.distance / 1000)
           console.log("ROUTE", routeResult)
         }
@@ -683,7 +695,7 @@ export default function NavMap2(){
           console.log("2")
           setHasAccepted(false)
           setGeoRes(routeResult.features[0].geometry.coordinates[0])
-          setRoutePrice(routeResult.features[0].properties.distance * 0.045)
+          setRoutePrice(routeResult.features[0].properties.distance * 0.045 + 45)
           setRouteDistance(routeResult.features[0].properties.distance / 1000)
           console.log("ROUTE", routeResult)
         }
@@ -707,7 +719,7 @@ export default function NavMap2(){
       }
       setGeoJSONRoute(createGeoJSON([geoRes]))
   }, [geoRes])
-    
+
   const layerStyle = {
       id:"route",
         type:"line",
@@ -715,36 +727,6 @@ export default function NavMap2(){
           'line-color': '#2196F3',
           'line-width': 5,
         }
-  }
-
-  // Обратное геокодирование (Отключено)
-  const [deliveryAddressFrom, setDeliveryAddressFrom] = useState('')
-  const [deliveryAddressTo, setDeliveryAddressTo] = useState('')
-  async function getOrderAddress(){
-    await fetch(`https://api.geoapify.com/v1/geocode/reverse?lat=${
-      userData.DriverMode === 0 ? activeOrder[0].LatFrom : 
-      (orders[orderIteration] && orders[orderIteration].LatFrom !== undefined ? orders[orderIteration].LatFrom : orders[orderIteration].LatFrom)}&lon=${
-        userData.DriverMode === 0 ? activeOrder[0].LonFrom :
-        (orders[orderIteration] && orders[orderIteration].LonFrom !== undefined ? orders[orderIteration].LonFrom : orders[orderIteration].LonFrom)}&format=json&apiKey=${mapApiKey}`,{
-      method: 'GET'
-    }).then(response => response.json()).
-    then((result)=>{
-      setDeliveryAddressFrom(result.results[0].address_line1)
-    }).catch(error =>{
-      console.log(error)
-    })
-    await fetch(`https://api.geoapify.com/v1/geocode/reverse?lat=${
-      userData.DriverMode === 0 ? activeOrder[0].LatTo : 
-      (orders[orderIteration] && orders[orderIteration].LatTo !== undefined ? orders[orderIteration].LatTo : orders[orderIteration].LatTo)}&lon=${
-        userData.DriverMode === 0 ? activeOrder[0].LonTo :
-        (orders[orderIteration] && orders[orderIteration].LonTo !== undefined ? orders[orderIteration].LonTo : orders[orderIteration].LonTo)}&format=json&apiKey=${mapApiKey}`,{
-      method: 'GET'
-    }).then(response => response.json()).
-    then((result)=>{
-      setDeliveryAddressTo(result.results[0].address_line1)
-    }).catch(error =>{
-      console.log(error)
-    })
   }
 
   // Изменения здесь
@@ -755,26 +737,7 @@ export default function NavMap2(){
     }
   }, [orders, orderIteration])
 
-  /* useEffect(()=>{
-    if(orders.length > 0){
-      getOrderAddress()
-      requestOptions()
-    }
-  }, [activeOrder]) */
-  ///////////////////////////////
-
-  /* const userPositionTo = {
-    type: 'FeatureCollection',
-    features: [
-      { type: 'Feature', 
-        geometry: {
-          type: 'Point', 
-          coordinates: orders.length !== 0 ? (userData.DriverMode === 1 ? (orders.length >= 2 && orderIteration <= orders.length-1 ? [orders[orderIteration].LonFrom,orders[orderIteration].LatFrom] : [orders[0].LonFrom,orders[0].LatFrom]) : 
-          (userData.DriverMode === 0 && activeOrder.length > 0 ? [activeOrder[0].LatFrom,activeOrder[0].LonFrom] : addressFromCoordinate)) : null 
-        }
-      }
-    ]
-  } */
+ // Маркер пассажира стили
   const markerUserFromStyle = {
     id: 'point',
     type: 'circle',
@@ -783,14 +746,30 @@ export default function NavMap2(){
       'circle-color': '#2196F3'
     }
   }
-  /* const markerUserToStyle = {
-    id: 'point',
-    type: 'circle',
-    paint: {
-      'circle-radius': 10,
-      'circle-color': '#ff0000'
-    }
-  } */
+  // Маркер водителя
+    const markerImageUrl = '/ico/driver-car.png'
+    const markerDriverStyle1 = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          properties: {},
+          geometry: {
+            type: "Point",
+            coordinates: driverPos, // Пример координат
+          },
+        },
+      ],
+    };
+    const markerDriverStyle = {
+      id: 'driver-marker-layer',
+      type: 'symbol',
+      layout: {
+        'icon-image': 'driver-marker', // Имя изображения
+        'icon-size': 0.08,              // Размер изображения
+        'icon-allow-overlap': true,    // Позволяем перекрытие иконок
+      },
+    };
 
   //Шаги оформления заказа
   const [step, setStep] = useState(0)
@@ -826,12 +805,12 @@ export default function NavMap2(){
                 <div className='AdvancedMenu'>
                   <div className='FastAddressBlock'>
                     <div className='FastAddressBlockItem' onClick={()=>{getFastAddress([54.423565,51.484111],"Больница")}}>
-                      <i class="fa-solid fa-hospital FastAddressBlockItemIco"></i>
+                      <i className="fa-solid fa-hospital FastAddressBlockItemIco"></i>
                       <div className='FastAddressBlockItemHeader'>Больница</div>
                       <div className='FastAddressBlockItemSubHeader'>Больничная ул. 4</div>
                     </div>
                     <div className='FastAddressBlockItem' onClick={()=>{getFastAddress([54.431643,51.466389], "МФЦ")}}>
-                    <i class="fa-regular fa-flag FastAddressBlockItemIco"></i>
+                    <i className="fa-regular fa-flag FastAddressBlockItemIco"></i>
                       <div className='FastAddressBlockItemHeader'>МФЦ</div>
                       <div className='FastAddressBlockItemSubHeader'>Советская ул. 11</div>
                     </div>
@@ -881,7 +860,7 @@ export default function NavMap2(){
                         </SelectItem>
                         <SelectItem className='PaymentMethodItem' value="Перевод">
                           <div className='PaymentMethodItemIcoWrapper'>
-                            <i class="PaymentMethodItemIco fa-solid fa-money-bill-transfer"></i>
+                            <i className="PaymentMethodItemIco fa-solid fa-money-bill-transfer"></i>
                           </div>
                           <div className='PaymentMethodItemText'>Перевод</div>
                         </SelectItem>
@@ -1021,6 +1000,15 @@ export default function NavMap2(){
               }}
               style={{width: '100vw', height: '100vh'}}
               mapStyle={mapInfo}
+              onLoad={(event) => {
+              const map = event.target;
+
+              // Загружаем изображение для маркера
+              map.loadImage(markerImageUrl, (error, image) => {
+                if (error) throw error;
+                map.addImage('driver-marker', image); // Добавляем изображение под именем 'driver-marker'
+              });
+            }}
           >
               <Source id="my-data" type="geojson" data={geoJSONRoute}>
                 <Layer {...layerStyle} />
@@ -1028,9 +1016,9 @@ export default function NavMap2(){
               <Source id="user-data-from" type="geojson" data={userPositionFrom}>
                 <Layer {...markerUserFromStyle}/>
               </Source>
-              {/* <Source id="user-data-to" type="geojson" data={userPositionTo}>
-                <Layer {...markerUserToStyle}/>
-              </Source> */}
+              <Source id="driver-data" type="geojson" data={markerDriverStyle1}>
+                <Layer {...markerDriverStyle}/>
+              </Source>
           </Map>
           <div className={`popup popup-input-error ${togglerPopup}`}>
             <h3 className='popup-input-error__text'>{
@@ -1071,4 +1059,3 @@ export default function NavMap2(){
       </div>
     )
   }
-  
