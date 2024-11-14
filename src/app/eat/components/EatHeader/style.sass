@@ -1,0 +1,23 @@
+.eat-header
+    padding: 10px 5vw
+    display: flex
+    justify-content: space-between
+    align-items: center
+    width: 100%
+    box-shadow: 0px 0px 5px #000
+    margin-bottom: 15px
+    .eat-header_logo
+        width: max-content
+        font-size: 36px
+        position: relative
+        &::after
+            content: 'Еда'
+            display: block
+            transform: translateY(-20px)
+            text-align: end
+            font-size: 28px
+    .eat-header_account-block
+        display: flex
+        .eat-header_account-block_cart
+            font-size: 32px
+            margin-right: 10px

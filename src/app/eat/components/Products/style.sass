@@ -1,0 +1,25 @@
+.products-block
+    display: flex
+    flex-wrap: wrap
+    width: 100%
+    gap: 10px
+    .product-cart_item
+        width: 32%
+        cursor: pointer
+        &.product-cart_add-item
+            display: flex
+            flex-direction: column
+            justify-content: center
+            &:hover
+                .product-cart_plus
+                    color: rgba(0, 0, 0, .8)
+                    transition: color .5s
+            .product-cart_plus
+                cursor: pointer
+                align-items: center
+                font-size: 152px
+                color: rgba(0, 0, 0, .5)
+                transition: color .5s
+        .product-image
+            width: 200px
+            height: 200px

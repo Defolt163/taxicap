@@ -66,7 +66,7 @@ export default function FeedbackPage(){
             <div className="feedback">
                 <div className="container">
                     <PagesHeader ReturnBtn="/mobile/general" PageHeader="Обратная связь"/>
-                    <div className="textarea-header">Здесь вы можете оставить ошибки, найденные в приложении, либо предложения по улучшению сервиса</div>
+                    <div className="textarea-header">Здесь вы можете сообщить о ошибках, найденные в приложении, либо оставить предложения по улучшению сервиса</div>
                     <form className='feedback-form'>
                         <textarea className="feedback-textarea" value={feedbackValue} onChange={(e)=>setFeedbackValue(e.target.value)}/>
                         <div className="Button" onClick={()=>{sendMessage()}}>Отправить</div>

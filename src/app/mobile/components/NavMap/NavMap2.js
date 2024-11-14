@@ -23,6 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+
 //import defaultUserIco from '/public/ico/man-user.svg'
 
 //const socket = io("http://localhost:3001")
@@ -292,7 +294,7 @@ export default function NavMap2(){
           return result.json()
         }).then((res) => {
           if(res.length !== 0){
-            console.log("1")
+            console.log("10l", res)
             setOrders(res)
             setActiveOrderId(userData.ActiveOrder)
             setActiveDriverOrder(true)
@@ -330,7 +332,6 @@ export default function NavMap2(){
                   orderTimeOut()
                 } */
               }if(checkOrderStatus[0].OrderStatus === 'active'){
-                console.log("BIG DICK")
                 fetch(`/api/orders-data/check-order/update-info?orderId=${checkOrderStatus[0].id}`, {
                 method: 'GET'
                 }).then((orderResult) => {
@@ -381,8 +382,30 @@ export default function NavMap2(){
     checkOrderPassenger()
   }, [userData])
 
+  const[driverTimeToPassenger, setDriverTimeToPassenger] = useState(0)
+    const [remainingTime, setRemainingTime] = useState(0);
+
+    useEffect(() => {
+        setRemainingTime(driverTimeToPassenger)
+            
+            const countdownInterval = setInterval(() => {
+                setRemainingTime(prevTime => {
+                    if (prevTime > 0) {
+                        return prevTime - 1; 
+                    } else {
+                        clearInterval(countdownInterval);
+                        return 1;
+                    }
+                });
+            }, 60000)
+            return () => clearInterval(countdownInterval);
+    }, [driverTimeToPassenger]);
+
   useEffect(()=>{
     console.log("ACTIVE", activeOrder)
+    if(activeOrder.length !== 0){
+      setDriverTimeToPassenger(Math.ceil(activeOrder[0].DriverTime / 60))
+    }
   }, [activeOrder])
 
   // Удаление заказа по таймеру
@@ -623,9 +646,6 @@ export default function NavMap2(){
       });
     }
   })
-  useEffect(()=>{
-    console.log("DriverPoss",driverPos)
-  },[driverPos])
 
   //Построение маршрута
   async function getAddress() {
@@ -681,6 +701,23 @@ export default function NavMap2(){
           setRoutePrice(routeResult.features[0].properties.distance * 0.045 + 45)
           setRouteDistance(routeResult.features[0].properties.distance / 1000)
           console.log("ROUTE", routeResult)
+          console.log("4LEN", location)
+          fetch(`https://api.geoapify.com/v1/routing?waypoints=${[location.latitude,location.longitude]}|${[orders[0].LatFrom,orders[0].LonFrom]}&mode=drive&apiKey=${mapApiKey}`)
+          .then(res => res.json())
+          .then((routeDriverResult) =>{
+            console.log(`4LEN`, routeDriverResult)
+            console.log("8")
+            if(routeDriverResult && routeDriverResult.features && routeDriverResult.features.length > 0 && routeDriverResult.features[0].geometry && routeDriverResult.features[0].geometry.coordinates && routeDriverResult.features[0].geometry.coordinates.length > 0 && routeDriverResult.features[0].geometry.coordinates[0] !== geoRes){
+              fetch(`/api/orders-data/set-time?id=${orders[0].id}`,{
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  "DriverTime": routeDriverResult.features[0].properties.legs[0].time
+                })
+              })
+              //setGeoRes(routeResult.features[0].geometry.coordinates[0])
+              //console.log("ROUTE", routeResult)
+            }})
         }
       })
       .catch(error => console.log('Ошибка установки маршрута', error))         /* Здлесь скобки */
@@ -706,6 +743,30 @@ export default function NavMap2(){
   useEffect(()=>{
     requestOptions()
   },[addressToCoordinate, addressFromCoordinate, activeOrder])
+
+  // маршрут от водителя до клиента
+  function setAddressFromDriverToClient(){
+    if(orders.length !== 0){
+      fetch(`https://api.geoapify.com/v1/routing?waypoints=${location.longitude,location.latitude}|${[orders[0].LatFrom,orders[0].LonFrom]}&mode=drive&apiKey=${mapApiKey}`)
+      .then(response => response.json())
+      .then((routeResult) =>{
+        console.log(`4LEN`, routeResult)
+        console.log("8")
+        if(routeResult && routeResult.features && routeResult.features.length > 0 && routeResult.features[0].geometry && routeResult.features[0].geometry.coordinates && routeResult.features[0].geometry.coordinates.length > 0 && routeResult.features[0].geometry.coordinates[0] !== geoRes){
+          console.log("2")
+          setHasAccepted(false)
+          setGeoRes(routeResult.features[0].geometry.coordinates[0])
+          setRoutePrice(routeResult.features[0].properties.distance * 0.045 + 45)
+          setRouteDistance(routeResult.features[0].properties.distance / 1000)
+          console.log("ROUTE", routeResult)
+        }
+      }).catch(error => console.log("4LEN Ошибка", error))
+    }
+  }
+  useEffect(()=>{
+    //setAddressFromDriverToClient()
+  }, orders)
+
   useEffect(()=>{
       function createGeoJSON(coordinates) {
           return {
@@ -732,7 +793,6 @@ export default function NavMap2(){
   // Изменения здесь
   useEffect(()=>{
     if(orders !== undefined){
-      //getOrderAddress()
       requestOptions()
     }
   }, [orders, orderIteration])
@@ -815,12 +875,12 @@ export default function NavMap2(){
                       <div className='FastAddressBlockItemSubHeader'>Советская ул. 11</div>
                     </div>
                   </div>
-                  <div className='EatBlock'>
+                  {/* <div className='EatBlock'>
                     <Link className='FastAddressBlockItem' href={'/delivery-meal'}>
                       <Image src={scooterIco} alt="scooter"/>
                       <div className='text-center'><strong>Еда</strong></div>
                     </Link>
-                  </div>
+                  </div> */}
                 </div>
                 <div className='Button' onClick={()=>{addressFrom === "" || addressTo === "" ? setTogglerPopup('popup-open') : getAddress()}}>Поиск</div>
               </div>
@@ -889,14 +949,20 @@ export default function NavMap2(){
         return(
           <>
             <div className='AddressInputBlock DriveActive'>
-              <h3 className='ItemsHeader ItemsHeader__center'>Водитель прибудет через <br/> 5 минут</h3>
+              <h3 className='ItemsHeader ItemsHeader__center'>Водитель прибудет через <br/> {remainingTime} минут</h3>
               <div className='AccountBlock'>
-                <div className='AccountIco' style={{backgroundImage: `url(${activeOrder !== undefined ? activeOrder[0].DriverImage : '/ico/man-user.svg'})`}}></div>
+                {/* <div className='AccountIco' style={{backgroundImage: `url(${activeOrder !== undefined ? activeOrder[0].DriverImage : '/ico/man-user.svg'})`}}></div> */}
                 <div className='AccountBlockInfo'>
-                  <h4 className='AccountName'>{activeOrder !== undefined ? activeOrder[0].DriverName : null}</h4>
-                  <div className='CarInfo'>
-                    <div className='CarModel'>{activeOrder !== undefined ? activeOrder[0].VehicleColor : null} {activeOrder !== undefined ? activeOrder[0].VehicleBrand : null} {activeOrder !== undefined ? activeOrder[0].VehicleModel : null} <br/> <strong>{activeOrder !== undefined ? activeOrder[0].VehicleNumber : null}</strong></div>
-                  </div>
+                  <Avatar className='AccountIco'>
+                    <AvatarImage src={activeOrder[0].DriverImage} />
+                    <AvatarFallback>{activeOrder[0].DriverName[0]}</AvatarFallback>
+                  </Avatar>
+                  <div className='AccountDescrBlock'>
+                    <h4 className='AccountName'>{activeOrder !== undefined ? activeOrder[0].DriverName : null}</h4>
+                    <div className='CarInfo'>
+                      <div className='CarModel'>{activeOrder !== undefined ? activeOrder[0].VehicleColor : null} {activeOrder !== undefined ? activeOrder[0].VehicleBrand : null} {activeOrder !== undefined ? activeOrder[0].VehicleModel : null} <br/> <strong>{activeOrder !== undefined ? activeOrder[0].VehicleNumber : null}</strong></div>
+                    </div>
+                </div>
                 </div>
                 <Link href='tel:123' className='CallUser'><i className="fa-solid fa-phone"></i></Link>
               </div>
@@ -946,10 +1012,14 @@ export default function NavMap2(){
                 orders !== undefined && orderIteration >= 0 && orderIteration < orders.length ? (
                   <div className='OrderWrapper'>
                     <div className='AccountBlock'>
-                      <div className='AccountIco' style={{backgroundImage: `url(${orders[orderIteration].CustomerImage !== null ? orders[orderIteration].CustomerImage : '/ico/man-user.svg'})`}}></div>
+                      {/* <div className='AccountIco' style={{backgroundImage: `url(${orders[orderIteration].CustomerImage !== null ? orders[orderIteration].CustomerImage : '/ico/man-user.svg'})`}}></div> */}
+                      <Avatar className='AccountIco'>
+                        <AvatarImage src={orders[orderIteration].CustomerImage} />
+                        <AvatarFallback>{orders[orderIteration].CustomerName[0]}</AvatarFallback>
+                      </Avatar>
                       <div className='AccountBlockInfo'>
-                        <h4 className='AccountName'>{orders !== undefined ? orders[orderIteration].CustomerName : null}</h4>
                         <div className='OrderInfoBlock'>
+                          <h4 className='AccountName'>{orders !== undefined ? orders[orderIteration].CustomerName : null}</h4>
                           <div className='OrderInfo'>Дистанция: {orders !== undefined ? Math.round(routeDistance * 10)/10 : 0}км</div>
                           <div className='OrderInfo'>Стоимость: {orders !== undefined ? Math.round(orders[orderIteration].Price) : 0}₽</div>
                           <div className='OrderInfo'>Способ оплаты: {orders !== undefined ? orders[orderIteration].PaymentMethod : "Ошибка"}</div>

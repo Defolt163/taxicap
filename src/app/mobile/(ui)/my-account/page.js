@@ -6,6 +6,7 @@ import userIco from '/public/ico/man-user.svg'
 import { useEffect, useState } from 'react'
 import Cookies from 'js-cookie'
 import PagesHeader from '../../components/PagesHeader/PagesHeader'
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 export default function MyAccountPage(){
     // Получение sessionId из кук
     const [sessionKey, setSessionKey] = useState('')
@@ -100,7 +101,11 @@ export default function MyAccountPage(){
                 <PagesHeader ReturnBtn="/mobile/general" PageHeader="Мой аккаунт"/>
                 <div className='MyAccountPageAccount'>
                     <div className='AccountCard'>
-                        <div style={{backgroundImage: `url(${userData.UserImage === null ? '/ico/man-user.svg' : userData.UserImage})`}} className='AccountCardIco' alt='user ico'/>
+                        <Avatar className='AccountCardIco'>
+                            <AvatarImage src={userData.UserImage} />
+                            <AvatarFallback>{userName[0]}</AvatarFallback>
+                        </Avatar>
+                        {/* <div style={{backgroundImage: `url(${userData.UserImage === null ? '/ico/man-user.svg' : userData.UserImage})`}} className='AccountCardIco' alt='user ico'/> */}
                         <div className='AccountCardData'>
                             <div className='AccountCardDataFirst'>{userName}</div>
                             <div className='AccountCardDataSecond'>{userData.UserEmail}</div>

@@ -1,0 +1,37 @@
+.eat-list-restaurants
+    padding-bottom: 40px
+    .eat-list-restaurants_block
+        display: flex
+        justify-content: space-between
+        width: 100%
+        gap: 10px
+        .eat-list-restaurant
+            width: 25%
+            &:hover
+                .restaurant_logo
+                    &::before
+                        background-color: transparent
+                        transition: background-color .1s
+            .restaurant_logo
+                width: 100%
+                height: 150px
+                border-radius: 30px
+                overflow: hidden
+                position: relative
+                &::before
+                    content: ''
+                    position: absolute
+                    top: 0
+                    left: 0
+                    width: 100%
+                    height: 100%
+                    background-color: rgba(0, 0, 0, .15)
+                    transition: background-color .1s
+            .restaurant_descr
+                margin-top: 10px
+                .restaurant_name
+                    font-weight: 600
+                    font-size: 18px
+                .restaurant_time-block
+                    display: flex
+                    font-size: 14px

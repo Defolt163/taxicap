@@ -1,0 +1,25 @@
+.sidebar
+    height: 100%
+    width: 20%
+    margin-right: 30px
+    .sidebar-logo
+        font-size: 32px
+        font-weight: 500
+        position: relative
+        margin-bottom: 50px
+        &::before
+            content: 'Еда'
+            position: absolute
+            right: 0
+            bottom: -15px
+            font-size: 21px
+    .sidebar-item
+        cursor: pointer
+        display: flex
+        justify-content: space-between
+        align-items: center
+        border-radius: 5px
+        padding: 10px 5px
+        margin-bottom: 10px
+        &:last-child
+            margin-bottom: 0
