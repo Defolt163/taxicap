@@ -59,13 +59,13 @@ export default function NavMap2(){
     }).then((result)=>{
       return result.json()
     }).then((res)=>{
-      console.log(res.result)
+      console.log("ХУУУЙ", res.result)
       setMapInfo(res.result)
     })
   },[])
   
   useEffect(()=>{
-      myHandler()
+    myHandler()
   }, [])
   
   // Открытие веб сокета

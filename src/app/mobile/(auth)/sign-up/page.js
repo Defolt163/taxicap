@@ -58,9 +58,9 @@ export default function SignInPage(){
     async function handleSubmit() {
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
         let sessionId = ''
-        for (let i = 0; i < 39; i++) {
+        for (let i = 0; i < 90; i++) {
         const randomIndex = Math.floor(Math.random() * characters.length)
-        sessionId += characters[randomIndex]
+        sessionId += characters[randomIndex] + '.' + characters[randomIndex]
         }
         console.log(sessionId)
         setCookie('UserData', JSON.stringify({

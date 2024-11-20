@@ -24,10 +24,30 @@ import {
   } from "@/components/ui/input-otp"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import Link from 'next/link';
+import { useEffect } from 'react';
 
 
 
 export default function DeliveryMeal(){
+    const [statIteration, setStateIteration] = useEffect(5)
+    useEffect(()=>{
+        fetch(`/api/stat-info`,{
+            method: 'GET'
+          }).then((result)=>{
+              return result.json()
+          }).then((res)=>{
+            setStateIteration(res)
+          })
+    },[])
+    function sendStat(){
+        fetch(`/api/stat-info`,{
+            method: 'GET'
+          }).then((result)=>{
+              return result.json()
+          }).then((res)=>{
+
+          })
+    }
     return(
         <div className="delivery-meal">
             <Link href={'/'}>
