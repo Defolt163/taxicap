@@ -469,40 +469,40 @@ export default function NavMap2(){
     }
   }
 // Сокет
-  useEffect(() => {
-    if (userData && userData.DriverMode === 0) {
-      const handleOrderAcceptedByDriver = (userId) => {
-        if(userId === userData.UserId){
-          setHasAccepted(true)
-          getUsersAccountType()
-        }
-      }
-      const socket = socketRef.current
-      socket.on("orderUpdatedByDriver", handleOrderAcceptedByDriver)
-  
-      return () => {
-        socket.off("orderUpdatedByDriver", handleOrderAcceptedByDriver)
+useEffect(() => {
+  if (userData && userData.DriverMode === 0) {
+    const handleOrderAcceptedByDriver = (userId) => {
+      if(userId === userData.UserId){
+        setHasAccepted(true)
+        getUsersAccountType()
       }
     }
-    if (userData && userData.DriverMode === 1) {
-      const handleOrderAcceptedByPassenger = () => {
-        console.log("trrrrr")
-        if(orders.length <= 0){
-          fetchOrders()
-        }if(orders.length !== 0){
-          checkDriverOrders()
-        }
-      }
-      
-      const socket = socketRef.current
-  
-      socket.on("orderUpdatedByDriver", handleOrderAcceptedByPassenger)
-  
-      return () => {
-        socket.off("orderUpdatedByDriver", handleOrderAcceptedByPassenger)
+    const socket = socketRef.current
+    socket.on("orderUpdatedByDriver", handleOrderAcceptedByDriver)
+
+    return () => {
+      socket.off("orderUpdatedByDriver", handleOrderAcceptedByDriver)
+    }
+  }
+  if (userData && userData.DriverMode === 1) {
+    const handleOrderAcceptedByPassenger = () => {
+      console.log("trrrrr")
+      if(orders.length <= 0){
+        fetchOrders()
+      }if(orders.length !== 0){
+        checkDriverOrders()
       }
     }
-  })
+    
+    const socket = socketRef.current
+
+    socket.on("orderUpdatedByDriver", handleOrderAcceptedByPassenger)
+
+    return () => {
+      socket.off("orderUpdatedByDriver", handleOrderAcceptedByPassenger)
+    }
+  }
+})
 
   // Завершение заказа
   function orderCompletion(){
