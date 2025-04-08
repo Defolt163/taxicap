@@ -28,7 +28,8 @@ export default function AppLayout({ children }) {
     }
   }, []) */
   // Установка куки с localstorage
-  function setCookie(name, value) {
+  // закоменчено внизу
+  /* function setCookie(name, value) {
     let expires = ""
     let date = new Date()
     date.setTime(date.getTime() + (7 * 24 * 60 * 60 * 1000))
@@ -93,7 +94,7 @@ export default function AppLayout({ children }) {
   }
   useEffect(()=>{
     getUsersAccountType()
-  }, [sessionKey])
+  }, [sessionKey]) */
 
   useEffect(() => {
       setTimeout(() => {

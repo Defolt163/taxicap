@@ -1,19 +1,19 @@
-const mysql = require('mysql2')
+import mysql from 'mysql2/promise';
 
 // Получение данных из файла окружения
 const { DB_HOST, DB_USER, DB_PASSWORD, DB_NAME } = process.env;
 
 // Создание подключения к базе данных
-const accountDB = mysql.createConnection({
+const accountDB = mysql.createPool({
   host: DB_HOST,
   user: DB_USER,
   password: DB_PASSWORD,
   database: DB_NAME,
   connectionLimit: 6
 });
+export default accountDB;
 
-
-accountDB.connect(err =>{
+/* accountDB.connect(err =>{
     if(err){
         console.error("Ошибка подключения к бд", err)
     } else {
@@ -21,4 +21,4 @@ accountDB.connect(err =>{
     }
 })
 
-module.exports = accountDB
+module.exports = accountDB */

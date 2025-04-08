@@ -84,35 +84,6 @@ export default function NavMap2(){
     }
   }, [])
 
-  // Получение статуса аккаунта
-  
-  async function getUsersAccountType(){
-    if(sessionKey !== ''){
-      fetch(`/api/account-data/user-data?sessionId=${sessionKey}`,{
-        method: 'GET'
-      }).then((result)=>{
-          return result.json()
-      }).then((res)=>{
-        console.log("DATA RES", res)
-        if(res.length !== 0){
-          setUserData(res[0])
-        }else{
-          router.push('/mobile/sign-in')
-        }
-      })
-      .catch(error =>{
-        console.log("ОШИБКАА", error)
-        router.push('/mobile/sign-in')
-      })
-    }
-  }
-
-  useEffect(()=>{
-    if (sessionKey) {
-      getUsersAccountType()
-    }
-  }, [sessionKey])
-
   const [addressFrom, setAddressFrom] = useState("")
   const [addressTo, setAddress] = useState("")
 

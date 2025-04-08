@@ -13,10 +13,18 @@ import {
 
 
 export default function SignInPage(){
+    function setCookie(name, value, days) {
+        const expires = new Date();
+        expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+        const expiresStr = "expires=" + expires.toUTCString();
+        document.cookie = `${name}=${value}; ${expiresStr}; path=/`;
+    }
+
     const router = useRouter()
     const [step, setStep] = useState(0)
     const [togglerPopup, setTogglerPopup] = useState('')
     const [togglerConfirmEmailPopup, setTogglerConfirmEmailPopup] = useState('')
+    const [togglerPopupInvalidEmail, setTogglerPopupInvalidEmail] = useState('')
     function handleNextStep(){
         setStep(step + 1)
     }
@@ -32,70 +40,69 @@ export default function SignInPage(){
     const [inputConfirmPassword, setInputConfirmPassword] = useState('')
     const [errorConfirmEmail, setErrorConfirmEmail] = useState('')
 
-    //Получение и сверка всех UserEmail
-    const [togglerPopupInvalidEmail, setTogglerPopupInvalidEmail] = useState('')
-    async function getUsersEmail(){
-        await fetch(`/api/account-data/emails?inputEmail=${inputEmail}`,{
-            method: 'GET'
-        }).then((result)=>{
-            console.log("OKAY")
-            return result.json()
-        }).then((data)=>{
-            if(inputEmail === data[0]){
-                setTogglerPopupInvalidEmail('popup-open')
-            }else{
-                setTogglerConfirmEmailPopup("popup-open")
-                sendMessage()
-            }
-        })
-        .catch(error =>{
-            console.log(error)
-        })
-    }
-
-
+    async function getUsersEmail() {
+        try {
+          const response = await fetch(`/api/account-data/emails?inputEmail=${inputEmail}`, {
+            method: 'GET',
+          });
+      
+          const data = await response.json();
+      
+          if (response.status === 400) {
+            // Email уже существует
+            setTogglerPopupInvalidEmail('popup-open');
+          } else if (response.status === 200) {
+            // Email свободен
+            setTogglerConfirmEmailPopup('popup-open');
+            sendMessage();
+          } else {
+            // Нестандартный ответ
+            console.warn("Неожиданный статус:", response.status);
+          }
+      
+        } catch (error) {
+          console.error("Ошибка запроса:", error);
+        }
+      }
+      
     // Регистрация
     async function handleSubmit() {
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-        let sessionId = ''
-        for (let i = 0; i < 39; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length)
-        sessionId += characters[randomIndex]
+        try {
+            const response = await fetch('/api/account-data/sign-up', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ inputName, inputEmail }),
+            });
+
+            const res = await response.json();
+            if (response.ok) {
+                alert('Успешная регистрация');
+                setCookie('token', res.token, 7);
+                router.push('/dashboard')
+            } else if (response.status == 400 ){
+                setTogglerPopupInvalidEmail('popup-open')
+            } 
+            else {
+                alert(res.message);
+            }
+        } catch (error) {
+            alert('Ошибка: Сервер недоступен.');
         }
-        console.log(sessionId)
-        setCookie('UserData', JSON.stringify({
-                session_key: sessionId
-            }), 30)
-        await fetch('/api/account-data/sign-up', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId, inputName, inputEmail, inputPassword, inputConfirmPassword }),
-        })
-        .then(() =>{
-            console.log("Register Complete")
-        }).catch(error=>{
-            console.log("Error", error)
-            alert("Произошла ошибка регистрации, повторите снова")
-        })
-    }
-    // Запись SessionId в куки
-    function setCookie(name, value) {
-        let expires = ""
-        let date = new Date()
-        date.setTime(date.getTime() + (7 * 24 * 60 * 60 * 1000))
-        expires = " expires=" + date.toUTCString()
-    
-        document.cookie = name + "=" + decodeURIComponent(value) + expires + " path=/"
     }
 
+
     // Отправка кода на Email
-    const [emailCode, setEmailCode] = useState(0)
-    useEffect(()=>{
+    //const [emailCode, setEmailCode] = useState(0)
+    const emailCode = 1111
+    /* useEffect(()=>{
         setEmailCode(Math.floor(1000 + Math.random() * 9000))
-    },[])
+    },[]) */
     const [emailConfirmed, setEmailConfirmed] = useState(false)
     function sendMessage(){
-        emailjs.send("service_taxicap", "template_rkv2tvg", {
+        alert("OK")
+        /* emailjs.send("service_taxicap", "template_rkv2tvg", {
             'message': `${emailCode}`, 
             'email-to': `${inputEmail}`
         }, "L1XK15ZnEN_oq838c")
@@ -103,7 +110,7 @@ export default function SignInPage(){
             console.log(result)
         }, (error) => {
             console.log(error)
-        })
+        }) */
     }
 
     useEffect(()=>{
