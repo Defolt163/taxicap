@@ -6,11 +6,11 @@ const SECRET_KEY = process.env.JWT_SECRET_KEY; // Секрет для JWT
 
 export async function POST(req) {
     try {
-        const { email, password } = await req.json();
+        const { email } = await req.json();
 
         // Проверка пользователя
         console.log('Получен логин:', email);
-        const [rows] = await pool.query('SELECT * FROM users WHERE UserEmail = ?', [email]);
+        const [rows] = await pool.query('SELECT * FROM accounts WHERE UserEmail = ?', [email]);
 
         if (rows.length === 0) {
             console.log('Пользователь не найден');
@@ -24,15 +24,15 @@ export async function POST(req) {
         console.log('Найден пользователь:', user);
 
         // Проверка пароля
-        const isMatch = await bcrypt.compare(password, user.UserPassword)
+        //const isMatch = await bcrypt.compare(password, user.UserPassword)
 
-        if (!isMatch) {
+        /* if (!isMatch) {
             console.log('Неверный пароль');
             return new Response(
                 JSON.stringify({ message: 'Неверный пароль' }),
                 { status: 401 }
             );
-        }
+        } */
 
         // Генерация JWT
         const token = jwt.sign(
@@ -69,14 +69,23 @@ async function getUserFromToken(token) {
 
         const userId = decoded.id;
 
-        const [rows] = await pool.query('SELECT UserId, UserName, UserEmail, UserRole FROM users WHERE UserId = ?', [userId]);
+        const [rows] = await pool.query('SELECT * FROM accounts WHERE UserId = ?', [userId]);
         console.log('Результаты запроса в базу данных:', rows);
         const newToken = jwt.sign(
             {
                 id: rows[0].UserId,
                 name: rows[0].UserName,
                 email: rows[0].UserEmail,
-                role: rows[0].UserRole,
+                phone: rows[0].UserPhone,
+                order: rows[0].ActiveOrder,
+                birthday: rows[0].UserBirthday,
+                image: rows[0].UserImage,
+                car: {
+                    brand: rows[0].VehicleBrand,
+                    model: rows[0].VehicleModel, 
+                    color: rows[0].VehicleColor,
+                    number: rows[0].VehicleNumber,
+                },
             },
             SECRET_KEY,
             { expiresIn: '7d' }

@@ -37,21 +37,7 @@ export default function NavMap2(){
   const [sessionKey, setSessionKey] = useState('')
   const [userData, setUserData] = useState([])
   const [driverPos, setDriverPos] = useState([])
-  function myHandler() {
-    if(sessionKey === ''){
-      const cookieValue = Cookies.get('UserData')
-      if (cookieValue) {
-          try {
-              const userData = JSON.parse(cookieValue)
-              setSessionKey(userData.session_key)
-          } catch (error) {
-              console.error("Ошибка при парсинге данных пользователя из cookie:", error)
-          }
-      } else {
-          router.push('/mobile/sign-in')
-      }
-    }
-  }
+
   const [mapInfo, setMapInfo] = useState([])
   useEffect(()=>{
     fetch('/api/mapGl/getMap',{
@@ -63,10 +49,6 @@ export default function NavMap2(){
       setMapInfo(res.result)
     })
   },[])
-  
-  useEffect(()=>{
-      myHandler()
-  }, [])
   
   // Открытие веб сокета
   /* const [socket, setSocket] = useState(null)

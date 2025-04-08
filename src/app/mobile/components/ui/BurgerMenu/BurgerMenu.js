@@ -15,25 +15,6 @@ export default function BurgerMenu(){
     // Получение sessionId из кук
     const [sessionKey, setSessionKey] = useState('')
 
-    function myHandler() {
-        if(sessionKey === ''){
-            const cookieValue = Cookies.get('UserData');
-            if (cookieValue) {
-                try {
-                    const userData = JSON.parse(cookieValue);
-                    setSessionKey(userData.session_key);
-                } catch (error) {
-                    console.error("Ошибка при парсинге данных пользователя из cookie:", error);
-                }
-            } else {
-                router.push('/mobile/sign-in')
-            }
-        }
-    }
-    useEffect(()=>{
-        myHandler()
-    }, [])
-
     //Получение и сверка всех UserEmail
     const [userName, setUserName] = useState('')
     const [userData, setUserData] = useState([])

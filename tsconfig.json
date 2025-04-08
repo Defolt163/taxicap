@@ -2,7 +2,9 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     },
     "lib": [
       "dom",
@@ -24,7 +26,8 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "target": "ES2017"
   },
   "include": [
     "next-env.d.ts",
@@ -33,8 +36,11 @@
     "**/*.tsx",
     "src/app/api/**/*.ts",
     "src/app/api/**/**/*.ts",
-    "src/app/api/**/**/**/*.ts", "src/app/api/account-data/sign-in/route.js", "src/app/api/account-data/emails/route.js", "src/app/api/account-data/sign-up/route.js",
-    ],
+    "src/app/api/**/**/**/*.ts",
+    "src/app/api/account-data/sign-in/route.js",
+    "src/app/api/account-data/emails/route.js",
+    "src/app/api/account-data/sign-up/route.js"
+  ],
   "exclude": [
     "node_modules"
   ]
