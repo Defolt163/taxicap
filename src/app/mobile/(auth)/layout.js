@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function LoginLayout({ children }) {
-    const router = useRouter()
+    /* const router = useRouter()
 
     // Получение sessionId из кук
     const [sessionKey, setSessionKey] = useState('')
@@ -62,7 +62,7 @@ export default function LoginLayout({ children }) {
     }
     useEffect(()=>{
         getUsersAccountType()
-    }, [sessionKey])
+    }, [sessionKey]) */
     return (
           <html lang="ru">
             <body>

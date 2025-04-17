@@ -1,4 +1,4 @@
-"use client";
+/* "use client";
 
 import { usePathname, useRouter } from "next/navigation";
 import React, { createContext, useContext, useEffect, useState } from "react";
@@ -27,7 +27,7 @@ export function DataProvider({ children }) {
     function fetchUserData() {
         const token = getCookie('token'); // Получаем токен из куки
     
-        return fetch('/api/login', {
+        return fetch('/api/account-data/sign-in', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -36,9 +36,9 @@ export function DataProvider({ children }) {
         })
         .then((response) => {
             if (!response.ok) { 
-                if (userPath.startsWith('/dashboard')) {
+                if (userPath.startsWith('/mobile/general')) {
                     if (response.status === 401) {
-                        router.push('/login');
+                        router.push('/mobile/sign-in');
                     }
                 }
                 setCookie('token', 'notAuth', 7)
@@ -69,4 +69,4 @@ export function DataProvider({ children }) {
 
 export function useData() {
     return useContext(DataContext);
-}
+} */

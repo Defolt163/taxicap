@@ -12,24 +12,23 @@ import {
 export default function SignInPage(){
     const router = useRouter()
     const [inputEmail, setInputEmail] = useState('')
-    const [emailCode, setEmailCode] = useState(0)
+    //const [emailCode, setEmailCode] = useState(0)
 
     // Установка куки
-    function setCookie(name, value) {
-        let expires = ""
-        let date = new Date()
-        date.setTime(date.getTime() + (7 * 24 * 60 * 60 * 1000))
-        expires = "; expires=" + date.toUTCString()
-    
-        document.cookie = name + "=" + decodeURIComponent(value) + expires + "; path=/"
-        localStorage.setItem('accountSessionId', value)
+    function setCookie(name, value, days) {
+        const expires = new Date();
+        expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+        const expiresStr = "expires=" + expires.toUTCString();
+        document.cookie = `${name}=${value}; ${expiresStr}; path=/`;
     }
 
     useEffect(()=>{
-        setEmailCode(Math.floor(1000 + Math.random() * 9000))
+        //setEmailCode(Math.floor(1000 + Math.random() * 9000))
     },[])
+    const emailCode = 1111
     function sendMessage(){
-        emailjs.send("service_taxicap", "template_rkv2tvg", {
+        setTogglerSendEmail('popup-open')
+        /* emailjs.send("service_taxicap", "template_rkv2tvg", {
             'message': `${emailCode}`, 
             'email-to': `${inputEmail}`
         }, "L1XK15ZnEN_oq838c")
@@ -37,7 +36,29 @@ export default function SignInPage(){
             console.log(result);
         }, (error) => {
             console.error(error);
-        });
+        }); */
+    }
+    async function SignIn(){
+        try {
+            const response = await fetch('/api/account-data/sign-in', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email: inputEmail }),
+            });
+    
+            const res = await response.json();
+    
+            if (response.ok) {
+                setCookie('token', res.token, 7);
+                router.push('/mobile/general')
+            } else {
+                alert(res.message);
+            }
+        } catch (error) {
+            alert(error)
+        }
     }
 
 
@@ -46,46 +67,22 @@ export default function SignInPage(){
     const [inputPasswordCode, setInputPasswordCode] = useState('') // Код подтверждения
     const [errorConfirmEmail, setErrorConfirmEmail] = useState('') // Сообщение об ошибке кода
     async function getUsersEmail(){
-        await fetch(`/api/account-data/emails?inputEmail=${inputEmail}`,{
-            method: 'GET'
-        }).then((result)=>{
-            console.log("OKAY")
-            return result.json()
-        }).then((data)=>{
-            if(inputEmail === data[0]){
+        try{
+            const response = await fetch(`/api/account-data/emails?inputEmail=${inputEmail}`, {
+                method: 'GET'
+            })
+            const res = await response.json()
+            if(response.status == 400){
                 sendMessage()
-                setTogglerSendEmail('popup-open')
-            }else{
+            } else {
                 setTogglerPopup('popup-open')
             }
-        })
-        .catch(error =>{
-            console.log(error)
-        })
-    }
-    async function updateSessionId(){
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let sessionId = '';
-        for (let i = 0; i < 39; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        sessionId += characters[randomIndex];
         }
-        console.log(sessionId)
-        setCookie('UserData', JSON.stringify({
-                session_key: sessionId
-            }), 30);
-        await fetch(`/api/account-data/sign-in?UserEmail=${inputEmail}`,{
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ "UserSessionId": sessionId }),
-        }).then(()=>{
-            console.log("Logged!")
-            router.push('/mobile/general')
-        })
-        .catch(error =>{
-            console.log(error)
-        })
+        catch{
+            alert("Ошибка сервера")
+        } 
     }
+    
     return(
         <div className="Authentication">
             <div className="container">
@@ -127,9 +124,9 @@ export default function SignInPage(){
                                 </InputOTPGroup>
                             </InputOTP>
                             <h4 className="popup-input-error__text popup-input-error__text_message">{errorConfirmEmail}</h4>
-                        <div style={{marginTop: '10px'}} className='Button PopupButton' 
-                            onClick={()=>{inputPasswordCode.trim() === emailCode.toString().trim() ? 
-                            [setTogglerSendEmail(""), updateSessionId()] : setErrorConfirmEmail("Неверный код")}}>Войти</div>
+                            <div style={{marginTop: '10px'}} className='Button PopupButton' 
+                                onClick={()=>{inputPasswordCode.trim() === emailCode.toString().trim() ? 
+                                [SignIn()] : setErrorConfirmEmail("Неверный код")}}>Войти</div>
                         </div>
                         <div className={`popup-background ${togglerSendEmail}`}></div>
                     </>

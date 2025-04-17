@@ -1,8 +1,27 @@
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
+import { NextResponse } from 'next/server';
 import pool from '../../accountDB';
 
 const SECRET_KEY = process.env.JWT_SECRET_KEY; // Секрет для JWT
+
+// Шифрование
+
+const DATA_SECRET_KEY = process.env.DATA_SECRET_KEY /* '16cf126a9dc4e39e405a03ad0fb2f31d91f6b73342c7d7647772e104aa8d7e39'; */ // Ключ для генерации IV
+const DataBufferKey = Buffer.from(DATA_SECRET_KEY, 'hex');
+const ALGORITHM = 'aes-256-cbc'; // Алгоритм для симметричного шифрования
+const IV_LENGTH = 16; // Длина вектора инициализации
+// Функция для генерации случайного IV
+function generateIV() {
+    return crypto.randomBytes(IV_LENGTH);
+}
+function encryptData(data) {
+    const iv = generateIV(); // Генерация случайного IV
+    const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(DataBufferKey, 'utf-8'), iv);
+    let encrypted = cipher.update(data, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    return { iv: iv.toString('hex'), encryptedData: encrypted };
+}
 
 export async function POST(req) {
     try {
@@ -10,7 +29,7 @@ export async function POST(req) {
 
         // Проверка пользователя
         console.log('Получен логин:', email);
-        const [rows] = await pool.query('SELECT * FROM accounts WHERE UserEmail = ?', [email]);
+        const [rows] = await pool.query('SELECT UserId, UserEmail FROM accounts WHERE UserEmail = ?', [email]);
 
         if (rows.length === 0) {
             console.log('Пользователь не найден');
@@ -37,18 +56,20 @@ export async function POST(req) {
         // Генерация JWT
         const token = jwt.sign(
             {
-                id: user.UserId,
-                name: user.UserName,
-                email: user.UserEmail,
-                role: user.UserRole,
+                id: rows[0].UserId,
+                email: rows[0].UserEmail
             },
             SECRET_KEY,
             { expiresIn: '7d' }
         );
         console.log('Сгенерирован токен:', token);
+        // Преобразуем данные из базы в строку
+        const dataToEncrypt = JSON.stringify(rows);
+        // Шифруем данные
+        const { iv, encryptedData } = encryptData(dataToEncrypt);
 
         return new Response(
-            JSON.stringify({ token }),
+            JSON.stringify({ token, encryptedData, iv  }),
             { status: 200 }
         );
     } catch (err) {
@@ -74,18 +95,7 @@ async function getUserFromToken(token) {
         const newToken = jwt.sign(
             {
                 id: rows[0].UserId,
-                name: rows[0].UserName,
                 email: rows[0].UserEmail,
-                phone: rows[0].UserPhone,
-                order: rows[0].ActiveOrder,
-                birthday: rows[0].UserBirthday,
-                image: rows[0].UserImage,
-                car: {
-                    brand: rows[0].VehicleBrand,
-                    model: rows[0].VehicleModel, 
-                    color: rows[0].VehicleColor,
-                    number: rows[0].VehicleNumber,
-                },
             },
             SECRET_KEY,
             { expiresIn: '7d' }
@@ -100,9 +110,13 @@ async function getUserFromToken(token) {
             JSON.stringify({ message: 'Готово', token }),
             { status: 201 }
         ); */
-        const sanitizedRows = rows.map(({ UserId, ...rest }) => rest);
-
-        return { newToken, rows: sanitizedRows };
+        //const sanitizedRows = rows.map(({ UserId, ...rest }) => rest);
+        // Преобразуем данные из базы в строку
+        const dataToEncrypt = JSON.stringify(rows);
+        // Шифруем данные
+        const { iv, encryptedData } = encryptData(dataToEncrypt);
+        
+        return { newToken, user: {iv, encryptedData} };
     } catch (error) {
         console.error('Ошибка при декодировании токена или запросе пользователя:', error);
         throw new Error('Invalid token or user not found');
