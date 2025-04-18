@@ -10,10 +10,17 @@ import passengerImg from '/public/image/startpage/passenger.png'
 import passenger2Img from '/public/image/startpage/passenger2.png'
 
 export default function Home() {
+  function setCookie(name, value, days) {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+    const expiresStr = "expires=" + expires.toUTCString();
+    document.cookie = `${name}=${value}; ${expiresStr}; path=/`;
+  }
   const [step, setStep] = useState(0)
   function handleNextStep(){
     setStep(step + 1)
   }
+
 
   const renderStepContent = () => {
       switch (step) {
@@ -68,7 +75,7 @@ export default function Home() {
                   <h3>Нажимая продолжить, вы соглашаетесь <br/> <Link href='/privacy-policy'>с условиями пользования и конфидентифициальности</Link></h3>
                 </div>
                 <div className='reels-other'>
-                  <div className='Button' onClick={()=>{handleNextStep()}}>Продолжить</div>
+                  <div className='Button' onClick={()=>{setCookie('firstScreen', true, 999); handleNextStep()}}>Продолжить</div>
                 </div>
               </div>
             </div>

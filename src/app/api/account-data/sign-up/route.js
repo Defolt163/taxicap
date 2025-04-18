@@ -27,6 +27,10 @@ export async function POST(req) {
           // Получение сохраненного пользователя
           const [newRows] = await accountDB.query('SELECT * FROM accounts WHERE UserEmail = ?', [inputEmail]);
           const user = newRows[0];
+          await accountDB.query(
+            'INSERT INTO userphoto (User) VALUES (?)',
+            [user.UserId]
+          )
 
           // Генерация токена
           const token = jwt.sign(

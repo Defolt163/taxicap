@@ -38,7 +38,7 @@ export default function BurgerMenu(){
                     <h3 className='BurgerMenuAccountName'>{userData && userData.UserName}</h3>
                 </div>
                 <ul className='BurgerMenuItems'>
-                    <li className='BurgerMenuItem'><Link href="/mobile/my-account">Мой аккаунт</Link></li>
+                    <li className='BurgerMenuItem'><Link href="/mobile/general/my-account">Мой аккаунт</Link></li>
                     <li className='BurgerMenuItem'><Link href="/mobile/user-agreement">Пользовательское соглашение</Link></li>
                     <li className='BurgerMenuItem'><Link href="/mobile/confidentiality">Конфиденциальность</Link></li>
                     <li className='BurgerMenuItem'><Link href="/mobile/feedback">Сообщить о проблеме</Link></li>

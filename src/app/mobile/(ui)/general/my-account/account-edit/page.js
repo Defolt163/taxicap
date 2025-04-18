@@ -1,58 +1,57 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
-import PagesHeader from '../../../components/PagesHeader/PagesHeader'
+import PagesHeader from '../../../../components/PagesHeader/PagesHeader'
 import './style.sass'
 import Cookies from 'js-cookie'
 import Image from 'next/image'
 import cameraIco from '/public/ico/camera.svg'
 import emailjs from '@emailjs/browser'
-export default function EditAccountPage(){
-    // Получение sessionId из кук
-    const [sessionKey, setSessionKey] = useState('')
-    function myHandler() {
-        const cookieValue = Cookies.get('UserData') // Замените cookieName на имя необходимой вам cookie
-        const userData = JSON.parse(cookieValue)
-        setSessionKey(userData.session_key)
-      }
-    useEffect(()=>{
-        myHandler()
-    }, [])
+import { useData } from '@/app/mobile/components/DataContext'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { toast } from "sonner"
+import { Toaster } from '@/components/ui/sonner'
 
-    //Получение и сверка всех UserEmail
-    const [userData, setUserData] = useState([])
-    const [userPhone, setUserPhone] = useState('')
-    function getUsersEmail(){
-        if(sessionKey !== ''){
-            fetch(`/api/account-data/user-data?sessionId=${sessionKey}`,{
-                method: 'GET'
-            }).then((result)=>{
-                console.log("OKAY")
-                return result.json()
-            }).then((res)=>{
-                if(userData.length <= 0){
-                    setUserData(res[0])
-                    setUserPhone(res[0].UserPhone)
-                }
-            })
-            .catch(error =>{
-                console.log(error)
+export default function EditAccountPage(){
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null; // Если куки нет
+    }
+    const { userData, setUserData, loadingStatus } = useData()
+    useEffect(()=>{
+        if(userData.Approved == 3){
+            toast.warning("Ваше фото находится на модерации", {
+                duration: Infinity,
             })
         }
-    }
-    useEffect(()=>{
-        getUsersEmail()
-    }, [sessionKey])
-    useEffect(()=>{
-        console.log(userData)
     }, [userData])
     // Загрузка фото профиля
     const [selectedFile, setSelectedFile] = useState(null)
 
-    const handleFileChange = (event) => {
+    /* const handleFileChange = (event) => {
         setSelectedFile(event.target.files[0])
-    }
+    } */
+    const [filePreviewUrl, setFilePreviewUrl] = useState(null);
+
+    const handleFileChange = (event) => {
+        const file = event.target.files[0];
+        setSelectedFile(file);
+
+        // Создаем URL для предварительного просмотра
+        if (file) {
+            const previewUrl = URL.createObjectURL(file);
+            setFilePreviewUrl(previewUrl);
+        }
+    };
+
+    const handleRemoveFile = () => {
+        setSelectedFile(null);
+        setFilePreviewUrl(null);
+    };
 
     const handleUpload = async () => {
+        const token = getCookie('token');
         if (!selectedFile) {
             alert("Выберите файл для загрузки")
             return
@@ -60,18 +59,16 @@ export default function EditAccountPage(){
 
         const formData = new FormData()
         formData.append("file", selectedFile)
-        formData.append("userData", JSON.stringify(userData.UserId))
+        //formData.append("userData", JSON.stringify(userData.UserId))
 
         try {
         const response = await fetch("/api/account-data/upload-user", {
             method: "POST",
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
             body: formData,
         })
-
-        const data = await response.json()
-        console.log(data)
-        getUsersEmail()
-        window.location.reload()
         } catch (error) {
         console.error("Ошибка при загрузке файла:", error)
         }
@@ -79,21 +76,24 @@ export default function EditAccountPage(){
 
     const inputFileRef = useRef(null)
     const handleEditPhotoClick = () => {
-        // Программное нажатие на кнопку выбора файла
         inputFileRef.current.click()
     }
 
     // Изменение данных
-    const [editName, setEditName] = useState('')
-    const [editPhone, setEditPhone] = useState('')
-    const [editEmail, setEditEmail] = useState('')
+    const [editName, setEditName] = useState(userData && userData.UserName)
+    const [editPhone, setEditPhone] = useState(userData && userData.UserPhone.toString().substring(1))
+    const [editEmail, setEditEmail] = useState(userData && userData.UserEmail)
 
     const [togglerChangingPopup, setTogglerChangingPopup] = useState('')
 
-    function editInfoProfile(){
-        fetch(`/api/account-data/edit-account-data?UserId=${userData.UserId}`, {
+    async function editInfoProfile(){
+        const token = getCookie('token');
+        await fetch(`/api/account-data/edit-account-data`, {
             method: "PUT",
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
             body: JSON.stringify({
                 "UserName": editName, 
                 "UserPhone": "8"+editPhone,
@@ -132,25 +132,40 @@ export default function EditAccountPage(){
         })
     }
 
+    if (loadingStatus) {
+        return(
+        <>
+            <div className={`popup-background popup-open`}></div>
+            <div className={`popup popup-input-error popup-open`}>
+                <h3 className='popup-input-error__text'>Загрузка</h3>
+            </div>
+            <div className={`popup-background popup-open`}></div>
+        </>)
+    }
     return(
         <>
             <div className='edit-account-page'>
                 <div className='container'>
                     <div className='edit-account-page_wrapper'>
-                        <PagesHeader ReturnBtn="/mobile/my-account" PageHeader="Редактирование"/>
+                        <PagesHeader ReturnBtn="../my-account" PageHeader="Редактирование"/>
                         <div className='loader-block'>
                             <input type="file" accept="image/jpeg, image/png" ref={inputFileRef} onChange={handleFileChange} />
                         </div>
                         <div className='edit-block'>
-                            <div style={{backgroundImage: `url(${userData.UserImage === null ? '/ico/man-user.svg' : userData.UserImage})`}} className='user-photo'>
+                            {/* <div style={{backgroundImage: `url(${userData && userData.UserImage == null ? '/ico/man-user.svg' : userData.UserImage})`}} className='user-photo'>
                                 <div className='edit-photo'>
                                     <Image src={cameraIco} className='edit-photo_ico' onClick={handleEditPhotoClick}></Image>
                                 </div>
-                            </div>
-                            {selectedFile && (<button className={`Button upload-btn`} onClick={handleUpload}>Загрузить</button>)}
-                            <input className='input-field' placeholder={userData.UserName} value={editName} onChange={(e)=>{setEditName(e.target.value)}}/>
+                            </div> */}
+                            <Avatar className='user-photo w-3/4 h-auto'>
+                                <AvatarImage  className='object-cover' src={userData && userData.UserImage || filePreviewUrl} />
+                                <AvatarFallback className='aspect-square text-7xl'>{userData && userData.UserName.slice(0,1)}</AvatarFallback>
+                            </Avatar>
+                            <h3 className='underline decoration-solid' onClick={handleEditPhotoClick}>Изменить фото</h3>
+                            {selectedFile && (<button className={`Button upload-btn`} onClick={handleUpload}>Загрузить фото</button>)}
+                            <input className='input-field' value={editName} onChange={(e)=>{setEditName(e.target.value)}}/>
                             <div className='input-field_phone'>
-                                <input className='input-field_phone__mask' placeholder={userPhone.toString().substring(1)} value={editPhone} 
+                                <input className='input-field_phone__mask' value={editPhone} 
                                     onChange={(e)=>{let inputValue = e.target.value
                                     if ( inputValue.startsWith("8") ||
                                         inputValue.startsWith("7") ||
@@ -160,15 +175,17 @@ export default function EditAccountPage(){
                                     }
                                     setEditPhone(inputValue)}}/>
                             </div>
-                            <input className='input-field' placeholder={userData.UserEmail} value={editEmail} onChange={(e)=>{setEditEmail(e.target.value)}}/>
+                            <input className='input-field' value={editEmail} onChange={(e)=>{setEditEmail(e.target.value)}}/>
                         </div>
-                        <div className='Button' onClick={()=>{
+                        {/* <div className='Button' onClick={()=>{
                             editEmail !== '' ? 
                             (editEmail === userData.UserEmail ? setTogglerPopupInvalidEmail('popup-open') : sendEmail()) :
-                            editPhone.length < 10 ? setTogglerPhoneNumberErrorPopup('popup-open') : editInfoProfile()}}>Сохранить</div>
+                            editPhone.length < 10 ? setTogglerPhoneNumberErrorPopup('popup-open') : editInfoProfile()}}>Сохранить</div> */}
+                        <div className='Button' onClick={()=>{editInfoProfile()}}>Сохранить</div>
                     </div>
                 </div>
             </div>
+            <Toaster visibleToasts={1}/>
             <>
                 <div className={`popup popup-input-error ${togglerPopupInvalidEmail}`}>
                     <h3 className='popup-input-error__text'>Эта электронная почта уже используется</h3>

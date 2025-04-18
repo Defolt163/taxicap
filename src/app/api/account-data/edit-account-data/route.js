@@ -1,7 +1,31 @@
 import { NextRequest, NextResponse } from "next/server"
-import db from '../../accountDB'
+import pool from '../../accountDB'
+import jwt from 'jsonwebtoken';
 
-export async function PUT(request: NextRequest) {
+const SECRET_KEY = process.env.JWT_SECRET_KEY; // Секрет для JWT
+
+export async function PUT(req) {
+  const token = req.headers.get('authorization')?.split(' ')[1];
+
+  if (!token) {
+      console.log('Токен не предоставлен');
+      return new Response(JSON.stringify({ message: 'Tокен не предоставлен' }), { status: 401 });
+  }
+
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+    const { UserName, UserPhone, UserEmail } = await req.json();
+    //console.log("USER", UserName, UserPhone, UserEmail)
+    pool.query(
+      'UPDATE accounts SET UserName = ?, UserPhone = ?, UserEmail = ? WHERE UserId = ?', [UserName, UserPhone, UserEmail, decoded.id]
+    );
+      return new Response({ status: 200 });
+  } catch (error) {
+      console.error('Ошибка при получении пользователя:', error.message);
+      return new Response(JSON.stringify(), { status: 401 });
+  }
+}
+/* export async function PUT(request: NextRequest) {
   try {
     if (request.method === 'PUT') {
       const url = new URL(request.url);
@@ -61,3 +85,4 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }
+ */

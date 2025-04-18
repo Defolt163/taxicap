@@ -1,6 +1,7 @@
-@import ../../../variables
+@import ../../../../variables
 .MyAccountPage
     padding-top: 20px
+    min-height: 100dvh
     .MyAccountPageAccount
         .AccountCard
             position: relative
@@ -12,6 +13,8 @@
             align-items: center
             text-decoration: none
             color: #000
+            &.VehicleCard
+                justify-content: space-between
             .AccountCardIco
                 margin-right: 10px
                 width: 60px
@@ -49,6 +52,15 @@
                     color: red
                     border-color: red
                     top: 50%
+            .AccountCardVehicleEdit
+                width: 30%
+                display: flex
+                flex-direction: column
+                align-items: flex-end
+                .Button
+                    width: max-content
+                    padding: 5px
+                    border-radius: 5px
         &.history
             margin-top: 15px
             .AccountCard

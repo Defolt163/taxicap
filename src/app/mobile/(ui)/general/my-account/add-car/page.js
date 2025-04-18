@@ -2,63 +2,66 @@
 import { useEffect, useState } from "react"
 import './style.sass'
 import Cookies from 'js-cookie'
-import PagesHeader from "../../../components/PagesHeader/PagesHeader"
+import PagesHeader from "../../../../components/PagesHeader/PagesHeader"
+import { useData } from '@/app/mobile/components/DataContext'
 
 export default function AddCarPage(){
-    // Получение sessionId из кук
-    const [sessionKey, setSessionKey] = useState('')
-    useEffect(()=>{
-        const cookieValue = Cookies.get('UserData') // Замените cookieName на имя необходимой вам cookie
-        const userData = JSON.parse(cookieValue)
-        setSessionKey(userData.session_key)
-    }, [])
-    const [userData, setUserData] = useState([])
-    useEffect(()=>{
-        if(sessionKey !== ''){
-            fetch(`http://localhost:3000/api/account-data/user-data?sessionId=${sessionKey}`,{
-                method: 'GET'
-            }).then((result)=>{
-                console.log("OKAY")
-                return result.json()
-            }).then((res)=>{
-                setUserData(res[0])
-            })
-            .catch(error =>{
-                console.log(error)
-            })
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null; // Если куки нет
+    }
+    const { userData, setUserData, loadingStatus } = useData()
+    const [togglerPopupLoadingData, setTogglerPopupLoadingData] = useState('popup-open')
+    useEffect(() => {
+        if (!loadingStatus) {
+          setTogglerPopupLoadingData('');
         }
-    }, [sessionKey])
+      }, [loadingStatus])
 
-    const [vehicleBrand, setVehicleBrand] = useState("")
-    const [vehicleModel, setVehicleModel] = useState("")
+    const [vehicleBrand, setVehicleBrand] = useState(userData && userData.VehicleBrand !== null ? userData.VehicleBrand : '')
+    const [vehicleModel, setVehicleModel] = useState(userData && userData.VehicleModel !== null ? userData.VehicleModel : '')
     const [vehicleColor, setVehicleColor] = useState("Black")
-    const [vehicleId, setVehicleId] = useState("")
+    const [vehicleId, setVehicleId] = useState(userData && userData.VehicleNumber !== null ? userData.VehicleNumber : '')
     const [togglerPopupChangeSuccess, setTogglerPopupChangeSuccess] = useState('')
     const [togglerPopupChangeError, setTogglerPopupChangeError] = useState('')
     const [togglerPopupInputError, setTogglerPopupInputError] = useState('')
 
-    function changeCar(){
+    async function changeCar(){
+        const token = getCookie('token');
         const allFieldsValid = ([vehicleBrand, vehicleModel, vehicleColor, vehicleId]
             .every(field => field !== '' && field !== null))
         const allFieldDatabase =([userData.VehicleBrand, userData.VehicleModel, userData.VehicleColor, userData.VehicleId]
             .every(field => field !== '' && field !== null)
         )
         if(allFieldsValid || allFieldDatabase){
-            fetch(`/api/account-data/change-car?sessionId=${sessionKey}`,{
-                method: "PUT",
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+            try{
+                setTogglerPopupLoadingData('popup-open')
+                const response = await fetch('/api/account-data/change-car', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
                     "VehicleBrand": vehicleBrand,
                     "VehicleModel": vehicleModel,
                     "VehicleColor": vehicleColor,
                     "VehicleNumber": vehicleId
                 })
-            }).then(()=>{
-                setTogglerPopupChangeSuccess('popup-open')
-            })
-            .catch(() => {
+                })
+                if(response.ok){
+                    setTogglerPopupLoadingData('')
+                    setTogglerPopupChangeSuccess('popup-open')
+                }
+                if(!response.ok){
+                    setTogglerPopupLoadingData('')
+                    setTogglerPopupChangeError('popup-open')
+                }
+            } catch (error){
                 setTogglerPopupChangeError('popup-open')
-            })
+            }
         }else{
             setTogglerPopupInputError('popup-open')
         }
@@ -68,7 +71,7 @@ export default function AddCarPage(){
         <>
             <div className="AddCarPage">
                 <div className="container">
-                    <PagesHeader ReturnBtn="/mobile/my-account" PageHeader={userData && userData.VehicleBrand === undefined ? "Добавить авто" : "Изменить авто"}/>
+                    <PagesHeader ReturnBtn="../my-account" PageHeader={userData && userData.VehicleBrand === null ? "Добавить авто" : "Изменить авто"}/>
                     <div className="GetStartedPageBlock">
                         <form className="GetStartedForm" id="tel">
                             <div className='GetStartedFormItem VehicleParams'>
@@ -76,8 +79,7 @@ export default function AddCarPage(){
                                 <input
                                 id="vehicle-brand"
                                 type="text"
-                                required={userData && userData.VehicleBrand === undefined}
-                                placeholder={userData && userData.VehicleBrand !== undefined ? userData.VehicleBrand : null}
+                                required={userData && userData.VehicleBrand === null}
                                 value={vehicleBrand}
                                 onChange={(e) => setVehicleBrand(e.target.value)}
                                 />
@@ -87,8 +89,7 @@ export default function AddCarPage(){
                                 <input
                                 id="vehicle-model"
                                 type="text"
-                                required={userData && userData.VehicleModel === undefined}
-                                placeholder={userData && userData.VehicleModel !== undefined ? userData.VehicleModel : null}
+                                required={userData && userData.VehicleModel === null}
                                 value={vehicleModel}
                                 onChange={(e) => setVehicleModel(e.target.value)}
                                 />
@@ -98,7 +99,7 @@ export default function AddCarPage(){
                                 <select
                                     id="vehicle-color"
                                     type="text"
-                                    required={userData && userData.VehicleColor === undefined}
+                                    required={userData && userData.VehicleColor === null}
                                     value={vehicleColor}
                                     onChange={(e) => setVehicleColor(e.target.value)}
                                 >
@@ -118,8 +119,7 @@ export default function AddCarPage(){
                                 <input
                                 id="vehicle-id"
                                 type="text"
-                                required={userData && userData.VehicleNumber === undefined}
-                                placeholder={userData && userData.VehicleNumber !== undefined ? userData.VehicleNumber : null}
+                                required={userData && userData.VehicleNumber === null}
                                 value={vehicleId}
                                 onChange={(e) => setVehicleId(e.target.value)}
                                 />
@@ -150,6 +150,13 @@ export default function AddCarPage(){
                 <div className='Button PopupButton' onClick={()=>{setTogglerPopupInputError('')}}>Закрыть</div>
             </div>
             <div className={`popup-background ${togglerPopupInputError}`}></div>
+            <>
+                <div className={`popup-background ${togglerPopupLoadingData}`}></div>
+                <div className={`popup popup-input-error ${togglerPopupLoadingData}`}>
+                    <h3 className='popup-input-error__text'>Загрузка</h3>
+                </div>
+                <div className={`popup-background ${togglerPopupLoadingData}`}></div>
+            </>
         </>
     )
 }

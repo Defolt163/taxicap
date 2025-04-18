@@ -10,6 +10,7 @@ export function DataProvider({ children }) {
     const router = useRouter()
     const userPath = usePathname()
     const [userData, setUserData] = useState(null);
+    const [loadingStatus, setLoadingStatus] = useState(true);
     
     function getCookie(name) {
         const value = `; ${document.cookie}`;
@@ -27,31 +28,40 @@ export function DataProvider({ children }) {
     // Функция для получения данных о пользователе
     async function fetchUserData() {
         const token = getCookie('token'); // Получаем токен из куки
-    
-        try{
-            const response = await fetch('/api/account-data/sign-in', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-            })
-            const result = await response.json();
-            if(!response.ok){
-                if (userPath.startsWith('/mobile/general')) {
-                    if (response.status === 401) {
-                        router.push('/mobile/sign-in');
+        const checkStartPage = getCookie('firstScreen');
+        if (token !== null && checkStartPage !== null){
+            try{
+                const response = await fetch('/api/account-data/sign-in', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                })
+                const result = await response.json();
+                if(!response.ok || response.status == 401 ){
+                    if (userPath.startsWith('/mobile/general')) {
+                        if (response.status === 401) {
+                            router.push('/mobile/sign-in');
+                        }
+                    }
+                    setCookie('token', 'notAuth', 7)
+                } else {
+                    console.log("Резул", result)
+                    setCookie('token', result.newToken, 7);
+                    decryptData(result.user.encryptedData, result.user.iv)
+                    setLoadingStatus(false)
+                    if (!userPath.startsWith('/mobile/general')){
+                        router.push('/mobile/general');
                     }
                 }
-                setCookie('token', 'notAuth', 7)
-            } else {
-                console.log("Резул", result)
-                setCookie('token', result.newToken, 7);
-                decryptData(result.user.encryptedData, result.user.iv)
-                router.push('/mobile/general');
+            } catch (error){
+                alert(`ошибка в контексте: ${error}`)
             }
-        } catch (error){
-            alert(error)
+        }else if (checkStartPage !== null && userPath.startsWith('/mobile/general')){
+            router.push('/mobile/sign-in');
+        }else{
+            router.push('/mobile/');
         }
     }
 
@@ -84,7 +94,7 @@ export function DataProvider({ children }) {
     }
     
     return (
-        <DataContext.Provider value={{ userData }}>
+        <DataContext.Provider value={{ userData, setUserData, loadingStatus }}>
             {children}
         </DataContext.Provider>
     );

@@ -1,11 +1,10 @@
-@import ../../../../variables
+@import ../../../../../variables
 .edit-account-page
     padding-top: 20px
     &_wrapper
         height: calc( 100vh - 30px )
         display: flex
         flex-direction: column
-        justify-content: space-between
         .loader-block
             display: none
         .edit-block
@@ -14,10 +13,7 @@
             align-items: center
             .user-photo
                 position: relative
-                width: 50%
-                padding-bottom: 50%
                 background-color: #fff
-                border-radius: 50%
                 background-position: center
                 background-size: cover
                 background-repeat: no-repeat
@@ -43,11 +39,11 @@
                 position: relative
                 &:nth-of-type(1)
                     margin-top: 15px
-                    background: url("../../../../../../public/ico/user-regular.svg") no-repeat left
+                    background: url("../../../../../../../public/ico/user-regular.svg") no-repeat left
                     background-size: 20px
                     background-position: 20px
                 &:nth-of-type(2)
-                    background: url("../../../../../../public/ico/envelope-regular.svg") no-repeat left
+                    background: url("../../../../../../../public/ico/envelope-regular.svg") no-repeat left
                     background-size: 20px
                     background-position: 20px
             .input-field_phone
@@ -55,7 +51,7 @@
                 margin-bottom: 20px
                 width: 100%
                 .input-field_phone__mask
-                    background: url("../../../../../../public/ico/phone-solid.svg") no-repeat left
+                    background: url("../../../../../../../public/ico/phone-solid.svg") no-repeat left
                     background-size: 20px
                     background-position: 20px
                     padding-left: 73px

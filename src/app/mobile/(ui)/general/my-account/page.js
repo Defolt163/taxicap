@@ -5,68 +5,87 @@ import Image from 'next/image'
 import userIco from '/public/ico/man-user.svg'
 import { useEffect, useState } from 'react'
 import Cookies from 'js-cookie'
-import PagesHeader from '../../components/PagesHeader/PagesHeader'
+import PagesHeader from '../../../components/PagesHeader/PagesHeader'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useData } from '../../components/DataContext'
+import { useData } from '../../../components/DataContext'
+
 export default function MyAccountPage(){
-    const { userData } = useData()
-    //Получение и сверка всех UserEmail
-    //const [userData, setUserData] = useState([])
-    const [userName, setUserName] = useState('')
-    const [userPhone, setUserPhone] = useState('')
+    const { userData, setUserData, loadingStatus } = useData()
+    // Модальные окна
     const [togglerPopupLoadingData, setTogglerPopupLoadingData] = useState('popup-open')
-    //setUserName(res[0].UserName.split(' ')[0])
-    //setUserData(res[0])
-      //          setUserPhone(res[0].UserPhone)
-       //         setTogglerPopupLoadingData('')
-        //        setDriverMode(res[0].DriverMode)
-
-    // Обновление статуса аккаунта
-    const [driverMode, setDriverMode] = useState(0)
-    /* function updateDriverMode(){
-        console.log(sessionKey)
-        if(sessionKey !== '' && userData.length !== 0){
-            fetch(`/api/account-data/change-driver-mode?UserSessionId=${sessionKey}`,{
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ "DriverMode": driverMode }),
-            }).then(()=>{
-                console.log("Changed")
-                getUsersEmail()
-            })
-            .catch(error =>{
-                console.log(error)
-            })
-        }
-    }
-    useEffect(()=>{
-        updateDriverMode()
-    },[driverMode]) */
-
     const [togglerPopupDeleteCar, setTogglerPopupDeleteCar] = useState('')
     const [togglerPopupSuccessDeleteCar, setTogglerPopupSuccessDeleteCar] = useState('')
     const [togglerPopupErrorDeleteCar, setTogglerPopupErrorDeleteCar] = useState('')
-
-    /* function deleteCar(){
-        if(sessionKey !== ''){
-            fetch(`/api/account-data/change-car/delete-car?sessionId=${sessionKey}`,{
-                method: "PUT",
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    "VehicleBrand": null,
-                    "VehicleModel": null,
-                    "VehicleColor": null,
-                    "VehicleNumber": null
-                })
-            }).then(()=>{
-                setTogglerPopupDeleteCar('')
-                setTogglerPopupSuccessDeleteCar('popup-open')
-            })
-            .catch(() => {
-                setTogglerPopupErrorDeleteCar('popup-open')
-            })
+    // Модальные окна
+    useEffect(() => {
+        if (!loadingStatus) {
+          setTogglerPopupLoadingData('');
         }
-    } */
+      }, [loadingStatus])
+
+    // Обновление статуса аккаунта
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null; // Если куки нет
+    }
+    async function updateDriverMode(mode){
+        const token = getCookie('token');
+        const newMode = userData.DriverMode === 1 ? 0 : 1;
+        try{
+            setTogglerPopupLoadingData('popup-open')
+            const response = await fetch('/api/account-data/change-driver-mode', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ driverMode: mode })
+            })
+            if(response.ok){
+                setTogglerPopupLoadingData('')
+                setUserData({
+                    ...userData,
+                    DriverMode: newMode,
+                });
+            }
+        } catch (error){
+            console.log(`Ошибка ${error}`)
+        }
+    }
+
+    async function deleteCar(){
+        const token = getCookie('token');
+        setTogglerPopupDeleteCar('')
+        try{
+            setTogglerPopupLoadingData('popup-open')
+            const response = await fetch('/api/account-data/change-car', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            })
+            if(response.ok){
+                setTogglerPopupLoadingData('')
+                setTogglerPopupSuccessDeleteCar('popup-open')
+                setUserData({
+                    ...userData,
+                    VehicleBrand: null,
+                    VehicleModel: null,
+                    VehicleColor: null,
+                    VehicleNumber: null
+                });
+            }
+        } catch (error){
+            setTogglerPopupErrorDeleteCar('popup-open')
+        }
+    }
+
+
+    // UPDATE accounts SET VehicleBrand = 'Toyota', VehicleModel = 'Camry', VehicleColor = 'Black', VehicleNumber = 'A123BC' WHERE UserId = 1; 
+
 
     return(
         <div className="MyAccountPage">
@@ -80,28 +99,29 @@ export default function MyAccountPage(){
                         </Avatar>
                         {/* <div style={{backgroundImage: `url(${userData.UserImage === null ? '/ico/man-user.svg' : userData.UserImage})`}} className='AccountCardIco' alt='user ico'/> */}
                         <div className='AccountCardData'>
-                            <div className='AccountCardDataFirst'>{userData.UserName}</div>
-                            <div className='AccountCardDataSecond'>{userData.UserEmail}</div>
-                            <div className='AccountCardDataThird'><i className="fa-solid fa-phone"></i> +7 {userPhone.toString().substring(1)}</div>
+                            <div className='AccountCardDataFirst'>{userData && userData.UserName}</div>
+                            <div className='AccountCardDataSecond'>{userData && userData.UserEmail}</div>
+                            <div className='AccountCardDataThird'><i className="fa-solid fa-phone"></i> +7 {userData && userData.UserPhone.toString().substring(1)}</div>
                         </div>
-                        <Link href='/mobile/my-account/account-edit' className='AccountCardEdit'>
+                        <Link href='my-account/account-edit' className='AccountCardEdit'>
                             <i className="fa-solid fa-pencil"></i>
                         </Link>
                     </div>
                 </div>
                 <div className='MyAccountPageAccount history'>
                     <div className='AccountCard'>
-                        <Link href='/mobile/my-account/history'>История поездок</Link>
+                        <Link href='my-account/history'>История поездок</Link>
                     </div>
                 </div>
                 <div className='AccountToggleModeBox'>
                     <label className='AccountToggleMode' htmlFor='driver-mode'>Режим водителя</label>
                     <label className="TogglerWrapper">
-                        <input id='driver-mode' className='TogglerChecker' type="checkbox" checked={userData && userData.DriverMode === 1 ||  driverMode === 1} onChange={(e) => {
+                        <input id='driver-mode' className='TogglerChecker' type="checkbox" checked={userData && userData && userData.DriverMode === 1 } onChange={(e) => {
                             if (e.target.checked && userData.DriverMode === 0) {
-                                setDriverMode(1)
+                                updateDriverMode(1)
                             } else {
-                                setDriverMode(driverMode === 1 ? 0 : 1)
+                                //setDriverMode(driverMode === 1 ? 0 : 1)
+                                updateDriverMode(userData && userData.DriverMode === 1 ? 0 : 1)
                             }
                         }}/>
                         <div className="TogglerSlider">
@@ -109,38 +129,42 @@ export default function MyAccountPage(){
                         </div>
                     </label>
                 </div>
-                {driverMode !== 0 && userData.VehicleBrand !== null? 
+                {userData && userData.DriverMode !== 0 && userData.VehicleBrand !== null? 
                     <>
                         <div className="PageHeader">
                         <h2>Моя машина</h2>
                         </div>
                         <div className='MyAccountPageAccount'>
-                            <div className='AccountCard'>
+                            <div className='AccountCard VehicleCard'>
                                 <div className='AccountCardData'>
                                     <div className='AccountCardDataFirst'>{userData.VehicleBrand}</div>
                                     <div className='AccountCardDataSecond'>{userData.VehicleModel}</div>
                                     <div className='AccountCardDataSecond'>Цвет: {userData.VehicleColor}</div>
                                     <div className='AccountCardDataThird'>{userData.VehicleNumber}</div>
                                 </div>
-                                <Link href='/mobile/my-account/add-car' className='AccountCardEdit'>
-                                    <i className="fa-solid fa-pencil"></i>
-                                </Link>
-                                <div onClick={()=>{setTogglerPopupDeleteCar('popup-open')}} className='AccountCardEdit AccountCardEditTrash'>
-                                    <i className="fa-solid fa-trash"></i>
+                                <div className='AccountCardVehicleEdit'>
+                                    <Link href='my-account/add-car' className='Button bg-orange-500'>
+                                        <h3>Редактировать</h3>
+                                        {/* <i className="fa-solid fa-pencil"></i> */}
+                                    </Link>
+                                    <div onClick={()=>{setTogglerPopupDeleteCar('popup-open')}} className='Button mt-2 bg-red-600'>
+                                        <h3>Удалить</h3>
+                                        {/* <i className="fa-solid fa-trash"></i> */}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </> : driverMode !== 0 && userData.VehicleBrand === null ?
-                    <>
+                    </> : userData && userData.DriverMode !== 0 && userData.VehicleBrand == null ?
+                    <div>
                         <div className="PageHeader">
                             <h2>Моя машина</h2>
                         </div>
                         <div className='MyAccountPageAccount'>
-                            <Link href='/mobile/my-account/add-car' className='AccountCard'>
+                            <Link href='my-account/add-car' className='AccountCard'>
                                 Добавить авто
                             </Link>
                         </div>
-                    </> : null
+                    </div> : null
                 }
             </div>
             <div className={`popup-background ${togglerPopupDeleteCar}`}></div>

@@ -4,13 +4,14 @@ import NavMap2 from '../../components/NavMap/NavMap2'
 import BurgerMenu from '../../components/ui/BurgerMenu/BurgerMenu'
 import './style.sass'
 import { Helmet } from 'react-helmet'
+import Head from 'next/head'
 
 export default function GeneralPage(){
     return(
         <>  
-            <Helmet>
+            <Head>
                 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-            </Helmet>
+            </Head>
             <BurgerMenu/>
             <NavMap2/>
         </>

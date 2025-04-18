@@ -90,7 +90,7 @@ async function getUserFromToken(token) {
 
         const userId = decoded.id;
 
-        const [rows] = await pool.query('SELECT * FROM accounts WHERE UserId = ?', [userId]);
+        const [rows] = await pool.query('SELECT a.*, m.UserPhoto, m.Approved FROM accounts a JOIN userphoto m ON a.UserId = m.User WHERE a.UserId = ?', [userId]);
         console.log('Результаты запроса в базу данных:', rows);
         const newToken = jwt.sign(
             {
@@ -115,7 +115,6 @@ async function getUserFromToken(token) {
         const dataToEncrypt = JSON.stringify(rows);
         // Шифруем данные
         const { iv, encryptedData } = encryptData(dataToEncrypt);
-        
         return { newToken, user: {iv, encryptedData} };
     } catch (error) {
         console.error('Ошибка при декодировании токена или запросе пользователя:', error);
