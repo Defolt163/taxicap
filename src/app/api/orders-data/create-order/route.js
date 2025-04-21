@@ -56,10 +56,17 @@ export async function POST(request: NextRequest) {
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import accountDB from '../../accountDB';
+import pool from '../../accountDB';
+import jwt from 'jsonwebtoken';
+const SECRET_KEY = process.env.JWT_SECRET_KEY; // Секрет для JWT
 
-export async function POST(request: NextRequest) {
+export async function POST(req) {
+  const token = req.headers.get('authorization')?.split(' ')[1];
+  if (!token) {
+    return new Response(JSON.stringify({ message: 'Tокен не предоставлен' }), { status: 401 });
+  }
   try {
+    const decoded = jwt.verify(token, SECRET_KEY)
     const {
       OrderKey,
       CustomerPhone,
@@ -75,44 +82,26 @@ export async function POST(request: NextRequest) {
       Price,
       PaymentMethod,
       CustomerImage
-    } = await request.json();
+    } = await req.json();
 
-    const values = [
-      OrderKey,
-      CustomerPhone,
-      UserId,
-      OrderStatus,
-      CustomerName,
-      LatFrom,
-      LonFrom,
-      LatTo,
-      LonTo,
-      AddressFrom,
-      AddressTo,
-      Price,
-      PaymentMethod,
-      CustomerImage
-    ];
+    const sql = `INSERT INTO orders (\`OrderKey\`, CustomerPhone, UserId, OrderStatus, CustomerName, LatFrom, LonFrom, LatTo, LonTo, AddressFrom, AddressTo, Price, PaymentMethod, CustomerImage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `;
 
-    const result: any = await new Promise((resolve, reject) => {
-      accountDB.query(
-        "INSERT INTO orders (OrderKey, CustomerPhone, UserId, OrderStatus, CustomerName, LatFrom, LonFrom, LatTo, LonTo, AddressFrom, AddressTo, Price, PaymentMethod, CustomerImage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        values,
-        (err: any, results: any) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(results);
-          }
-        }
-      );
-    });
+  const values = [
+    OrderKey, CustomerPhone, decoded.id, OrderStatus, CustomerName,
+    LatFrom, LonFrom, LatTo, LonTo, AddressFrom, AddressTo,
+    Price, PaymentMethod, CustomerImage
+  ];
 
-    if (result && result.affectedRows > 0) {
-      return NextResponse.json({ message: "Order(s) created successfully" });
-    } else {
-      return NextResponse.json({ message: "Failed to create order(s)" }, { status: 400 });
-    }
+  await pool.query(sql, values);
+    const [rows] = await pool.query(
+      "SELECT id FROM orders WHERE UserId = ? AND (OrderStatus = 'active' OR OrderStatus = 'created')", [decoded.id]
+    );
+    
+    return new Response(
+      JSON.stringify({ rows }),
+      { status: 200 }
+    );  
   } catch (error) {
     console.error(error);
     return NextResponse.json({ message: error.message }, { status: 500 });

@@ -90,7 +90,7 @@ async function getUserFromToken(token) {
 
         const userId = decoded.id;
 
-        const [rows] = await pool.query('SELECT a.*, m.UserPhoto, m.Approved FROM accounts a JOIN userphoto m ON a.UserId = m.User WHERE a.UserId = ?', [userId]);
+        const [rows] = await pool.query('SELECT a.*, m.UserPhoto, m.Approved, m.PhotoWarningDescription FROM accounts a JOIN userphoto m ON a.UserId = m.User WHERE a.UserId = ?', [userId]);
         console.log('Результаты запроса в базу данных:', rows);
         const newToken = jwt.sign(
             {

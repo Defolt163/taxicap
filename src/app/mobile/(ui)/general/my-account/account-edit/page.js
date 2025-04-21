@@ -20,10 +20,15 @@ export default function EditAccountPage(){
     }
     const { userData, setUserData, loadingStatus } = useData()
     useEffect(()=>{
-        if(userData.Approved == 3){
+        if(userData && userData.Approved == 3){
             toast.warning("Ваше фото находится на модерации", {
                 duration: Infinity,
             })
+        } else if(userData && userData.Approved == 4){
+            toast.error('Фото не прошло модерацию', {
+                description: `${userData && userData.PhotoWarningDescription}`,
+                duration: Infinity,
+            });
         }
     }, [userData])
     // Загрузка фото профиля

@@ -40,7 +40,7 @@
     "src/app/api/account-data/sign-in/route.js",
     "src/app/api/account-data/emails/route.js",
     "src/app/api/account-data/sign-up/route.js"
-, "src/app/api/account-data/change-driver-mode/route.js", "src/app/api/account-data/change-car/route.js", "src/app/api/account-data/edit-account-data/route.js"  ],
+, "src/app/api/account-data/change-driver-mode/route.js", "src/app/api/account-data/change-car/route.js", "src/app/api/account-data/edit-account-data/route.js", "src/app/api/orders-data/get-orders-history/route.js", "src/app/api/orders-data/get-orders/route.js", "src/app/api/orders-data/accept-order/route.js", "src/app/api/orders-data/accept-order/update-active-order/route.js", "src/app/api/orders-data/check-order/route.js", "src/app/api/orders-data/create-order/route.js"  ],
   "exclude": [
     "node_modules"
   ]

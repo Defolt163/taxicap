@@ -24,47 +24,86 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+const crypto = require('crypto');
+import { useData } from '../DataContext'
+import useSocket from "../useSocket";
+import {
+  registerPassengerHandlers,
+  registerDriverHandlers
+} from "../socketHandlers";
 
 //import defaultUserIco from '/public/ico/man-user.svg'
 
 //const socket = io("http://localhost:3001")
 const mapApiKey = process.env.NEXT_PUBLIC_MAP_API_KEY
 const localHostApi = process.env.NEXT_PUBLIC_MYSQL_API
-export default function NavMap2(){
-  const router = useRouter()
 
-  // Получение sessionId из кук
-  const [sessionKey, setSessionKey] = useState('')
-  const [userData, setUserData] = useState([])
+export default function NavMap2(){
+    //Хранение заказов
+    const [orders, setOrders] = useState([])
+    const [activeDriverOrder, setActiveDriverOrder] = useState(false)
+    const [hasAccepted, setHasAccepted] = useState(false) // Переменная для условия для лечения цикла
+  async function decryptData(encodedMessage, messageIv) {
+    // Преобразуем ключ и IV из шестнадцатеричного формата
+    const key = Buffer.from('16cf126a9dc4e39e405a03ad0fb2f31d91f6b73342c7d7647772e104aa8d7e39', 'hex'); // Ключ AES-256
+    const iv = Buffer.from(messageIv, 'hex'); // IV (инициализационный вектор)
+    // Преобразуем зашифрованные данные в Buffer
+    const encryptedBuffer = Buffer.from(encodedMessage, 'hex');
+
+    // Создаем расшифровщик
+    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+
+    // Расшифровка данных
+    let decrypted = decipher.update(encryptedBuffer, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    let parsedData = JSON.parse(decrypted)
+    setOrders(parsedData)
+    console.log("YANIX", parsedData)
+}
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null; // Если куки нет
+}
+  const { userData, loadingStatus } = useData()
   const [driverPos, setDriverPos] = useState([])
 
-  const [mapInfo, setMapInfo] = useState([])
+  const [mapInfo, setMapInfo] = useState()
   useEffect(()=>{
-    fetch('/api/mapGl/getMap',{
+    fetch('https://maps.geoapify.com/v1/styles/osm-bright/style.json?apiKey=3f92ee1c9c6946c59edce5b1227a9078',{
       method: 'GET'
     }).then((result)=>{
       return result.json()
     }).then((res)=>{
-      console.log(res.result)
-      setMapInfo(res.result)
+      const data = res.result || {};
+      setMapInfo(res);
     })
   },[])
   
   // Открытие веб сокета
-  /* const [socket, setSocket] = useState(null)
-  useEffect(()=>{
-    const newSocket = io("http://localhost:3001")
-    setSocket(newSocket)
-  }, []) */
-  const socketRef = useRef(null)
+  const socketRef = useSocket(); // подключение
+  const socket = socketRef.current;
   useEffect(() => {
-    const newSocket = io(`http://${localHostApi}:3001/`)
-    socketRef.current = newSocket
+
+    if (!socket || !userData) return;
+
+    if (userData.DriverMode === 0) {
+      registerPassengerHandlers(socket, userData.UserId, setHasAccepted, setDriverPos);
+    } else {
+      registerDriverHandlers(socket, fetchOrders, checkDriverOrders, orderCreatedSound);
+    }
 
     return () => {
-      newSocket.disconnect() // Отключаем сокет при размонтировании компонента
-    }
-  }, [])
+      socket.off("orderCreated");
+      socket.off("orderUpdatedByDriver");
+      socket.off("driverPosition");
+    };
+  }, [userData]);
+  
+
+
+  
 
   const [addressFrom, setAddressFrom] = useState("")
   const [addressTo, setAddress] = useState("")
@@ -86,26 +125,24 @@ export default function NavMap2(){
       setOrderIteration(0)
     }
   }
-  //Хранение заказов
-  const [orders, setOrders] = useState([])
-  const [activeDriverOrder, setActiveDriverOrder] = useState(false)
-  const [hasAccepted, setHasAccepted] = useState(false) // Переменная для условия для лечения цикла
 
-  useEffect(()=>{
-    console.log("ORDER::", orders[orderIteration])
-  })
   // Функция получения заказов для водителя
   function fetchOrders(){
     console.log("Check if")
+    const token = getCookie('token');
     if(userData && userData.DriverMode === 1){
       if(userData.VehicleBrand !== null){
         fetch(`/api/orders-data/get-orders`, {
-          method: 'GET'
+          method: 'GET',
+          headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+          },
         }).then((result) => {
           return result.json()
         }).then((res) => {
           if(res.length !== 0){
-            setOrders(res)
+            decryptData(res.orders.encryptedData, res.orders.iv)
             setTogglerOpenOrder('')
             setStep(1)
           }/* if((res.length === 0) && activeDriverOrder === false){
@@ -139,6 +176,54 @@ export default function NavMap2(){
     )
   }, [])
   useEffect(() => {
+    const socket = socketRef.current;
+  
+    if (!socket || !userData) return;
+  
+    if (userData.DriverMode === 1) {
+      const handleOrderCreated = (orderData) => {
+        console.log("Новый заказ!", orderData);
+        fetchOrders(); // обновляем список заказов
+        orderCreatedSound?.play(); // звуковое уведомление
+      };
+  
+      socket.on("orderCreated", handleOrderCreated);
+  
+      return () => {
+        socket.off("orderCreated", handleOrderCreated);
+      };
+    }
+  }, [userData]);
+  useEffect(() => {
+    const socket = socketRef.current;
+  
+    if (!socket || !userData) return;
+  
+    if (userData.DriverMode === 0) {
+      const handleOrderAccepted = (incomingUserId) => {
+        if (incomingUserId === userData.UserId) {
+          console.log("Водитель принял заказ!");
+          checkOrderPassenger()
+        }
+      };
+      const handleOrderCompleted = (incomingUserId) => {
+        if (incomingUserId === userData.UserId) {
+          console.log("Водитель завершил заказ!");
+          successfullyPopups()
+        }
+      };
+      socket.on("orderAccepted", handleOrderAccepted);
+      socket.on("orderCompleted", handleOrderCompleted);
+  
+      return () => {
+        socket.off("orderAccepted", handleOrderAccepted);
+        socket.off("orderCompleted", handleOrderCompleted);
+      };
+    }
+  }, [userData]);
+  
+  
+  /* useEffect(() => {
     if (userData && userData.DriverMode === 1) {
       const handleOrderCreated = () => {
         fetchOrders()
@@ -156,7 +241,7 @@ export default function NavMap2(){
         socket.off("orderCreated", handleOrderCreated)
       }
     }
-  })
+  }) */
 
   useEffect(()=>{
     if(orders.length > 0 && userData.DriverMode === 1){
@@ -167,9 +252,7 @@ export default function NavMap2(){
   // Создание заказа по вебсокету
   const [activeOrder, setActiveOrder] = useState([])
   const [paymentMethodValue, setPaymentMethodValue] = useState("Наличные");
-  useEffect(()=>{
-    console.log("METODA", paymentMethodValue)
-  },[paymentMethodValue])
+
   function openOrder(){
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let orderKey = '';
@@ -177,8 +260,9 @@ export default function NavMap2(){
       const randomIndex = Math.floor(Math.random() * characters.length);
       orderKey += characters[randomIndex];
     }
-    console.log(orderKey)
+    const token = getCookie('token');
     const data = {
+      "token": token,
       "OrderKey": orderKey,
       "CustomerPhone": userData.UserPhone,
       "UserId": userData.UserId,
@@ -195,18 +279,20 @@ export default function NavMap2(){
       "CustomerImage": userData.UserImage
     }
     setActiveOrder([data])
-    const socket = socketRef.current
     socket.emit("sendOrder", data)
   }
   // Принятие заказа
   const [activeOrderId, setActiveOrderId] = useState(0)
   async function acceptOrder(){
+    const token = getCookie('token');
     await fetch(`/api/orders-data/accept-order?id=${orders[orderIteration].id}`,{
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({ 
           "DriverName": userData.UserName,
-          "DriverId": userData.UserId,
           "DriverPhone": userData.UserPhone,
           "VehicleBrand": userData.VehicleBrand,
           "VehicleModel": userData.VehicleModel,
@@ -217,18 +303,20 @@ export default function NavMap2(){
         }),
     }).then(()=>{
         setActiveDriverOrder(true)
-        fetch(`/api/orders-data/accept-order/update-active-order?UserId=${userData.UserId}`,{
+        fetch(`/api/orders-data/accept-order/update-active-order`,{
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
           body: JSON.stringify({
             "ActiveOrder": orders[orderIteration].id
           })
         }).then(()=>{
           setTogglerOpenOrder('order-active')
           setActiveOrderId(orders[orderIteration].id)
-          const socket = socketRef.current
-          socket.emit("joinOrder", orders[orderIteration].id)
-          socket.emit("orderUpdate", orders[orderIteration].UserId)
+          socket.emit("acceptOrder", orders[orderIteration].UserId)
+          //updateOrder(orders[orderIteration].UserId)
         }).then(()=>{
           //
         })
@@ -239,10 +327,15 @@ export default function NavMap2(){
   }
   // Проверка активных заказов для водителя
   function checkDriverOrders(){
+    const token = getCookie('token');
     if(userData && userData.DriverMode === 1){
       if(userData.ActiveOrder !== 0){
         fetch(`/api/orders-data/accept-order/update-active-order?id=${userData.ActiveOrder}`, {
-          method: 'GET'
+          method: 'GET',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
         }).then((result) => {
           return result.json()
         }).then((res) => {
@@ -253,7 +346,8 @@ export default function NavMap2(){
             setActiveDriverOrder(true)
             setStep(1)
             setTogglerOpenOrder('order-active')
-            socket.emit("joinOrder", userData.ActiveOrder)
+            socket.emit("joinOrderRoom", res[0].id)
+            //socket.emit("joinOrder", userData.ActiveOrder)
           }
         }).catch(error => {
           console.log(error)
@@ -267,48 +361,41 @@ export default function NavMap2(){
     checkDriverOrders()
   },[userData])
   // Проверка заказа для пассажира
+ /// NEW VERSION ////
   function checkOrderPassenger(){
+    const token = getCookie('token');
     if(userData && userData.DriverMode === 0){
-        fetch(`/api/orders-data/check-order?userId=${userData.UserId}`, {
-          method: 'GET'
+        fetch(`/api/orders-data/check-order`, {
+          method: 'GET',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
         }).then((result) => {
           return result.json()
-        }).then((res) => {
-          console.log("2")
+        })
+        .then((res) => {
           if(res.length !== 0){
-            let checkOrderStatus = res.filter((item) => item.OrderStatus === 'active' || item.OrderStatus === 'created')
-            if(checkOrderStatus.length > 0){
-              if(checkOrderStatus[0].OrderStatus === 'created'){
+              console.log("3", res[0])
+              let checkOrderStatus = res[0]
+              if(checkOrderStatus.OrderStatus === 'created'){
                 setStep(2)
-                setActiveOrder(checkOrderStatus)
-                /* if(activeOrder.length !== 0){
-                  orderTimeOut()
-                } */
-              }if(checkOrderStatus[0].OrderStatus === 'active'){
-                fetch(`/api/orders-data/check-order/update-info?orderId=${checkOrderStatus[0].id}`, {
-                method: 'GET'
-                }).then((orderResult) => {
-                  return orderResult.json()
-                }).then((passengerOrder) => {
-                  setActiveOrder(passengerOrder)
-                  console.log("JGDJFGDGFSGFJSG", passengerOrder)
-                  fetch(`/api/orders-data/accept-order/update-active-order?UserId=${userData.UserId}`,{
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      "ActiveOrder": passengerOrder[0].id
-                    })
-                  })
+                setActiveOrder(res)
+              }else if(checkOrderStatus.OrderStatus === 'active'){
+                  setActiveOrder(res)
+                  console.log("333", res)
                   setStep(3)
-                  setActiveOrderId(passengerOrder[0].id)
+                  setActiveOrderId(res.id)
                   const socket = socketRef.current
-                  socket.emit("joinOrderClient", passengerOrder[0].id)
-                })
-              }
-            }if(checkOrderStatus.length <= 0){
+                  socket.emit("joinOrderRoom", res[0].id)
+              }else if(checkOrderStatus.length <= 0){
               console.log("CHECK")
               fetch(`/api/orders-data/accept-order/update-active-order?id=${userData.ActiveOrder}`, {
-                method: 'GET'
+                method: 'GET',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`,
+                },
               }).then((result) => {
                 return result.json()
               }).then((res) => {
@@ -422,12 +509,11 @@ export default function NavMap2(){
     }
   }
 // Сокет
-useEffect(() => {
+/* useEffect(() => {
   if (userData && userData.DriverMode === 0) {
     const handleOrderAcceptedByDriver = (userId) => {
       if(userId === userData.UserId){
         setHasAccepted(true)
-        getUsersAccountType()
       }
     }
     const socket = socketRef.current
@@ -455,19 +541,22 @@ useEffect(() => {
       socket.off("orderUpdatedByDriver", handleOrderAcceptedByPassenger)
     }
   }
-})
+}) */
 
   // Завершение заказа
-  function orderCompletion(){
+  /* function orderCompletion(){
+    const token = getCookie('token')
     if(userData && userData.DriverMode === 1){
       const socket = socketRef.current
       socket.emit("orderUpdate", orders[0].UserId)
       fetch(`/api/orders-data/accept-order?id=${orders[orderIteration].id}`,{
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({ 
           "DriverName": userData.UserName,
-          "DriverId": userData.UserId,
           "DriverPhone": userData.UserPhone,
           "VehicleBrand": userData.VehicleBrand,
           "VehicleModel": userData.VehicleModel,
@@ -477,9 +566,12 @@ useEffect(() => {
         }),
       }).then(()=>{
         console.log("4")
-        fetch(`/api/orders-data/accept-order/update-active-order?UserId=${userData.UserId}`,{
+        fetch(`/api/orders-data/accept-order/update-active-order`,{
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
           body: JSON.stringify({
             "ActiveOrder": 0
           })
@@ -514,6 +606,75 @@ useEffect(() => {
     setGeoRes([])
     setActiveOrder([])
     setStep(0)
+  } */
+  /////NEW VERSION/////
+  function orderCompletion(){
+    const token = getCookie('token')
+    if(userData && userData.DriverMode === 1){
+      fetch(`/api/orders-data/accept-order?id=${orders[orderIteration].id}`,{
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+          "DriverName": userData.UserName,
+          "DriverPhone": userData.UserPhone,
+          "VehicleBrand": userData.VehicleBrand,
+          "VehicleModel": userData.VehicleModel,
+          "VehicleColor": userData.VehicleColor,
+          "VehicleNumber": userData.VehicleNumber,
+          "OrderStatus": "completed"
+        }),
+      }).then(()=>{
+        console.log("4")
+        fetch(`/api/orders-data/accept-order/update-active-order`,{
+          method: 'PUT',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            "ActiveOrder": 0
+          })
+        }).then(()=>{
+          socket.emit("completeOrder", orders[orderIteration].UserId)
+          successfullyPopups()
+        })
+        //fetchOrders()
+      })
+      .catch(error =>{
+          console.log(error)
+      })
+    }
+  }
+  // Удаление номера заказа из аккаунта
+  function orderClose(){
+    const token = getCookie('token')
+    fetch(`/api/orders-data/accept-order/update-active-order?UserId=${userData.UserId}`,{
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        "ActiveOrder": 0
+      })
+    }).then(()=>{
+      successfullyPopups()
+    })
+    
+  }
+  //success order
+  function successfullyPopups(){
+    setTogglerPopupOrderClose('popup-open')
+    setGeoRes([])
+    setActiveDriverOrder(false)
+    setStep(0)
+    setOrders([])
+    setActiveOrderId(0)
+    setTogglerPopupDriverCloseOrder('')
+    setActiveOrder([])
   }
     
   // кодирование значения в html
@@ -580,8 +741,7 @@ useEffect(() => {
   // Геопозиция водителей
     // Сторона водителей
     function driverGeo(){
-      const socket = socketRef.current
-      socket.emit("sendGeoResToClient", activeOrderId, location)
+      socket.emit("sendDriverLocation", activeOrderId, location)
     }
   
     useEffect(()=>{
@@ -590,15 +750,26 @@ useEffect(() => {
       }
     }, [location])
     // Сторона клиента (Пассажир)
-  
-  useEffect(()=>{
-    const socket = socketRef.current
-    if(userData.DriverMode === 0 && activeOrderId !== 0){
-      socket.on("driverPosition", (pos) => {
-        setDriverPos(pos.longitude !== null ? [pos.longitude,pos.latitude] : [1.1,1.1])
-      });
-    }
-  })
+    
+    useEffect(() => {
+      const socket = socketRef.current;
+    
+      if (userData && userData.DriverMode === 0 && activeOrderId !== 0) {
+        const handleDriverLocation = (pos) => {
+          console.log("ПОЗИЦИЯ", pos);
+          if (pos?.longitude !== null) {
+            setDriverPos([pos.longitude, pos.latitude]);
+          }
+        };
+    
+        socket.on("driverLocation", handleDriverLocation);
+    
+        return () => {
+          socket.off("driverLocation", handleDriverLocation);
+        };
+      }
+    }, [userData, activeOrderId]);
+    
 
   //Построение маршрута
   async function getAddress() {
@@ -639,7 +810,7 @@ useEffect(() => {
   //убрать коммент
   // Графическое построение
   function requestOptions(){
-    if(userData.DriverMode === 1 && orders.length !== 0 && hasAccepted === false){
+    if(orders && userData && userData.DriverMode === 1 && orders.length > 0 && hasAccepted === false){
       fetch(`https://api.geoapify.com/v1/routing?waypoints=${
       userData.DriverMode === 1 ? (orders.length >= 2 && orderIteration <= orders.length-1 ? [orders[orderIteration].LatFrom,orders[orderIteration].LonFrom] : [orders[0].LatFrom,orders[0].LonFrom]) : 
       (userData.DriverMode === 0 && activeOrder.length > 0 ? [activeOrder[0].LatFrom,activeOrder[0].LonFrom] : addressFromCoordinate)}|${
@@ -674,7 +845,7 @@ useEffect(() => {
         }
       })
       .catch(error => console.log('Ошибка установки маршрута', error))         /* Здлесь скобки */
-    }if(userData.DriverMode === 0 && (addressFromCoordinate.length !== 0 || (activeOrder.length !== 0 && hasAccepted === false))){
+    }if(userData && userData.DriverMode === 0 && (addressFromCoordinate.length !== 0 || (activeOrder.length !== 0 && hasAccepted === false))){
       fetch(`https://api.geoapify.com/v1/routing?waypoints=${userData.DriverMode === 0 && activeOrder.length > 0 ? [activeOrder[0].LatFrom,activeOrder[0].LonFrom] : addressFromCoordinate}|${userData.DriverMode === 0 && activeOrder.length > 0 ? [activeOrder[0].LatTo,activeOrder[0].LonTo] : addressToCoordinate}&mode=drive&apiKey=${mapApiKey}`)
       .then(response => response.json())
       .then((routeResult) =>{
@@ -716,9 +887,9 @@ useEffect(() => {
       }).catch(error => console.log("4LEN Ошибка", error))
     }
   }
-  useEffect(()=>{
+  /* useEffect(()=>{
     //setAddressFromDriverToClient()
-  }, orders)
+  }, orders) */
 
   useEffect(()=>{
       function createGeoJSON(coordinates) {
@@ -962,32 +1133,32 @@ useEffect(() => {
           return(
             <div className='OrderDriver'>
               {
-                orders !== undefined && orderIteration >= 0 && orderIteration < orders.length ? (
+                orders && orders !== undefined && orderIteration >= 0 && orderIteration < orders.length ? (
                   <div className='OrderWrapper'>
                     <div className='AccountBlock'>
                       {/* <div className='AccountIco' style={{backgroundImage: `url(${orders[orderIteration].CustomerImage !== null ? orders[orderIteration].CustomerImage : '/ico/man-user.svg'})`}}></div> */}
                       <Avatar className='AccountIco'>
-                        <AvatarImage src={orders[orderIteration].CustomerImage} />
-                        <AvatarFallback>{orders[orderIteration].CustomerName[0]}</AvatarFallback>
+                        <AvatarImage src={orders && orders[orderIteration].CustomerImage} />
+                        <AvatarFallback>{orders && orders[orderIteration].CustomerName[0]}</AvatarFallback>
                       </Avatar>
                       <div className='AccountBlockInfo'>
                         <div className='OrderInfoBlock'>
-                          <h4 className='AccountName'>{orders !== undefined ? orders[orderIteration].CustomerName : null}</h4>
-                          <div className='OrderInfo'>Дистанция: {orders !== undefined ? Math.round(routeDistance * 10)/10 : 0}км</div>
-                          <div className='OrderInfo'>Стоимость: {orders !== undefined ? Math.round(orders[orderIteration].Price) : 0}₽</div>
-                          <div className='OrderInfo'>Способ оплаты: {orders !== undefined ? orders[orderIteration].PaymentMethod : "Ошибка"}</div>
+                          <h4 className='AccountName'>{orders && orders !== undefined ? orders[orderIteration].CustomerName : null}</h4>
+                          <div className='OrderInfo'>Дистанция: {orders && orders !== undefined ? Math.round(routeDistance * 10)/10 : 0}км</div>
+                          <div className='OrderInfo'>Стоимость: {orders && orders !== undefined ? Math.round(orders[orderIteration].Price) : 0}₽</div>
+                          <div className='OrderInfo'>Способ оплаты: {orders && orders !== undefined ? orders[orderIteration].PaymentMethod : "Ошибка"}</div>
                         </div>
                       </div>
-                      <Link href={`tel:${orders !== undefined ? orders[orderIteration].CustomerPhone : null}`} className='CallUser'><i className="fa-solid fa-phone"></i></Link>
+                      <Link href={`tel:${orders && orders !== undefined ? orders[orderIteration].CustomerPhone : null}`} className='CallUser'><i className="fa-solid fa-phone"></i></Link>
                     </div>
                     <div className='OrderAddress'>
                       <div className='OrderAddressItem'>
                         <h3 className='AddressHeader'>От</h3>
-                        <div className='Address'>{orders !== undefined ? orders[orderIteration].AddressFrom : null}</div> {/* Направление ОТ */}
+                        <div className='Address'>{orders && orders !== undefined ? orders[orderIteration].AddressFrom : null}</div> {/* Направление ОТ */}
                       </div>
                       <div className='OrderAddressItem'>
                         <h3 className='AddressHeader'>До</h3>
-                        <div className='Address'>{orders !== undefined ? orders[orderIteration].AddressTo : null}</div> {/* Направление До */}
+                        <div className='Address'>{orders && orders !== undefined ? orders[orderIteration].AddressTo : null}</div> {/* Направление До */}
                       </div>
                     </div>
                     <div className={`OrderActions ${togglerOpenOrder}`}>
@@ -1008,8 +1179,10 @@ useEffect(() => {
   // Сообщения об ошибках не введенных инпутов
   const [togglerPopup, setTogglerPopup] = useState("")
   const [togglerPopupOrderClose, setTogglerPopupOrderClose] = useState('')
-  
-  return (
+  if (loadingStatus) {
+    return <div>Загрузка...</div>;
+  } else{
+    return (
       <div className="Map">
           <div className={`MapUi ${togglerPriceBlock}`}>
             {userData && userData.DriverMode === 1 ? renderStepDriver() : renderStepClient()}
@@ -1081,4 +1254,6 @@ useEffect(() => {
           <div className={`popup-background ${togglerPopupPassengerCloseOrder}`}></div>
       </div>
     )
+  }
+  
   }
