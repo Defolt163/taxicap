@@ -13,7 +13,7 @@ export async function GET(req) {
   }
   try {
       const decoded = jwt.verify(token, SECRET_KEY);
-      const [order] = await pool.query(`SELECT * FROM orders WHERE UserId = 1 AND (OrderStatus = "created" OR OrderStatus = "active")`, [decoded.id]);
+      const [order] = await pool.query(`SELECT * FROM orders WHERE UserId = ? AND (OrderStatus = "created" OR OrderStatus = "active")`, [decoded.id]);
       //;
       // SELECT id, OrderStatus, Date FROM orders WHERE UserId = ? AND OrderStatus = "completed"
       

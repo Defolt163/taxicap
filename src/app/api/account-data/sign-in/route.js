@@ -89,8 +89,8 @@ async function getUserFromToken(token) {
         console.log('Декодированный токен:', decoded);
 
         const userId = decoded.id;
-
-        const [rows] = await pool.query('SELECT a.*, m.UserPhoto, m.Approved, m.PhotoWarningDescription FROM accounts a JOIN userphoto m ON a.UserId = m.User WHERE a.UserId = ?', [userId]);
+        console.log('Результаты запроса в базу данных11:', decoded.id);
+        const [rows] = await pool.query('SELECT a.*, m.UserPhoto, m.Approved, m.PhotoWarningDescription FROM accounts a JOIN userphoto m ON a.UserId = m.User WHERE a.UserId = ?', [decoded.id]);
         console.log('Результаты запроса в базу данных:', rows);
         const newToken = jwt.sign(
             {

@@ -166,6 +166,7 @@ export default function NavMap2(){
   }, [userData])
 
   const [orderCreatedSound, setOrderCreatedSound] = useState(null)
+  const [activeOrderId, setActiveOrderId] = useState(0)
 
   useEffect(() => {
     setOrderCreatedSound(
@@ -186,11 +187,18 @@ export default function NavMap2(){
         fetchOrders(); // обновляем список заказов
         orderCreatedSound?.play(); // звуковое уведомление
       };
+      console.log("Заказ приняли11", activeOrderId)
+      const handleOrderAccepted = (orderData) => {
+        console.log("Заказ приняли", orderData);
+        fetchOrders(); // обновляем список заказов
+      };
   
       socket.on("orderCreated", handleOrderCreated);
+      socket.on("orderAccepted", handleOrderAccepted);
   
       return () => {
         socket.off("orderCreated", handleOrderCreated);
+        socket.off("orderAccepted", handleOrderAccepted);
       };
     }
   }, [userData]);
@@ -282,7 +290,6 @@ export default function NavMap2(){
     socket.emit("sendOrder", data)
   }
   // Принятие заказа
-  const [activeOrderId, setActiveOrderId] = useState(0)
   async function acceptOrder(){
     const token = getCookie('token');
     await fetch(`/api/orders-data/accept-order?id=${orders[orderIteration].id}`,{
@@ -302,6 +309,11 @@ export default function NavMap2(){
           "DriverImage": userData.UserImage
         }),
     }).then(()=>{
+      setTogglerOpenOrder('order-active')
+      setActiveOrderId(orders[orderIteration].id)
+      socket.emit("acceptOrder", orders[orderIteration].UserId)
+    })
+    /* .then(()=>{
         setActiveDriverOrder(true)
         fetch(`/api/orders-data/accept-order/update-active-order`,{
           method: 'PUT',
@@ -320,7 +332,7 @@ export default function NavMap2(){
         }).then(()=>{
           //
         })
-    })
+    }) */
     .catch(error =>{
         console.log(error)
     })
