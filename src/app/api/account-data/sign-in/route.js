@@ -92,6 +92,10 @@ async function getUserFromToken(token) {
         console.log('Результаты запроса в базу данных11:', decoded.id);
         const [rows] = await pool.query('SELECT a.*, m.UserPhoto, m.Approved, m.PhotoWarningDescription FROM accounts a JOIN userphoto m ON a.UserId = m.User WHERE a.UserId = ?', [decoded.id]);
         console.log('Результаты запроса в базу данных:', rows);
+        if (rows.length === 0) {
+            throw new Error('Invalid token or user not found');
+            //return new Response(JSON.stringify(), { status: 401 });
+        }
         const newToken = jwt.sign(
             {
                 id: rows[0].UserId,
@@ -101,9 +105,7 @@ async function getUserFromToken(token) {
             { expiresIn: '7d' }
         );
 
-        if (rows.length === 0) {
-            throw new Error('User not found');
-        }
+        
         console.log('Сгенерирован новый токен:', newToken);
 
         /* return new Response(

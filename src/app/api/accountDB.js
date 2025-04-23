@@ -9,7 +9,7 @@ const accountDB = mysql.createPool({
   user: DB_USER,
   password: DB_PASSWORD,
   database: DB_NAME,
-  connectionLimit: 6
+  connectionLimit: 20
 });
 export default accountDB;
 

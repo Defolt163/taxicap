@@ -19,6 +19,9 @@ export async function PUT(req) {
     await pool.query(
       'UPDATE orders SET DriverName = ?, DriverId = ?, DriverPhone = ?, VehicleBrand = ?, VehicleModel = ?, VehicleColor = ?, VehicleNumber = ?, OrderStatus = ?, DriverImage = ? WHERE id = ?', [DriverName, decoded.id, DriverPhone, VehicleBrand, VehicleModel, VehicleColor, VehicleNumber, OrderStatus, DriverImage, orderId]
     );
+    await pool.query(
+      'UPDATE accounts SET ActiveOrder = ? WHERE UserId = ?', [orderId, decoded.id]
+    );
     return new Response({ status: 200 });
   } catch (error) {
     console.error(error);

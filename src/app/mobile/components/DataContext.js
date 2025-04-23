@@ -56,7 +56,7 @@ export function DataProvider({ children }) {
                     }
                 }
             } catch (error){
-                alert(`ошибка в контексте: ${error}`)
+                router.push('/mobile/');
             }
         }else if (checkStartPage !== null && userPath.startsWith('/mobile/general')){
             router.push('/mobile/sign-in');

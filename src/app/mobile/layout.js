@@ -48,7 +48,7 @@ export default function AppHelloLayout({ children }) {
             router.push('/mobile/general');
         }
       } catch (error){
-          alert(`ошибка в layout over: ${error}`)
+          router.push('/mobile/');
       }
     }else if (checkStartPage !== null){
       router.push('/mobile/sign-in')

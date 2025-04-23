@@ -66,7 +66,7 @@ export default function NavMap2(){
     if (parts.length === 2) return parts.pop().split(';').shift();
     return null; // Если куки нет
 }
-  const { userData, loadingStatus } = useData()
+  const { userData, loadingStatus, setUserData } = useData()
   const [driverPos, setDriverPos] = useState([])
 
   const [mapInfo, setMapInfo] = useState()
@@ -183,14 +183,20 @@ export default function NavMap2(){
   
     if (userData.DriverMode === 1) {
       const handleOrderCreated = (orderData) => {
-        console.log("Новый заказ!", orderData);
-        fetchOrders(); // обновляем список заказов
-        orderCreatedSound?.play(); // звуковое уведомление
+        if(userData.ActiveOrder === 0){
+          console.log("Новый заказ!", orderData);
+          fetchOrders(); // обновляем список заказов
+          orderCreatedSound?.play(); // звуковое уведомление
+        }
       };
-      console.log("Заказ приняли11", activeOrderId)
+      
       const handleOrderAccepted = (orderData) => {
+        console.log("Заказ приняли11", userData.ActiveOrder)
+        if(userData.ActiveOrder === 0){
+          fetchOrders(); // обновляем список заказов
+        }
         console.log("Заказ приняли", orderData);
-        fetchOrders(); // обновляем список заказов
+        
       };
   
       socket.on("orderCreated", handleOrderCreated);
@@ -309,6 +315,10 @@ export default function NavMap2(){
           "DriverImage": userData.UserImage
         }),
     }).then(()=>{
+      setUserData({
+        ...userData,
+        ActiveOrder: orders[orderIteration].id,
+      });
       setTogglerOpenOrder('order-active')
       setActiveOrderId(orders[orderIteration].id)
       socket.emit("acceptOrder", orders[orderIteration].UserId)
@@ -354,8 +364,8 @@ export default function NavMap2(){
           if(res.length !== 0){
             console.log("10l", res)
             setOrders(res)
-            setActiveOrderId(userData.ActiveOrder)
-            setActiveDriverOrder(true)
+            //setActiveOrderId(userData.ActiveOrder)
+            //setActiveDriverOrder(true)
             setStep(1)
             setTogglerOpenOrder('order-active')
             socket.emit("joinOrderRoom", res[0].id)
@@ -651,6 +661,10 @@ export default function NavMap2(){
           })
         }).then(()=>{
           socket.emit("completeOrder", orders[orderIteration].UserId)
+          setUserData({
+            ...userData,
+            ActiveOrder: 0,
+          });
           successfullyPopups()
         })
         //fetchOrders()
@@ -674,6 +688,10 @@ export default function NavMap2(){
       })
     }).then(()=>{
       successfullyPopups()
+      setUserData({
+        ...userData,
+        ActiveOrder: 0
+      });
     })
     
   }
@@ -736,18 +754,30 @@ export default function NavMap2(){
     }
 
   // Быстрый доступ
-  async function getFastAddress(coords, address) {
-    if(
+  function getFastAddress(coords, address) {
+    const isInZone =
+    location.latitude >= 54.330347902222314  && location.latitude <= 54.5140980931572 &&
+    location.longitude >= 51.25456616016618 && location.longitude <= 51.629709692889264;
+
+    if (!isInZone) {
+      alert("Извините, но мы пока не можем подать машину так далеко :(");
+      return;
+    }
+    setAddressToCoordinate(coords); // Точка назначения (например, клик на карте)
+    setAddress(address); // Текстовый адрес
+    setAddressFromCoordinate([location.latitude, location.longitude]); // Откуда подавать
+    handleNextStep();
+    /* if(
       (location.latitude < 51.25456616016618 ||  location.latitude > 51.629709692889264) ||
       (location.longitude < 54.330347902222314 || location.longitude > 54.5140980931572)
-  ){
+    ){
       alert("Извините, Но мы пока не можем подать машину так далеко :(")
     }else{
       setAddressToCoordinate(coords)
       setAddress(address)
       setAddressFromCoordinate([location.latitude,location.longitude])
       handleNextStep()
-    }
+    } */
   }  
 
   // Геопозиция водителей

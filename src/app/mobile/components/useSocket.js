@@ -6,7 +6,7 @@ const useSocket = (userData) => {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    const socket = io("http://192.168.1.147:3001");
+    const socket = io("http://localhost:3001");
     socketRef.current = socket;
 
     return () => {
