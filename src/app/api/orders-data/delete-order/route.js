@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
-import accountDB from '../../accountDB';
+import pool from '../../accountDB';
+import jwt from 'jsonwebtoken';
+const SECRET_KEY = process.env.JWT_SECRET_KEY; // Секрет для JWT
 
-export async function DELETE(request: Request) {
+export async function DELETE(req) {
+  const token = req.headers.get('authorization')?.split(' ')[1];
+  if (!token) {
+    return new Response(JSON.stringify({ message: 'Tокен не предоставлен' }), { status: 401 });
+  }
   try {
     const url = new URL(request.url);
     const id = url.searchParams.get('id');
@@ -9,20 +15,9 @@ export async function DELETE(request: Request) {
     if (!id) {
       return NextResponse.json({ message: 'Параметр id не указан' }, { status: 400 });
     }
-
-    const results = await new Promise((resolve, reject) => {
-      accountDB.query(
-        'DELETE FROM orders WHERE id = ?',
-        [id],
-        (err: any, results: any) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(results);
-          }
-        }
-      );
-    });
+    await pool.query(
+      'DELETE FROM orders WHERE id = ?', [orderId]
+    );
 
     /* if (results.affectedRows === 0) {
       return NextResponse.json({ message: 'Запись не найдена' }, { status: 404 });
