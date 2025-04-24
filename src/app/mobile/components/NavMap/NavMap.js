@@ -620,13 +620,16 @@ export default function NavMap(){
   const [geoJSONRoute, setGeoJSONRoute] = useState([])
   const [routePrice, setRoutePrice] = useState(0)
   const [routeDistance, setRouteDistance] = useState(0) // Дистанция в км
-  const [routeFinish, setRouteFinish] = useState([]) // Конечная точка
+  const [routeStart, setRouteStart] = useState([0,0]) // Стартовая точка
+  const [routeFinish, setRouteFinish] = useState([0,0]) // Конечная точка
   useEffect(()=>{
+    setRouteStart(geoRes[0])
     //let lastItem = geoRes[geoRes.length - 1];
     setRouteFinish(geoRes[geoRes.length - 1])
   }, [geoRes])
   useEffect(()=>{
     console.log('routeFinish', routeFinish)
+    console.log('routeFinishS', routeStart)
   }, [routeFinish])
   //убрать коммент
   // Графическое построение
@@ -788,7 +791,7 @@ export default function NavMap(){
       },
     };
   // Маркер финиша
-  const markerFinish = '/ico/driver-car.png';
+  const markerFinish = '/ico/finish-mark.png';
   const markerFinishStyle1 = {
     type: "FeatureCollection",
     features: [
@@ -811,7 +814,30 @@ export default function NavMap(){
       'icon-allow-overlap': true,    // Позволяем перекрытие иконок
     },
   };
-
+  // Маркер старта
+  const markerStart = '/ico/start-mark.png';
+  const markerStartStyle1 = {
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        properties: {},
+        geometry: {
+          type: "Point",
+          coordinates:  routeStart,
+        },
+      },
+    ],
+  };
+  const markerStartStyle = {
+    id: 'start-marker-layer',
+    type: 'symbol',
+    layout: {
+      'icon-image': 'start-marker', // Имя изображения
+      'icon-size': 0.03,              // Размер изображения
+      'icon-allow-overlap': true,    // Позволяем перекрытие иконок
+    },
+  };
   //Шаги оформления заказа
   const [step, setStep] = useState(0)
   function handleNextStep(){
@@ -1055,6 +1081,12 @@ export default function NavMap(){
                 if (error) throw error;
                 map.addImage('finish-marker', image); // Добавляем изображение под именем 'driver-marker'
               });
+              if(userData && userData.DriverMode == 1){
+                map.loadImage(markerStart, (error, image) => {
+                  if (error) throw error;
+                  map.addImage('start-marker', image); // Добавляем изображение под именем 'passenger-marker'
+                });
+              }
               if(userData && userData.DriverMode == 0){
                 // Загружаем изображение для маркера пассажира
                 map.loadImage(markerUserImageUrl, (error, image) => {
@@ -1067,7 +1099,12 @@ export default function NavMap(){
               <Source id="my-data" type="geojson" data={geoJSONRoute}>
                 <Layer {...layerStyle} />
               </Source>
-              {routeFinish?.length === 2 && (
+              {routeStart && userData && userData.DriverMode == 1 && routeStart.length == 2 && (
+                <Source id="start-data" type="geojson" data={markerStartStyle1}>
+                  <Layer {...markerStartStyle}/>
+                </Source>
+              )}
+              {routeFinish && routeFinish.length === 2 && (
                 <Source id="finish-data" type="geojson" data={markerFinishStyle1}>
                   <Layer {...markerFinishStyle}/>
                 </Source>
