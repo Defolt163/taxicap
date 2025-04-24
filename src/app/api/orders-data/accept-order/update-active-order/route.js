@@ -28,24 +28,23 @@ export async function GET(req) {
     const token = req.headers.get('authorization')?.split(' ')[1];
 
     if (!token) {
-        console.log('Токен не предоставлен');
-        return new Response(JSON.stringify({ message: 'Tокен не предоставлен' }), { status: 401 });
+      return new Response(JSON.stringify({ message: 'Tокен не предоставлен' }), { status: 401 });
     }
+
     try {
-        //const decoded = jwt.verify(token, SECRET_KEY);
-        const [order] = await pool.query(`SELECT * FROM orders WHERE id = ?`, [activeOrderId]);
-        
-        console.log(order);
-        return new Response(
-          JSON.stringify( order ),
-          { status: 200 }
-        );   
+      const decoded = jwt.verify(token, SECRET_KEY);
+      const [order] = await pool.query(`SELECT * FROM orders WHERE id = ? AND DriverId = ? AND OrderStatus = "active";`, [activeOrderId, decoded.id]);
+      
+      return new Response(
+        JSON.stringify( order ),
+        { status: 200 }
+      );   
     } catch (error) {
-        return NextResponse.json(
-            { message: error },
-            {
-                status: 500
-            }
-        );
+      return NextResponse.json(
+          { message: error },
+          {
+              status: 500
+          }
+      );
     }
 }

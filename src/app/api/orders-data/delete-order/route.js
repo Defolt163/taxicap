@@ -8,22 +8,14 @@ export async function DELETE(req) {
   if (!token) {
     return new Response(JSON.stringify({ message: 'Tокен не предоставлен' }), { status: 401 });
   }
-  try {
-    const url = new URL(request.url);
-    const id = url.searchParams.get('id');
+  try {;
+    const decoded = jwt.verify(token, SECRET_KEY)
 
-    if (!id) {
-      return NextResponse.json({ message: 'Параметр id не указан' }, { status: 400 });
-    }
     await pool.query(
-      'DELETE FROM orders WHERE id = ?', [orderId]
+      'DELETE FROM orders WHERE OrderStatus = "created" AND UserId = ?', [decoded.id]
     );
 
-    /* if (results.affectedRows === 0) {
-      return NextResponse.json({ message: 'Запись не найдена' }, { status: 404 });
-    } */
-
-    return NextResponse.json({ message: 'Запись успешно удалена' });
+    return new Response({ status: 200 });
   } catch (error) {
     return NextResponse.json(
       { message: error.message },

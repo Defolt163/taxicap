@@ -15,13 +15,21 @@ export async function PUT(req) {
   try {
     const decoded = jwt.verify(token, SECRET_KEY)
     const { DriverName, DriverPhone, VehicleBrand, VehicleModel, VehicleColor, VehicleNumber, OrderStatus, DriverImage } = await req.json();
-    
-    await pool.query(
-      'UPDATE orders SET DriverName = ?, DriverId = ?, DriverPhone = ?, VehicleBrand = ?, VehicleModel = ?, VehicleColor = ?, VehicleNumber = ?, OrderStatus = ?, DriverImage = ? WHERE id = ?', [DriverName, decoded.id, DriverPhone, VehicleBrand, VehicleModel, VehicleColor, VehicleNumber, OrderStatus, DriverImage, orderId]
-    );
-    await pool.query(
-      'UPDATE accounts SET ActiveOrder = ? WHERE UserId = ?', [orderId, decoded.id]
-    );
+    if(OrderStatus == 'completed'){
+      await pool.query(
+        'UPDATE accounts SET ActiveOrder = 0 WHERE UserId = ?', [decoded.id]
+      );
+      await pool.query(
+        'UPDATE orders SET OrderStatus = "completed" WHERE id = ? AND DriverId = ?', [orderId, decoded.id]
+      );
+    }else{
+      await pool.query(
+        'UPDATE orders SET DriverName = ?, DriverId = ?, DriverPhone = ?, VehicleBrand = ?, VehicleModel = ?, VehicleColor = ?, VehicleNumber = ?, OrderStatus = ?, DriverImage = ? WHERE id = ?', [DriverName, decoded.id, DriverPhone, VehicleBrand, VehicleModel, VehicleColor, VehicleNumber, OrderStatus, DriverImage, orderId]
+      );
+      await pool.query(
+        'UPDATE accounts SET ActiveOrder = ? WHERE UserId = ?', [orderId, decoded.id]
+      );
+    }
     return new Response({ status: 200 });
   } catch (error) {
     console.error(error);

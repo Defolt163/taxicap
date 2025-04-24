@@ -68,9 +68,7 @@ export async function POST(req) {
   try {
     const decoded = jwt.verify(token, SECRET_KEY)
     const {
-      OrderKey,
       CustomerPhone,
-      UserId,
       OrderStatus,
       CustomerName,
       LatFrom,
@@ -84,22 +82,16 @@ export async function POST(req) {
       CustomerImage
     } = await req.json();
 
-    const sql = `INSERT INTO orders (\`OrderKey\`, CustomerPhone, UserId, OrderStatus, CustomerName, LatFrom, LonFrom, LatTo, LonTo, AddressFrom, AddressTo, Price, PaymentMethod, CustomerImage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
+    const sql = `INSERT INTO orders (CustomerPhone, UserId, OrderStatus, CustomerName, LatFrom, LonFrom, LatTo, LonTo, AddressFrom, AddressTo, Price, PaymentMethod, CustomerImage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
   const values = [
-    OrderKey, CustomerPhone, decoded.id, OrderStatus, CustomerName,
+    CustomerPhone, decoded.id, OrderStatus, CustomerName,
     LatFrom, LonFrom, LatTo, LonTo, AddressFrom, AddressTo,
     Price, PaymentMethod, CustomerImage
   ];
 
   await pool.query(sql, values);
-    const [rows] = await pool.query(
-      "SELECT id FROM orders WHERE UserId = ? AND (OrderStatus = 'active' OR OrderStatus = 'created')", [decoded.id]
-    );
-    
     return new Response(
-      JSON.stringify({ rows }),
       { status: 200 }
     );  
   } catch (error) {
