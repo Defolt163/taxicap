@@ -8,7 +8,7 @@ export default function faqPage(){
                 <div className="info-page_header">
                     <PagesHeader ReturnBtn="/mobile/general"/>
                 </div>
-                <div className="info_page_text-block">
+                <div className="">
                     <h2>Положение о конфиденциальности приложения Swift</h2>
                     <h3><strong>1.</strong> Общие положения</h3>
                     <p>Настоящее Положение о конфиденциальности определяет порядок сбора, хранения, использования и защиты персональных данных Пользователей приложения Swift (далее – «Приложение»).</p>

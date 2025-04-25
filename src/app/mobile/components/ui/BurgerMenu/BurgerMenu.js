@@ -17,8 +17,6 @@ export default function BurgerMenu(){
     
     function userSignOut() {
         document.cookie = `token=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/;`
-        localStorage.removeItem('accountData')
-        localStorage.removeItem('accountSessionId')
         router.push('/mobile/sign-in')
       }
     return(

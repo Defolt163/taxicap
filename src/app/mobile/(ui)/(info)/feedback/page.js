@@ -1,61 +1,40 @@
 'use client'
-import { useEffect, useState } from "react"
-import emailjs from '@emailjs/browser';
-import Cookies from 'js-cookie'
+import { useState } from "react"
 import PagesHeader from '../../../components/PagesHeader/PagesHeader'
 import './style.sass'
 
 export default function FeedbackPage(){
-    const [sessionKey, setSessionKey] = useState('')
-    function myHandler() {
-        if(sessionKey === ''){
-            const cookieValue = Cookies.get('UserData'); // Замените cookieName на имя необходимой вам cookie
-            const userData = JSON.parse(cookieValue)
-            setSessionKey(userData.session_key)
-        }
-      }
-    useEffect(()=>{
-        myHandler()
-    }, [])
-    const [userData, setUserData] = useState([])
-    function getUsersEmail(){
-        if(sessionKey !== '' && userData.length <= 0){
-            fetch(`/api/account-data/user-data?sessionId=${sessionKey}`,{
-                method: 'GET'
-            }).then((result)=>{
-                console.log("OKAY")
-                return result.json()
-            }).then((res)=>{
-                if(userData.length <= 0){
-                    setUserData(res)
-                }
-            })
-            .catch(error =>{
-                console.log(error)
-            })
-        }
+    const [togglerPopupLoadingData, setTogglerPopupLoadingData] = useState('')
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null; // Если куки нет
     }
-    useEffect(()=>{
-        getUsersEmail()
-    }, [sessionKey])
     const [feedbackValue, setFeedbackValue] = useState('')
     const [togglerPopup, setTogglerPopup] = useState('')
     const [popupText, setPopupText] = useState('')
-    function sendMessage(){
+    async function sendMessage(){
+        const token = getCookie('token')
         if(feedbackValue !== ""){
-            emailjs.send("service_taxicap", "template_z576mni", {
-                'user_name': `${userData[0].UserName}`,
-                'user_email': `${userData[0].UserEmail}`,
-                'user_id': `${userData[0].UserId}`,
-                'message': `${feedbackValue}`
-            }, "L1XK15ZnEN_oq838c")
-            .then(() => {
-                setTogglerPopup('popup-open')
-                setPopupText('Сообщение отправлено')
-            }, () => {
+            setTogglerPopupLoadingData('popup-open')
+            const response = await fetch('/api/send-message?type=feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ userMessage: feedbackValue })
+            })
+            if(!response.ok){
+                setTogglerPopupLoadingData('')
                 setTogglerPopup('popup-open')
                 setPopupText('Ошибка сервера')
-            });
+            }else{
+                setTogglerPopupLoadingData('')
+                setTogglerPopup('popup-open')
+                setPopupText('Сообщение отправлено')
+            }
         }else{
             setTogglerPopup('popup-open')
             setPopupText('Вы ничего не написали')
@@ -79,6 +58,12 @@ export default function FeedbackPage(){
                 <div className='Button PopupButton' onClick={()=>{setTogglerPopup('')}}>Закрыть</div>
             </div>
             <div className={`popup-background ${togglerPopup}`}></div>
+            {/* Loading */}
+            <div className={`popup-background ${togglerPopupLoadingData}`}></div>
+            <div className={`popup popup-input-error ${togglerPopupLoadingData}`}>
+                <h3 className='popup-input-error__text'>Загрузка</h3>
+            </div>
+            <div className={`popup-background ${togglerPopupLoadingData}`}></div>
         </>
     )
 } 

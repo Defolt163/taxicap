@@ -6,7 +6,7 @@ const SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 export async function POST(req) {
   try {
-      const { inputName, inputEmail } = await req.json();
+      const { inputName, inputEmail, rawPhone } = await req.json();
 
       // Проверка, существует ли пользователь
       const [rows] = await accountDB.query('SELECT * FROM accounts WHERE UserEmail = ?', [inputEmail]);
@@ -20,12 +20,12 @@ export async function POST(req) {
           // Сохранение пользователя в базе данных
           //const hashedPassword = await bcrypt.hash(inputPassword, 10)
           await accountDB.query(
-              'INSERT INTO accounts (UserName, UserEmail) VALUES (?, ?)',
-              [inputName, inputEmail]
+              'INSERT INTO accounts (UserName, UserPhone, UserEmail) VALUES (?, ?, ?)',
+              [inputName, rawPhone, inputEmail]
           );
 
           // Получение сохраненного пользователя
-          const [newRows] = await accountDB.query('SELECT * FROM accounts WHERE UserEmail = ?', [inputEmail]);
+          const [newRows] = await accountDB.query('SELECT UserId FROM accounts WHERE UserEmail = ?', [inputEmail]);
           const user = newRows[0];
           await accountDB.query(
             'INSERT INTO userphoto (User) VALUES (?)',

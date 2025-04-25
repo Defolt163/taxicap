@@ -140,6 +140,75 @@ export default function SetAccount(){
                 </div>
             </>
             )
+        case 3:
+            return (
+            <>
+                <div className="GetStartedPageBlock">
+                    <h1 className="GetStartedPageHeader">Введите данные вашего автомобиля</h1>
+                    <h3>Это позволит пассажиру скорее найти ваш автомобиль</h3>
+                    <form action={()=>{updateSessionId()}} className="GetStartedForm" id="vehicle">
+                        <div className='GetStartedFormItem VehicleParams'>
+                            <label htmlFor="vehicle-brand">Марка:</label>
+                            <input
+                            id="vehicle-brand"
+                            type="text"
+                            required
+                            value={vehicleBrand}
+                            onChange={(e) => setVehicleBrand(e.target.value)}
+                            />
+                        </div>
+                        <div className='GetStartedFormItem VehicleParams'>
+                            <label htmlFor="vehicle-model">Модель:</label>
+                            <input
+                            id="vehicle-model"
+                            type="text"
+                            required
+                            value={vehicleModel}
+                            onChange={(e) => setVehicleModel(e.target.value)}
+                            />
+                        </div>
+                        <div className='GetStartedFormItem VehicleParams'>
+                            <label htmlFor="vehicle-color">Цвет:</label>
+                            <select
+                                id="vehicle-color"
+                                type="text"
+                                required
+                                value={vehicleColor}
+                                onChange={(e) => setVehicleColor(e.target.value)}
+                            >
+                                <option value="Черный">Черный</option>
+                                <option value="Серый">Серый</option>
+                                <option value="Серебристый">Серебристый</option>
+                                <option value="Белый">Белый</option>
+                                <option value="Зеленый">Зеленый</option>
+                                <option value="Синий">Синий</option>
+                                <option value="Красный">Красный</option>
+                                <option value="Коричневый">Коричневый</option>
+                                <option value="Желтый">Желтый</option>
+                            </select>
+                        </div>
+                        <div className='GetStartedFormItem VehicleParams'>
+                            <label htmlFor="vehicle-id">Гос номер:</label>
+                            <input
+                            id="vehicle-id"
+                            type="text"
+                            required
+                            value={vehicleId}
+                            onChange={(e) => setVehicleId(e.target.value)}
+                            />
+                        </div>
+                    </form>
+                </div>
+                <div className='FormButtonBlock'>
+                    <div onClick={handlePrevStep} className="Button GetStartedBtn">
+                        Назад
+                    </div>
+                    <button type='submit' form="vehicle" className="Button GetStartedBtn">
+                        Начать!
+                    </button>
+                </div>
+            </>
+        )
     }}
 
     return(

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import accountDB from "../../accountDB";
 const SECRET_KEY = process.env.JWT_SECRET_KEY; // Секрет для JWT
-export async function GET(request) {
+export async function GET(req) {
+  const { searchParams } = new URL(req.url);
+  const inputEmail = searchParams.get("inputEmail");
   try {
-    const inputEmail = request.nextUrl.searchParams.get("inputEmail");
     if (!inputEmail) {
       return NextResponse.json({ message: "Email не указан" }, { status: 400 });
     }
@@ -13,16 +14,11 @@ export async function GET(request) {
       [inputEmail]
     );
     if (rows.length > 0) {
-      return NextResponse.json(
-        { message: "Пользователь уже существует", exists: true },
-        { status: 400 }
-      );
+      return new Response(JSON.stringify(), { status: 200 });
     }
 
-    return NextResponse.json(
-      { message: "Email свободен", exists: false },
-      { status: 200 }
-    );
+    return new Response(JSON.stringify(), { status: 404 });
+
   } catch (error) {
     console.error("Ошибка при проверке email:", error);
     return NextResponse.json(

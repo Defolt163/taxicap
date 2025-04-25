@@ -1053,7 +1053,13 @@ export default function NavMap(){
   const [togglerPopup, setTogglerPopup] = useState("")
   const [togglerPopupOrderClose, setTogglerPopupOrderClose] = useState('')
   if (loadingStatus) {
-    return <div>Загрузка...</div>;
+    return <div>
+      <div className={`popup-background popup-open`}></div>
+      <div className={`popup popup-input-error popup-open`}>
+          <h3 className='popup-input-error__text'>Загрузка</h3>
+      </div>
+      <div className={`popup-background popup-open`}></div>
+    </div>;
   } else{
     return (
       <div className="Map">
