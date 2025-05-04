@@ -1,4 +1,4 @@
-@import ./variables
+@use "./variables" as *
     
 body
     overflow-x: hidden
@@ -6,7 +6,7 @@ body
     border-radius: 42px
     background-color: $blocks-bgc
     &__container
-        padding: 10px 10px 0 10%
+        padding: 10px 10px 0 10px
 
 .btn_open__app
     overflow: hidden
@@ -88,9 +88,9 @@ body
                 width: 80vh
                 height: auto
             .promo_right__bg-image
-                z-index: -1
+                z-index: 0
                 position: absolute
-                width: 90%
+                width: 70%
                 height: auto
                 left: 50%
                 top: 50%
@@ -103,7 +103,6 @@ body
             height: 100%
             overflow: hidden
             .promo_block__container
-                padding: 0
                 h2
                     position: relative
                     z-index: 2
@@ -229,6 +228,10 @@ body
             .about_links
                 width: 60%
 
+@media screen and ( max-width: 992px )
+    .promo_block
+        &__container
+            padding-top: 2rem
 @media screen and ( max-width: 832px )
     .MainPage 
         .promo_blocks

@@ -1,12 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
-import Logo from '/public/logo/swift-logo-white.svg'
+import Logo from '/public/logo/logo-white.png'
 import './style.sass'
 
 export default function FooterPageComponent(){
     return(
         <div className="footer">
-            <div className="container">
+            <div className="container px-4">
                 <div className="footer_wrapper">
                     <Link href='/' className="footer_logo"><Image src={Logo} alt="Swift Logo"/></Link>
                     <ul className="footer_link_block">

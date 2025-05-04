@@ -1,28 +1,21 @@
 'use client'
 import Image from "next/image";
 import HeaderPageComponent from "../../components/Header/Header";
-import LogoShort from '/public/logo/swift-logo-short.svg'
+import LogoShort from '/public/logo/white-short-logo.svg'
 import './about-page.sass'
 import FooterPageComponent from "../../components/Footer/Footer";
 import { useEffect } from "react";
 
 export default function AboutPage(){
-    useEffect(() => {
-        const htmlElement = document.documentElement;
-        htmlElement.classList.add('black-bg');
-    
-        return () => {
-          htmlElement.classList.remove('black-bg');
-        };
-      }, [])
+
     return(
-        <div className="about">
+        <div className="about pt-[140px] max-[992px]:pt-8">
             <HeaderPageComponent FirstLink='/' FirstLabel="Главная"/>
-            <div className='about_blocks'>
+            <div className='about_blocks mb-12 text-white'>
                 <div className='about_block about_left'></div>
                 <div className='about_block about_right'>
                     <div className="about_block__container">
-                        <h1>О нас</h1>
+                        <h1 className='text-3xl font-bold mb-4'>О нас</h1>
                         <h4>
                             Знакомьтесь с новым приложением, созданным местными энтузиастами специально для жителей и гостей Шенталинского района! Мы – команда неравнодушных людей, которые преследуют одну цель: сделать передвижение по нашему замечательному региону максимально удобным и комфортным. <br/><br/>
 
@@ -38,7 +31,7 @@ export default function AboutPage(){
 
                             Мы искренне верим, что наш проект поможет сделать жизнь в Шенталинском районе более удобной и комфортной. Присоединяйтесь к нашему сообществу, и вместе мы откроем новые горизонты мобильности в нашем замечательном крае!
                         </h4>
-                        <Image className='promo_right__bg-image' src={LogoShort} alt='swift logo short "SF"'/>
+                        <Image className='promo_right__bg-image opacity-20' src={LogoShort} alt='swift logo short "SF"'/>
                     </div>
                 </div>
             </div>

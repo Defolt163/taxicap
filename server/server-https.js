@@ -1,0 +1,106 @@
+const axios = require("axios");
+const { readFileSync } = require("fs");
+const { createServer } = require("https");
+const { Server } = require("socket.io");
+
+// HTTPS сервер
+
+const httpsServer = createServer({
+    key: readFileSync("./certs/key.pem"),
+    cert: readFileSync("./certs/cert.pem"),
+});
+  
+const io = new Server(httpsServer, { 
+    cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+}
+});
+
+io.engine.on("connection", (rawSocket) => {
+    // if you need the certificate details (it is no longer available once the handshake is completed)
+    rawSocket.peerCertificate = rawSocket.request.client.getPeerCertificate();
+  });
+
+io.on("connection", (socket) => {
+  console.log("✅ User connected");
+
+  // 1. Пассажир создал заказ
+  socket.on("sendOrder", (data) => {
+    try {
+      const response = axios.post("https://localhost:3000/api/orders-data/create-order",
+        {
+          CustomerPhone: data.CustomerPhone,
+          UserId: data.UserId,
+          OrderStatus: data.OrderStatus,
+          CustomerName: data.CustomerName,
+          LatFrom: data.LatFrom,
+          LonFrom: data.LonFrom,
+          LatTo: data.LatTo,
+          LonTo: data.LonTo,
+          AddressFrom: data.AddressFrom,
+          AddressTo: data.AddressTo,
+          Price: data.Price,
+          PaymentMethod: data.PaymentMethod,
+          CustomerImage: data.CustomerImage,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${data.token}`,
+          },
+        }
+      );
+      console.log("Данные успешно отправлены в базу данных");
+      //io.emit("orderCreated", data); // Отправляем данные о созданном заказе всем подключенным клиентам
+      console.log("Ответ от сервера:", response.data);
+      /* const resPassenger = axios.get(`http://localhost:3000/api/orders-data/accept-order/get-user-order?UserId=${data.UserId}`);
+      const responseData = resPassenger.data */
+      /* axios.post(`http://localhost:3000/api/orders-data/accept-order/update-active-order?UserId=${data.UserId}`,
+      JSON.stringify({
+        "ActiveOrder": responseData[0].id
+      })
+      ) */
+      console.log("📦 Order created:", data);
+      io.emit("orderCreated", data); // Все водители
+    } catch (error) {
+      console.error("Ошибка отправки данных в базу данных:", error);
+    }
+  });
+
+  // 2. Водитель принял заказ
+  socket.on("acceptOrder", (orderId) => {
+    console.log("🚗 Order accepted:", orderId);
+    socket.broadcast.emit("orderAccepted", orderId); // Остальные водители
+  });
+
+  // 3. Пассажир отменил заказ
+  socket.on("cancelOrder", (orderId) => {
+    console.log("❌ Order canceled:", orderId);
+    io.emit("orderCanceled", orderId); // Все водители
+  });
+
+  // 4. Водитель завершил заказ
+  socket.on("completeOrder", (userId) => {
+    console.log("✅ Order completed by driver for:", userId);
+    io.emit("orderCompleted", userId); // Пассажир (по userId можно фильтровать на клиенте)
+  });
+
+  // 5. Геопозиция водителя
+  socket.on("sendDriverLocation", (orderId, position) => {
+    console.log("📍 Driver position update:", orderId, position);
+    socket.to(`order_${orderId}`).emit("driverLocation", position);
+  });
+
+  // Присоединение к комнате
+  socket.on("joinOrderRoom", (orderId) => {
+    if (orderId) {
+      socket.join(`order_${orderId}`);
+      console.log(`🟢 Joined room order_${orderId}`);
+    }
+  });
+});
+
+httpsServer.listen(3001, () => {
+    console.log("✅ HTTPS Socket.io server running on port 3001");
+  });

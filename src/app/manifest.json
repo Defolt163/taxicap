@@ -1,6 +1,7 @@
 {
   "name": "Swift Букинг автомобилей с водителем",
   "short_name": "Swift Перевозки",
+  "description": "Приложение для заказа местного такси",
   "icons": [
     {
       "src": "/favicon/android-chrome-192x192.png",
@@ -17,5 +18,17 @@
   "background_color": "#FFFFFF",
   "start_url": "/mobile",
   "display": "standalone",
-  "orientation": "portrait"
+  "orientation": "portrait",
+  "screenshots": [
+    {
+      "src": "/screenshots-pwa/main.png",
+      "sizes": "1170x2532",
+      "type": "image/png"
+    },
+    {
+      "src": "/screenshots-pwa/burger.png",
+      "sizes": "1170x2532",
+      "type": "image/png"
+  }
+  ]
 }

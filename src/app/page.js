@@ -5,7 +5,7 @@ import './main-page-style.sass'
 import Link from 'next/link'
 import BtnApp from '/public/ico/btn-app.svg'
 import HandAndPhone from '/public/landing/image/HandAndPhone.png'
-import LogoShort from '/public/logo/swift-logo-short.svg'
+import LogoShort from '/public/logo/white-short-logo.svg'
 import PhoneQr from '/public/landing/image/PhoneQr.png'
 import Image from 'next/image'
 import { useEffect } from 'react'
@@ -27,20 +27,20 @@ export default function MainPage(){
             <div className='promo_blocks'>
                 <div className='promo_block promo_left'>
                     <div className='promo_block__container'>
-                        <h1>Мобильный сервис создания и бронирования поездок</h1>
+                        <h1 className='max-[992px]:mb-4'>Мобильный сервис создания и бронирования поездок</h1>
                         <h3>В современном ритме жизни, время имеет решающее значение. Наше приложение дает тебе возможность создавать поездки и бронировать трансфер в удобное для тебя время, экономя драгоценные минуты.</h3>
                         <Link href='/mobile' className='btn_open__app'>Открыть приложение <div className='btn-app'><Image src={BtnApp} alt="arrow 45deg"/></div></Link>
                     </div>
                 </div>
                 <div className='promo_block promo_right'>
                     <iframe className='music-playlist' src="https://music.yandex.ru/iframe/playlist/nrjchannels/1004"></iframe>
-                    <Image className='promo_right__image' src={HandAndPhone} alt='hand phone app'/>
-                    <Image className='promo_right__bg-image' src={LogoShort} alt='swift logo short "SF"'/>
+                    <Image className='promo_right__image z-10' src={HandAndPhone} alt='hand phone app'/>
+                    <Image className='promo_right__bg-image opacity-20 z-0' src={LogoShort} alt='swift logo short "SF"'/>
                 </div>
             </div>
             <div className='qr-block'>
                 <div className='promo_block'>
-                    <div className='promo_block__container'>
+                    <div className='promo_block__container max-[992px]:pt-8'>
                         <h2>Отсканируй QR код и войди в приложение!</h2>
                         <Image className='phone_qr-code' src={PhoneQr} alt='Phone Qr Code'/>
                         <div className='video-overlay'></div>
@@ -50,9 +50,9 @@ export default function MainPage(){
                     </video>
                 </div>
             </div>
-            <div className='features'>
+            <div className='features my-8'>
                 <div className='container'>
-                    <h2>Выбери свою сторону</h2>
+                    <h2 className='mb-8'>Выбери свою сторону</h2>
                     <div className='features_block'>
                         <div className='features_block__side'>
                             <div className='features_block__side-text'>
@@ -87,7 +87,7 @@ export default function MainPage(){
             </div>
             <div className='about'>
                 <div className='container'>
-                    <h2>Пара слов о проекте</h2>
+                    <h2 className='mb-8'>Пара слов о проекте</h2>
                     <div className='about-text'>
                         Знакомьтесь с новым приложением, созданным местными энтузиастами специально для жителей и гостей Шенталинского района! Мы – команда неравнодушных людей, которые преследуют одну цель: сделать передвижение по нашему замечательному региону максимально удобным и комфортным.<br/>
 

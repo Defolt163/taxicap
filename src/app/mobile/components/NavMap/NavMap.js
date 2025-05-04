@@ -31,6 +31,8 @@ import {
   registerPassengerHandlers,
   registerDriverHandlers
 } from "../socketHandlers";
+import { subscribeUser, unsubscribeUser, sendNotification } from '../actions'
+import { Button } from '@/components/ui/button'
 
 //import defaultUserIco from '/public/ico/man-user.svg'
 
@@ -39,6 +41,7 @@ const mapApiKey = process.env.NEXT_PUBLIC_MAP_API_KEY
 const localHostApi = process.env.NEXT_PUBLIC_MYSQL_API
 
 export default function NavMap(){
+  
   const [geoRes, setGeoRes] = useState([])
   //Хранение заказов
   const [orders, setOrders] = useState([])
@@ -75,7 +78,7 @@ export default function NavMap(){
   const { userData, loadingStatus, setUserData } = useData()
   const [driverPos, setDriverPos] = useState([])
 
-  const [mapInfo, setMapInfo] = useState()
+  const [mapInfo, setMapInfo] = useState([])
   useEffect(()=>{
     fetch('https://maps.geoapify.com/v1/styles/osm-bright/style.json?apiKey=3f92ee1c9c6946c59edce5b1227a9078',{
       method: 'GET'
@@ -85,6 +88,89 @@ export default function NavMap(){
       setMapInfo(res);
     })
   },[])
+
+  //PUSH
+  function urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+      const base64 = (base64String + padding)
+        .replace(/-/g, '+') // убраны лишние escape-символы
+        .replace(/_/g, '/');
+    
+      const rawData = window.atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+    
+      for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+      }
+    
+      return outputArray;
+  }
+  const [isSupported, setIsSupported] = useState(false);
+  const [subscription, setSubscription] = useState(null);
+  const [message, setMessage] = useState('');
+
+
+  async function registerServiceWorker() {
+    try {
+      console.log("1")
+      const registration = await navigator.serviceWorker.register('/sw.js', {
+        scope: '/',
+        updateViaCache: 'none',
+      });
+
+      // Получаем существующую подписку
+      const sub = await registration.pushManager.getSubscription();
+      console.log("2")
+
+      // Если подписка не существует, создаем новую
+      if (!sub) {
+        await subscribeToPush(registration);
+      } else {
+        setSubscription(sub);
+      }
+    } catch (err) {
+      console.error('Service Worker registration failed:', err);
+    }
+  }
+
+  async function subscribeToPush(registration) {
+    try {
+      const sub = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY),
+      });
+
+      setSubscription(sub);
+      console.log('User subscribed to push notifications:', sub);
+    } catch (err) {
+      console.error('Push subscription error:', err);
+    }
+  }
+
+  async function unsubscribeFromPush() {
+    try {
+      await subscription?.unsubscribe();
+      setSubscription(null);
+      await unsubscribeUser();
+    } catch (err) {
+      console.error('Push unsubscribe error:', err);
+    }
+  }
+
+  async function sendUserNotification() {
+    try {
+      if (subscription) {
+        await sendNotification("message");
+      }
+    } catch (err) {
+      console.error('Send notification error:', err);
+    }
+  }
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
+
+
   
   // Открытие веб сокета
   const socketRef = useSocket(); // подключение
@@ -181,15 +267,21 @@ export default function NavMap(){
     if (!socket || !userData) return;
   
     if (userData.DriverMode === 1) {
-      const handleOrderCreated = () => {
+      const handleOrderCreated = async () => {
         if(userData.ActiveOrder === 0){
           fetchOrders();
+          if (subscription) {
+            await sendNotification("Новые заказы!");
+          }
         }
       };
       
-      const handleOrderAccepted = () => {
+      const handleOrderAccepted = async () => {
         if(userData.ActiveOrder === 0){
           fetchOrders();
+          if (subscription) {
+            await sendNotification("Статус обновлен");
+          }
         }
       };
   
@@ -848,6 +940,7 @@ export default function NavMap(){
     setStep(step - 1)
   }
 
+  
   const renderStepClient = () => {
     switch (step) {
       case 0:
@@ -1155,7 +1248,7 @@ export default function NavMap(){
           <div className={`popup-background ${togglerPopupVehicleNotFound}`}></div>
           <div className={`popup popup-input-error ${togglerPopupVehicleNotFound}`}>
             <h3 className='popup-input-error__text'>Для продолжения, добавьте автомобиль</h3>
-            <Link className='Button PopupButton' href='/mobile/my-account'>Добавить</Link>
+            <Link className='Button PopupButton' href='general/my-account'>Добавить</Link>
           </div>
           <div className={`popup-background ${togglerPopupVehicleNotFound}`}></div>
       </div>

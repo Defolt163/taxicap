@@ -1,29 +1,34 @@
-@import ./variables
-.not-found
-    height: 100vh
-    display: flex
-    justify-content: center
-    align-items: center
-    .not-found_text
-        color: #fff
+@use "./variables" as *
+.wrapper_404
+    background-color: $blocks-bgc
+    .not-found
+        height: 100vh
         display: flex
-        flex-direction: column
+        justify-content: center
         align-items: center
-        h1
-            text-align: center
-            margin: 0
-        h3
-            text-align: center
+        background-color: $blocks-bgc
+        .not-found_text
+            color: #fff
+            display: flex
+            flex-direction: column
+            align-items: center
+            h1
+                text-align: center
+                margin: 0
+            h3
+                text-align: center
+    .footer
+        margin: 0
 .not-found_bg
     position: absolute
-    z-index: -1
+    z-index: 0
     top: 50%
     left: 0
     transform: translateY(-50%)
     text-align: center
     font-size: 22rem
     font-weight: 900
-    color: #86868626
+    color: rgb(134 134 134 / 5%)
     width: 100%
 
 @media screen and ( max-width: 992px )

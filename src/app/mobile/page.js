@@ -2,7 +2,7 @@
 import Image from 'next/image'
 import './style.sass'
 import Link from "next/link"
-import logo from '/public/logo/swift-logo.svg'
+import logo from '/public/logo/logo-white.svg'
 import { useState } from 'react'
 import driverImg from '/public/image/startpage/driver.png'
 import driver2Img from '/public/image/startpage/driver2.png'
@@ -82,9 +82,9 @@ export default function Home() {
           )
         case 4:
           return (
-            <div className='container container-settings-page' style={{background: 'url(/settings-bg/bg-s-4.jpg) center center/cover no-repeat'}}>
+            <div className='container px-4 container-settings-page' style={{backgroundColor: "#6801E7"}}>
               <div className='reels-style'>
-                <Image src={logo} alt="logo" style={{height: 'auto', width: '100%', margin: '2rem 0'}}/>
+                <Image src={logo} alt="logo" style={{height: 'auto', width: '100%', margin: '7rem 0 0 0'}}/>
                 <div className='StartButtonBlock'>
                     <Link className='Button BtnStart' href={'/mobile/sign-in'}>Начать пользоваться</Link>
                   </div>
