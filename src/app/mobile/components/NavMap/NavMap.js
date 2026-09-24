@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import ReactMapGL, { Source, Layer, Map, Marker } from "react-map-gl"
+import ReactMapGL, { Source, Layer, Map, /* Marker */ } from "react-map-gl"
 import 'maplibre-gl/dist/maplibre-gl.css'
 import './style.sass'
 import carIco from '/public/ico/car.png'
@@ -33,6 +33,12 @@ import {
 } from "../socketHandlers";
 import { subscribeUser, unsubscribeUser, sendNotification } from '../actions'
 import { Button } from '@/components/ui/button'
+import dynamic from 'next/dynamic';
+
+const MapComponent = dynamic(() => import('./Map'), {
+  ssr: false,  // <-- КЛЮЧЕВОЙ МОМЕНТ: отключаем серверный рендеринг
+  loading: () => <div>Загрузка карты...</div>
+});
 
 //import defaultUserIco from '/public/ico/man-user.svg'
 
@@ -79,7 +85,7 @@ export default function NavMap(){
   const [driverPos, setDriverPos] = useState([])
 
   const [mapInfo, setMapInfo] = useState([])
-  useEffect(()=>{
+  /* useEffect(()=>{
     fetch('https://maps.geoapify.com/v1/styles/osm-bright/style.json?apiKey=3f92ee1c9c6946c59edce5b1227a9078',{
       method: 'GET'
     }).then((result)=>{
@@ -87,7 +93,7 @@ export default function NavMap(){
     }).then((res)=>{
       setMapInfo(res);
     })
-  },[])
+  },[]) */
 
   //PUSH
   function urlBase64ToUint8Array(base64String) {
@@ -400,6 +406,7 @@ export default function NavMap(){
             setOrders(res)
             setStep(1)
             setTogglerOpenOrder('order-active')
+            setActiveOrderId(res[0].id)
             socket.emit("joinOrderRoom", res[0].id)
           }
         }).catch(error => {
@@ -601,15 +608,14 @@ export default function NavMap(){
 
   useEffect(()=>{
     if('geolocation' in navigator) {
-      // Retrieve latitude & longitude coordinates from `navigator.geolocation` Web API
       navigator.geolocation.watchPosition(({ coords }) => {
-          const { latitude, longitude } = coords;
-          setLocation({ latitude, longitude });
+        const { latitude, longitude } = coords;
+        setLocation({ latitude, longitude });
       })
     }
   })
 
-  useEffect(()=>{
+  /* useEffect(()=>{
     console.log("LOCATSIA:", location)
     if(location !== undefined){
       fetch(`https://api.geoapify.com/v1/geocode/reverse?lat=${location.latitude}&lon=${location.longitude}&format=json&apiKey=${mapApiKey}`)
@@ -619,7 +625,7 @@ export default function NavMap(){
       )
       .catch(setAddressFrom(""));
     }
-  },[location])
+  },[location]) */
   // Маркер пользователя Не готово
   const userPositionFrom = {
     type: 'FeatureCollection',
@@ -656,12 +662,13 @@ export default function NavMap(){
   }
 
   useEffect(()=>{
-    if(activeOrderId !== 0){
+    console.log(`activeOrderId - ${activeOrderId} ${location}`)
+    if(activeOrderId !== 0 && userData?.DriverMode == 1){
       driverGeo()
     }
   }, [location])
+
   // Сторона клиента (Пассажир)
-  
   useEffect(() => {
     const socket = socketRef.current;
   
@@ -823,7 +830,7 @@ export default function NavMap(){
     }
   }, [orders])
 
-  // Маркер пассажира стили
+  // Маркер пользователя стили
   const passengerImage = userData && userData?.UserImage;
   const fallbackPassengerImage = userData?.UserName?.[0] || 'U';
 
@@ -1159,7 +1166,8 @@ export default function NavMap(){
           <div className={`MapUi ${togglerPriceBlock}`}>
             {userData && userData.DriverMode === 1 ? renderStepDriver() : renderStepClient()}
           </div>
-          <Map
+          <MapComponent/>
+          {/* <Map
               className="MapWrapper"
               initialViewState={{
                   longitude: 51.466315,
@@ -1186,8 +1194,8 @@ export default function NavMap(){
                   map.addImage('start-marker', image); // Добавляем изображение под именем 'passenger-marker'
                 });
               }
-              if(userData && userData.DriverMode == 0){
-                // Загружаем изображение для маркера пассажира
+              if(userData){
+                // Загружаем изображение для маркера пользователя - пассажира
                 map.loadImage(markerUserImageUrl, (error, image) => {
                   if (error) throw error;
                   map.addImage('passenger-marker', image); // Добавляем изображение под именем 'passenger-marker'
@@ -1214,7 +1222,7 @@ export default function NavMap(){
               <Source id="driver-data" type="geojson" data={markerDriverStyle1}>
                 <Layer {...markerDriverStyle}/>
               </Source>
-          </Map>
+          </Map> */}
           <div className={`popup popup-input-error ${togglerPopup}`}>
             <h3 className='popup-input-error__text'>{
                 addressFrom === "" && addressTo === "" ? 'Откуда и Куда вы направляетесь?' :
@@ -1245,12 +1253,7 @@ export default function NavMap(){
           </div>
           <div className={`popup-background ${togglerPopupPassengerCloseOrder}`}></div>
           {/* попап о пустом значении транспорта */}
-          <div className={`popup-background ${togglerPopupVehicleNotFound}`}></div>
-          <div className={`popup popup-input-error ${togglerPopupVehicleNotFound}`}>
-            <h3 className='popup-input-error__text'>Для продолжения, добавьте автомобиль</h3>
-            <Link className='Button PopupButton' href='general/my-account'>Добавить</Link>
-          </div>
-          <div className={`popup-background ${togglerPopupVehicleNotFound}`}></div>
+          
       </div>
     )
   }

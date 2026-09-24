@@ -35,8 +35,8 @@ export async function GET(req) {
     try {
         const decoded = jwt.verify(token, SECRET_KEY);
         const [rows] = await pool.query(`
-            ${userStatus == 'passenger' ? 'SELECT * FROM orders WHERE UserId = ? AND OrderStatus = "completed"' : 
-            userStatus == 'driver' ? 'SELECT * FROM orders WHERE DriverId = ? AND OrderStatus = "completed"' : null}`, [decoded.id, userStatus]);
+            ${userStatus == 'passenger' ? 'SELECT * FROM orders WHERE UserId = ? AND OrderStatus = "complete"' : 
+            userStatus == 'driver' ? 'SELECT * FROM orders WHERE DriverId = ? AND OrderStatus = "complete"' : null}`, [decoded.id, userStatus]);
         console.log('Результаты запроса в базу данных:', rows);
 
         // Преобразуем данные из базы в строку

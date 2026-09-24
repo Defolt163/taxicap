@@ -4,9 +4,10 @@ import { createClient } from 'redis';
 import pool from '../accountDB'
 
 const SECRET_KEY = process.env.JWT_SECRET_KEY; // Секрет для JWT
+const { REDIS_URL, REDIS_PORT } = process.env;
 // Создаем клиента Redis с новым API
 const client = createClient({
-  url: 'redis://localhost:6379', // URL для подключения, можно также указать пароль, если он используется
+  url: `redis://${REDIS_URL}:${REDIS_PORT}`, // URL для подключения, можно также указать пароль, если он используется
 });
 
 client.connect(); // Подключаемся к Redis
@@ -47,7 +48,6 @@ export async function POST(req) {
                 </blockquote>
             `
         };
-    
         try {
             await transporter.sendMail(mailOptions);
             return new Response({ status: 200 });
@@ -128,11 +128,13 @@ export async function POST(req) {
                     pass: 'wbhoblkcgtjtxzjl',
                 },
             });
+
+            console.log("transporter", transporter)
         
             const mailOptions = {
                 from: 'defol7@yandex.ru',
                 to: userEmail,
-                subject: 'Регистрация SwiftDrive',
+                subject: 'Авторизация REVVO',
                 html: `
                     <p>Здравствуйте, ${userName}</p>
                     <p><span style="font-size: 18pt;">Ваш код для подтверждения Email:</span></p>
@@ -142,7 +144,7 @@ export async function POST(req) {
                     <p>Если это сообщение отправлено вам по ошибке, просто проигнорируйте его</p>
                     <p>&nbsp;</p>
                     <blockquote>
-                    <p><span style="text-decoration: underline;">С уважением SwiftDrive</span></p>
+                    <p><span style="text-decoration: underline;">С уважением REVVO</span></p>
                     </blockquote>
                 `
             };

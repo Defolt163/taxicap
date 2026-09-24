@@ -29,7 +29,10 @@ export async function GET(req) {
   }
   try {
     const decoded = jwt.verify(token, SECRET_KEY);
-    const [rows] = await pool.query('SELECT id, CustomerPhone, CustomerName, UserId, DriverName, DriverId, DriverPhone, VehicleBrand, VehicleModel, VehicleColor, VehicleNumber, OrderStatus, LatFrom, LonFrom, LatTo, LonTo, AddressFrom, AddressTo, Price, PaymentMethod, DriverImage, CustomerImage FROM orders WHERE OrderStatus = "created"', );
+    if (decoded.role !== 1) {
+      return NextResponse.json({ message: "Недостаточно прав" }, { status: 403 });
+    }
+    const [rows] = await pool.query('SELECT id, customerPhone, customerName, userId, driverName, driverId, driverPhone, vehicleBrand, vehicleModel, vehicleColor, vehicleNumber, orderStatus, addressFrom, addressTo, price, paymentMethod, driverImage, customerImage, encodedWay, routeDistanceKm FROM orders WHERE orderStatus = "created"', );
     console.log('Результаты запроса в базу данных:', rows);
 
     // Преобразуем данные из базы в строку

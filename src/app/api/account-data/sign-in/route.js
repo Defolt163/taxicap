@@ -29,7 +29,7 @@ export async function POST(req) {
 
         // Проверка пользователя
         console.log('Получен логин:', email);
-        const [rows] = await pool.query('SELECT UserId, UserEmail FROM accounts WHERE UserEmail = ?', [email]);
+        const [rows] = await pool.query('SELECT UserId, UserEmail, DriverMode FROM accounts WHERE UserEmail = ?', [email]);
 
         if (rows.length === 0) {
             console.log('Пользователь не найден');
@@ -42,22 +42,12 @@ export async function POST(req) {
         const user = rows[0];
         console.log('Найден пользователь:', user);
 
-        // Проверка пароля
-        //const isMatch = await bcrypt.compare(password, user.UserPassword)
-
-        /* if (!isMatch) {
-            console.log('Неверный пароль');
-            return new Response(
-                JSON.stringify({ message: 'Неверный пароль' }),
-                { status: 401 }
-            );
-        } */
-
         // Генерация JWT
         const token = jwt.sign(
             {
                 id: rows[0].UserId,
-                email: rows[0].UserEmail
+                email: rows[0].UserEmail,
+                role: rows[0].DriverMode
             },
             SECRET_KEY,
             { expiresIn: '7d' }
@@ -100,6 +90,7 @@ async function getUserFromToken(token) {
             {
                 id: rows[0].UserId,
                 email: rows[0].UserEmail,
+                role: rows[0].DriverMode
             },
             SECRET_KEY,
             { expiresIn: '7d' }

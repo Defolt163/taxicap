@@ -19,8 +19,24 @@ const nextConfig = {
 
 
 module.exports = withPWA(nextConfig); */
-
 module.exports = {
+  reactStrictMode: false,
+  async rewrites() {
+    return [
+      {
+        source: '/tiles/:path*',
+        destination: 'http://localhost:8080/tile/:path*',
+      },
+      {
+        source: '/api/geo/:path*',
+        destination: 'http://localhost:8080/api/geo/:path*',
+      },
+      {
+        source: '/ws/:path*',
+        destination: 'http://localhost:8080/ws/:path*',
+      },
+    ]
+  },
   async headers() {
     return [
       {

@@ -10,7 +10,7 @@ import Head from 'next/head'
 
 
 export default function RootLayout({ children }) {
-  useEffect(()=>{
+  /* useEffect(()=>{
     fetch('https://geolocation-db.com/json/',
       {method: 'GET'}
     ).then((result)=>{
@@ -24,7 +24,7 @@ export default function RootLayout({ children }) {
       });
       }
     })
-  }, [])
+  }, []) */
   return (
       <html lang="ru">
         <body>

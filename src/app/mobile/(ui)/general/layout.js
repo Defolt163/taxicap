@@ -1,6 +1,8 @@
 
 import '../../../global.sass'
 import {DataProvider} from '../../components/DataContext'
+import { PopupProvider } from '../../components/PopupContext'
+import GlobalPopup from '../../components/ui/Popups/GlobalPopup'
 
 export const metadata = {
   title: "REVVO",
@@ -20,7 +22,10 @@ export default function AppLayout({ children }) {
   return (
     <>
       <DataProvider>
-        {children}
+        <PopupProvider>
+          {children}
+          <GlobalPopup/>
+        </PopupProvider>
       </DataProvider>
     </>
       

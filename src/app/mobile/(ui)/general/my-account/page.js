@@ -1,13 +1,15 @@
 'use client'
 import Link from 'next/link'
 import './style.sass'
-import Image from 'next/image'
-import userIco from '/public/ico/man-user.svg'
 import { useEffect, useState } from 'react'
-import Cookies from 'js-cookie'
 import PagesHeader from '../../../components/PagesHeader/PagesHeader'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useData } from '../../../components/DataContext'
+import Image from 'next/image'
+// ICONS
+import phoneIco from '@/../public/ico/ui/phone-solid-full.svg'
+import penIco from '@/../public/ico/ui/pen-to-square-regular-full.svg'
+
 
 export default function MyAccountPage(){
     const { userData, setUserData, loadingStatus } = useData()
@@ -19,9 +21,9 @@ export default function MyAccountPage(){
     // Модальные окна
     useEffect(() => {
         if (!loadingStatus) {
-          setTogglerPopupLoadingData('');
+            setTogglerPopupLoadingData('');
         }
-      }, [loadingStatus])
+    }, [loadingStatus])
 
     // Обновление статуса аккаунта
     function getCookie(name) {
@@ -101,10 +103,10 @@ export default function MyAccountPage(){
                         <div className='AccountCardData'>
                             <div className='AccountCardDataFirst'>{userData && userData.UserName}</div>
                             <div className='AccountCardDataSecond'>{userData && userData.UserEmail}</div>
-                            <div className='AccountCardDataThird'><i className="fa-solid fa-phone"></i> +7 {userData && userData.UserPhone.toString().substring(1)}</div>
+                            <div className='AccountCardDataThird flex'><Image className='mr-2' width={15} src={phoneIco} alt='cheevron-left'/> +7 {userData && userData.UserPhone.toString().substring(1)}</div>
                         </div>
                         <Link href='my-account/account-edit' className='AccountCardEdit'>
-                            <i className="fa-solid fa-pencil"></i>
+                            <Image src={penIco} alt='pen-ico'/>
                         </Link>
                     </div>
                 </div>

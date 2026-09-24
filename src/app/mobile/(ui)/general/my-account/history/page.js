@@ -34,6 +34,7 @@ export default function MyAccountPage(){
         let decrypted = decipher.update(encryptedBuffer, 'hex', 'utf8');
         decrypted += decipher.final('utf8');
         let parsedData = JSON.parse(decrypted)
+        console.log(parsedData)
         setUserOrders(parsedData)
     }
 
@@ -78,7 +79,7 @@ export default function MyAccountPage(){
                     </div>
                     <div className='history-block'>
                         {userOrders && userOrders.length !== 0 ? userOrders.map((OrderItem) =>{
-                            const orderDate = new Date(OrderItem.Date)
+                            const orderDate = new Date(OrderItem.date)
     
                             // Используем методы объекта Date для получения компонентов даты и времени
                             const year = orderDate.getFullYear()
@@ -92,26 +93,26 @@ export default function MyAccountPage(){
                             if(togglerType !== 'driver'){
                                 return(
                                     <div key={OrderItem.id} className='history-card'>
-                                    <div className='driver driver-name'>Водитель: <span>{OrderItem.DriverName}</span></div>
-                                    <div className='driver driver-number'>{OrderItem.DriverPhone}</div>
-                                    <div className='driver driver-car_number'>Гос-номер: {OrderItem.VehicleNumber}</div>
+                                    <div className='driver driver-name'>Водитель: <span>{OrderItem.driverName}</span></div>
+                                    <div className='driver driver-number'>{OrderItem.driverPhone}</div>
+                                    <div className='driver driver-car_number'>Гос-номер: {OrderItem.vehicleNumber}</div>
                                     <div className='address-block'>
-                                        <div className='address'>От: {OrderItem.AddressFrom}</div>
-                                        <div className='address'>Куда: {OrderItem.AddressTo}</div>
+                                        <div className='address'>От: {OrderItem.addressFrom}</div>
+                                        <div className='address'>Куда: {OrderItem.addressTo}</div>
                                     </div>
-                                    <div className='date-time_price'>{formattedDate}<div>{OrderItem.Price}₽</div></div>
+                                    <div className='date-time_price'>{formattedDate}<div>{OrderItem.price}₽</div></div>
                                 </div>
                                 )
                             }else{
                                 return(
                                     <div key={OrderItem.id} className='history-card'>
-                                    <div className='driver driver-name'>Пассажир: <span>{OrderItem.CustomerName}</span></div>
-                                    <div className='driver driver-number'>{OrderItem.CustomerPhone}</div>
+                                    <div className='driver driver-name'>Пассажир: <span>{OrderItem.customerName}</span></div>
+                                    <div className='driver driver-number'>{OrderItem.customerPhone}</div>
                                     <div className='address-block'>
-                                        <div className='address'>От: {OrderItem.AddressFrom}</div>
-                                        <div className='address'>Куда: {OrderItem.AddressTo}</div>
+                                        <div className='address'>От: {OrderItem.addressFrom}</div>
+                                        <div className='address'>Куда: {OrderItem.addressTo}</div>
                                     </div>
-                                    <div className='date-time_price'>{formattedDate}<div>{OrderItem.Price}₽</div></div>
+                                    <div className='date-time_price'>{formattedDate}<div>{OrderItem.price}₽</div></div>
                                 </div>
                                 )
                             }

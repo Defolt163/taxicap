@@ -8,6 +8,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useData } from '../../DataContext'
+// ICONS
+import chartBar from '@/../public/ico/ui/chart-bar-solid-full.svg'
+
 
 export default function BurgerMenu(){
     const router = useRouter()
@@ -22,8 +25,8 @@ export default function BurgerMenu(){
     return(
         <>
             <div className={`BurgerItem ${togglerBurgerMenu}`} onClick={()=>{setTogglerBurgerMenuBurgerMenu('burger-open')}}>
-                <i className="fa-solid fa-chart-bar"></i>
-                <i className="fa-solid fa-bars-staggered"></i>
+                <Image width={20} quality={90} alt='chart' src={chartBar}/>
+                {/* <i className="fa-solid fa-bars-staggered"></i> */}
             </div>
             <div className={`BurgerMenu ${togglerBurgerMenu}`}>
                 <div className='BurgerMenu-account'>
