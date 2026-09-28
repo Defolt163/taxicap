@@ -118,5 +118,6 @@ self.addEventListener('push', function (event) {
 self.addEventListener('notificationclick', function (event) {
   console.log('Notification click received.');
   event.notification.close();
-  event.waitUntil(clients.openWindow('https://192.168.0.100'));
+  const targetUrl = event.notification.data?.url || '/mobile/general';
+  event.waitUntil(clients.openWindow(targetUrl));
 });

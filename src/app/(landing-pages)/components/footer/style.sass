@@ -1,0 +1,20 @@
+.footer
+    background-color: #101a30
+    color: #fff
+    .footer_wrapper
+        padding: 20px 20px
+        max-width: 1280px
+        margin: 0 auto
+        display: flex
+        gap: 12px
+        justify-content: space-between
+        flex-wrap: wrap
+
+@media screen and ( max-width: 992px )
+    .footer
+        .footer_wrapper
+            flex-direction: column
+            .footer_item
+                margin-bottom: 10px
+                &:last-child
+                    margin-bottom: 0

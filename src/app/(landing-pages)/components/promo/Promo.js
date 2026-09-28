@@ -1,0 +1,20 @@
+import Image from 'next/image'
+import './style.sass'
+import PHONE from '@/../public/landing/image/PHONE.png'
+export default function LandingPromo(){
+    return(
+        <div className="landing_promo">
+            <div className='landing_promo_wrapper'>
+                <div className='promo_content'>
+                    <h1>Поехали</h1>
+                    <h2>Найди поездку <br/> или создай свою</h2>
+                    <p>Сервис для создания и бронирования поездок по Шентале</p>
+                    <div className='promo_buttons'>
+                        <div className='Button w-max'>Открыть приложение</div>
+                    </div>
+                </div>
+                <Image className='promo_image' src={PHONE} alt='Приложение'/>
+            </div>
+        </div>
+    )
+}

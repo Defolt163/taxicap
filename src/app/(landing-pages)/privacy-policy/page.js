@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import HeaderPageComponent from "../../components/Header/Header";
 import './private-policy-page.sass'
-import FooterPageComponent from "../../components/Footer/Footer";
 
 export default function PrivatePage(){
     useEffect(() => {
@@ -98,7 +97,6 @@ export default function PrivatePage(){
                     </div>
                 </div>
             </div>
-            <FooterPageComponent/>
             <div className="background"></div>
         </div>
     )

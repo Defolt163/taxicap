@@ -47,6 +47,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
     }
 
     const [activeOrder, setActiveOrder] = useState(null)
+    const [step, setStep] = useState(0)
     const previousOrderStatusRef = useRef(null)
     const isCreatingOrderRef = useRef(false)
     async function checkActiveOrder() {
@@ -118,6 +119,10 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
     useEffect(()=>{
         checkActiveOrder()
 
+        if (step < 2 && !activeOrder) {
+            return
+        }
+
         const checkWhenActive = () => {
             if (document.visibilityState === "visible") {
                 checkActiveOrder()
@@ -133,7 +138,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
             window.removeEventListener("focus", checkWhenActive)
             window.clearInterval(statusInterval)
         }
-    }, [userData])
+    }, [userData, step, activeOrder])
 
     const stompClientRef = useSocket({
         onOrderCreated: (orderId) => {
@@ -153,6 +158,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
 
         onOrderAccepted: (order) => {
             console.log("Driver found", order);
+            showPopup("Водитель взял ваш заказ");
             setActiveOrder(order)
             previousOrderStatusRef.current = order.orderStatus;
             setStep(3);
@@ -463,7 +469,6 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
         }
     }, []);
     //Шаги оформления заказа
-    const [step, setStep] = useState(0)
     function handleNextStep(){
         setStep(step + 1)
     }

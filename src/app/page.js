@@ -1,6 +1,5 @@
 'use client'
 import HeaderPageComponent from './components/Header/Header'
-import FooterPageComponent from './components/Footer/Footer'
 import './main-page-style.sass'
 import Link from 'next/link'
 import BtnApp from '/public/ico/btn-app.svg'
@@ -103,7 +102,6 @@ export default function MainPage(){
                     </div>
                 </div>
             </div>
-            <FooterPageComponent/>
         </div>
     )
 }

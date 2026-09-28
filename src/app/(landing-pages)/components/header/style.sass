@@ -1,0 +1,44 @@
+.header
+    position: fixed
+    top: 0
+    left: 0
+    z-index: 3
+    padding: 20px 20px
+    width: 100%
+    background-color: #fefefe
+    .header_wrapper
+        max-width: 1280px
+        margin: 0 auto
+        display: flex
+        justify-content: space-between
+        align-items: center
+        .header_items
+            display: flex
+            align-items: center
+            font-size: 18px
+            .header_item
+                margin-right: 20px
+                &:first-child
+                    font-weight: 600
+                &:last-child
+                    margin-right: 0
+
+@media screen and ( max-width: 1160px )
+    .header 
+        .header_wrapper 
+            .header_items
+                font-size: 16px
+            .Button
+                font-size: 16px
+
+
+@media screen and ( max-width: 1160px )
+    .header 
+        .header_wrapper 
+            .header_items
+                gap: 10px
+                font-size: 14px
+                .header_item
+                    margin: 0
+            .Button
+                font-size: 14px

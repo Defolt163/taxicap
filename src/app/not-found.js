@@ -3,7 +3,6 @@ import { useEffect } from 'react'
 import './not-found-style.sass'
 import Link from 'next/link'
 import HeaderPageComponent from './components/Header/Header'
-import FooterPageComponent from './components/Footer/Footer'
 import Image from 'next/image'
 import error404 from '/public/logo/404.png'
  
@@ -28,7 +27,6 @@ export default function NotFound() {
             <Link className='Button' href={'/'}>На главную</Link>
         </div>
         <div className='not-found_bg'>4 0 4</div>
-        <FooterPageComponent/>
     </div>
   )
 }

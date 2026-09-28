@@ -1,0 +1,40 @@
+.landing_howitwork
+    background-color: #f2f7fe
+    .landing_howitwork_wrapper
+        max-width: 1280px
+        margin: 0 auto
+        padding: 20px 20px
+        .parts
+            margin-top: 20px
+            display: flex
+            justify-content: space-between
+            gap: 20px
+            .part_item
+                margin-bottom: 20px
+                display: flex
+                width: 33.333%
+                .part_item_number
+                    height: 50px
+                    aspect-ratio: 1 / 1
+                    background-color: #0264fd
+                    border-radius: 50%
+                    text-align: center
+                    display: flex
+                    align-items: center
+                    justify-content: center
+                    color: #fff
+                    margin-right: 20px
+                h2
+                    font-size: 18px
+                    font-weight: bold
+                    margin-bottom: 6px
+                h3
+                    color: #6b6b6b
+
+@media screen and ( max-width: 992px )
+    .landing_howitwork
+        .landing_howitwork_wrapper
+            .parts
+                flex-direction: column
+                .part_item
+                    width: 100%

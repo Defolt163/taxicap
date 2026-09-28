@@ -3,7 +3,6 @@ import Image from "next/image";
 import HeaderPageComponent from "../../components/Header/Header";
 import LogoShort from '/public/logo/white-short-logo.svg'
 import './about-page.sass'
-import FooterPageComponent from "../../components/Footer/Footer";
 import { useEffect } from "react";
 
 export default function AboutPage(){
@@ -35,7 +34,6 @@ export default function AboutPage(){
                     </div>
                 </div>
             </div>
-            <FooterPageComponent/>
         </div>
     )
 }

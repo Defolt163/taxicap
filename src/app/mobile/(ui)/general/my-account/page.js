@@ -9,6 +9,7 @@ import Image from 'next/image'
 // ICONS
 import phoneIco from '@/../public/ico/ui/phone-solid-full.svg'
 import penIco from '@/../public/ico/ui/pen-to-square-regular-full.svg'
+import PushNotifications from '../../../components/PushNotifications'
 
 
 export default function MyAccountPage(){
@@ -115,10 +116,11 @@ export default function MyAccountPage(){
                         <Link href='my-account/history'>История поездок</Link>
                     </div>
                 </div>
+                <PushNotifications />
                 <div className='AccountToggleModeBox'>
                     <label className='AccountToggleMode' htmlFor='driver-mode'>Режим водителя</label>
                     <label className="TogglerWrapper">
-                        <input id='driver-mode' className='TogglerChecker' type="checkbox" checked={userData && userData && userData.DriverMode === 1 } onChange={(e) => {
+                        <input id='driver-mode' className='TogglerChecker' type="checkbox" checked={Boolean(userData?.DriverMode === 1) } onChange={(e) => {
                             if (e.target.checked && userData.DriverMode === 0) {
                                 updateDriverMode(1)
                             } else {

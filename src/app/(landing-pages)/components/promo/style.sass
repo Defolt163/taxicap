@@ -1,0 +1,84 @@
+.landing_promo
+    background: url('/landing/image/shentala/ploshad2.jpg') center center/cover no-repeat
+    position: relative
+    overflow: hidden
+    .landing_promo_wrapper
+        padding: 120px 20px
+        max-width: 1024px
+        margin: 0 auto
+        display: flex
+        justify-content: space-between
+        position: relative
+        .promo_image
+            position: absolute
+            top: 10px
+            right: 5%
+            height: 98%
+            width: auto
+        .promo_content
+            position: relative
+            width: max-content
+            padding-right: 20px
+            z-index: 0
+            &::before
+                content: ''
+                position: absolute
+                left: -170px
+                top: -50px
+                width: calc( 100% + 260px )
+                height: calc( 100% + 120px )
+                z-index: -1
+                background: #fff
+                filter: blur(30px)
+            h1
+                font-size: 82px
+                font-weight: 900
+                text-shadow: #fff 0px 0px 20px
+                position: relative
+            h2
+                font-size: 32px
+                font-weight: 600
+                position: relative
+            p
+                font-size: 18px
+                position: relative
+                margin-top: 30px
+            .promo_buttons
+                margin-top: 30px
+                position: relative
+                z-index: 0
+
+@media screen and ( max-width: 992px )
+    .landing_promo 
+        .landing_promo_wrapper 
+            padding: 80px 20px
+            .promo_content 
+                width: 50%
+                h1
+                    font-size: 52px
+                h2
+                    font-size: 22px
+                p
+                    margin-top: 10px
+            
+@media screen and ( max-width: 600px )
+    .landing_promo 
+        .landing_promo_wrapper 
+            .promo_content
+                width: 100%
+                padding: 0
+                h1
+                    text-align: center
+                h2
+                    font-size: 20px
+                    text-align: center
+                    br
+                        display: none
+                p
+                    text-align: center
+                    font-size: 16px
+            .promo_image
+                display: none
+            .promo_buttons
+                .Button
+                    margin: 0 auto
