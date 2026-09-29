@@ -2,7 +2,10 @@
 import Image from 'next/image'
 import './style.sass'
 import Link from "next/link"
-import logo from '/public/logo/full_logo.svg'
+import logo from '/public/favicon/android-chrome-512x512.png'
+import phone_ui from '/public/image/phone_interface.png'
+import walletImage from '/public/image/wallet_image.png'
+import shieldImage from '/public/image/shield_ico.png'
 import { useState } from 'react'
 
 export default function Home() {
@@ -22,7 +25,7 @@ export default function Home() {
       switch (step) {
         case 0:
           return(
-            <div className='container container-settings-page' style={{background: 'url(/settings-bg/bg-s-1.jpg) center center/cover no-repeat'}}>
+            <div className='container container-settings-page' style={{background: 'url(/settings-bg/bg-1.png) center center/cover no-repeat'}}>
               <div className='reels-style'>
                 <div className='reels-style-text'>
                   <h1>Создавай поездки</h1>
@@ -36,12 +39,13 @@ export default function Home() {
           )
         case 1:
           return(
-            <div className='container container-settings-page' style={{background: 'url(/settings-bg/bg-s-2.jpg) center center/cover no-repeat'}}>
+            <div className='container container-settings-page' style={{background: 'url(/settings-bg/bg-2.png) center center/cover no-repeat'}}>
               <div className='reels-style'>
                 <div className='reels-style-text'>
                   <h1>Принимай поездки</h1>
                   <h3>Активируйте статус водителя, и берите созданные поездки пассажиров</h3>
                 </div>
+                <Image className='reels_image phone_mockup' src={phone_ui} alt='интерфейс телефона'/>
                 <div className='reels-other'>
                   <div className='Button' onClick={()=>{handleNextStep()}}>Продолжить</div>
                 </div>
@@ -50,12 +54,13 @@ export default function Home() {
           )
         case 2:
           return(
-            <div className='container container-settings-page' style={{background: 'url(/settings-bg/bg-s-3.webp) center center/cover no-repeat'}}>
+            <div className='container container-settings-page other_style'>
               <div className='reels-style'>
                 <div className='reels-style-text'>
                   <h1>Никаких комиссий!</h1>
                   <h3>Вам не надо ни с кем делить ваши заработанные деньги!</h3>
                 </div>
+                <Image className='reels_image wallet' src={walletImage} alt="кошелек с золотыми монетами"/>
                 <div className='reels-other'>
                   <div className='Button' onClick={()=>{handleNextStep()}}>Продолжить</div>
                 </div>
@@ -64,12 +69,16 @@ export default function Home() {
           )
         case 3:
           return(
-            <div className='container container-settings-page' style={{background: 'url(/settings-bg/bg-s-4.jpg) center center/cover no-repeat'}}>
+            <div className='container container-settings-page' style={{background: 'url(/settings-bg/bg-4.png) center center/cover no-repeat'}}>
               <div className='reels-style'>
                 <div className='reels-style-text'>
                   <h1>Безопасность</h1>
                   <h3>Нажимая продолжить, вы соглашаетесь <br/> <Link href='/privacy-policy'>с условиями пользования и конфидентифициальности</Link></h3>
                 </div>
+                <div className='reels_image_block'>
+                  <Image className='image_shield' src={shieldImage} alt="кошелек с золотыми монетами"/>
+                </div>
+                
                 <div className='reels-other'>
                   <div className='Button' onClick={()=>{setCookie('firstScreen', true, 999); handleNextStep()}}>Продолжить</div>
                 </div>
@@ -78,12 +87,15 @@ export default function Home() {
           )
         case 4:
           return (
-            <div className='container px-4 container-settings-page' style={{backgroundColor: "#6801E7"}}>
-              <div className='reels-style'>
-                <Image src={logo} alt="logo" style={{height: 'auto', width: '100%', margin: '7rem 0 0 0'}}/>
-                <div className='StartButtonBlock'>
-                    <Link className='Button BtnStart' href={'/mobile/sign-in'}>Начать пользоваться</Link>
-                  </div>
+            <div className='container px-4 container-settings-page other_style' style={{background: 'url(/settings-bg/bg-5.png) center center/cover no-repeat'}}>
+              <div className='reels-style final_reels'>
+                <div className='final_screen'>
+                  <Image src={logo} alt="logo" className='image_logo'/>
+                  <h1>Поехали</h1>
+                  <h2>Попутные поездки для нашего района</h2>
+                </div>
+                
+                <Link className='Button BtnStart' href={'/mobile/sign-in'}>Начать пользоваться</Link>
               </div>
             </div>
           )

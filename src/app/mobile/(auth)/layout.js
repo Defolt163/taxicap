@@ -1,7 +1,6 @@
 import Image from "next/image";
-import logoImage from '/public/logo/logo-colored.svg'
+import logoImage from '/public/logo/logo_new.svg'
 import './style.sass'
-import Head from 'next/head';
 
 export default function LoginLayout({ children }) {
     return (
