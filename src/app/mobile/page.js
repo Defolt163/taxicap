@@ -2,12 +2,8 @@
 import Image from 'next/image'
 import './style.sass'
 import Link from "next/link"
-import logo from '/public/logo/logo-white.svg'
+import logo from '/public/logo/full_logo.svg'
 import { useState } from 'react'
-import driverImg from '/public/image/startpage/driver.png'
-import driver2Img from '/public/image/startpage/driver2.png'
-import passengerImg from '/public/image/startpage/passenger.png'
-import passenger2Img from '/public/image/startpage/passenger2.png'
 
 export default function Home() {
   function setCookie(name, value, days) {

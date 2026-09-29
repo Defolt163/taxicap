@@ -1,7 +1,7 @@
 import './style.sass'
 export default function HowItsWorked(){
     return(
-        <div className="landing_howitwork">
+        <div className="landing_howitwork" id='workis'>
             <div className='landing_howitwork_wrapper'>
                 <h2 className='landing_page_subheader'>Как это работает</h2>
                 <h3 className='landing_page_header'>Всего 3 шага до поездки</h3>

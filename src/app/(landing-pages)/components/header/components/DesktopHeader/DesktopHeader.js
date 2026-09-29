@@ -7,15 +7,25 @@ export default function DesktopHeader({ headerItems }){
             <div className='header_wrapper'>
                 <ul className="header_items">
                     <li className="header_item"><Link className="flex items-center" href={"#"}><Image className="mr-2" src={'/logo/logo_new.svg'} width={50} height={50} alt="Лого"/> <span>Поехали</span></Link></li>
-                    {headerItems.map((item, index) => (
-                        <li className="header_item" key={index}>
-                            <Link href={item.link}>
-                                <span>{item.name}</span>
-                            </Link>
-                        </li>
-                    ))}
+                    {headerItems.map((item, index) => {
+                        const content = <span>{item.name}</span>;
+
+                        return (
+                            <li className="header_item" key={index}>
+                                {item.onClick ? (
+                                    <button type="button" className="header_link_button" onClick={item.onClick}>
+                                        {content}
+                                    </button>
+                                ) : (
+                                    <Link href={item.link}>
+                                        {content}
+                                    </Link>
+                                )}
+                            </li>
+                        );
+                    })}
                 </ul>
-                <div className="Button small">Открыть приложение</div>
+                <Link href={'/mobile'} className="Button small">Открыть приложение</Link>
             </div>
         </div>
     )

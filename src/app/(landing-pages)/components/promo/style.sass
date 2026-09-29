@@ -61,12 +61,21 @@
                 p
                     margin-top: 10px
             
+@media screen and ( max-width: 992px )
+    .landing_promo 
+        height: 60dvh
+
 @media screen and ( max-width: 600px )
     .landing_promo 
+        height: 70dvh
         .landing_promo_wrapper 
+            height: 100%
+            align-items: center
             .promo_content
                 width: 100%
                 padding: 0
+                &::before
+                    filter: blur(120px)
                 h1
                     text-align: center
                 h2
