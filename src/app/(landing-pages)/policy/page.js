@@ -7,6 +7,7 @@ import {
 import Header from "../components/header/header";
 import './style.sass'
 import LandingFooter from "../components/footer/footer";
+import UserAgreementContent from "@/app/mobile/components/legal/UserAgreementContent";
 
 export default function PolicyPage(){
     return(
@@ -41,10 +42,9 @@ export default function PolicyPage(){
                         </AccordionItem>
 
                         <AccordionItem>
-                            <AccordionTrigger>Пользовательское соглашение сервиса "Поехали"</AccordionTrigger>
+                            <AccordionTrigger>Пользовательское соглашение приложения REVVO</AccordionTrigger>
                             <AccordionContent>
-                            Standard shipping typically takes 5-7 business days. Express options
-                            are available at checkout.
+                            <UserAgreementContent />
                             </AccordionContent>
                         </AccordionItem>
                     </AccordionRoot>

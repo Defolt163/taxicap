@@ -1,12 +1,19 @@
 import Image from "next/image";
-import logoImage from '/public/logo/logo_new.svg'
+import logo from '/public/favicon/android-chrome-512x512.png'
 import './style.sass'
+import { PopupProvider } from "../components/PopupContext";
+import GlobalPopup from "../components/ui/Popups/GlobalPopup";
 
 export default function LoginLayout({ children }) {
     return (
-        <div className="container h-dvh" style={{paddingTop: '2rem'}}>
-            <Image src={logoImage} alt="logo" style={{height: 'auto', width: '100%', margin: '0 0 2rem 0'}}/>
-            {children}
-        </div>
+        <>
+            <PopupProvider>
+                <div className="container h-dvh" style={{paddingTop: '2rem'}}>
+                    <Image src={logo} alt="logo" className='image_logo'/>
+                    {children}
+                </div>
+                <GlobalPopup />
+            </PopupProvider>
+        </>
     );
 }

@@ -101,8 +101,8 @@ self.addEventListener('push', function (event) {
 
   const options = {
     body: data.body,
-    icon: data.icon || '/logo/white-short-logo.png',
-    badge: '/logo/white-short-logo.png',
+    icon: data.icon || '/favicon/apple-touch-icon.png',
+    badge: '/favicon/apple-touch-icon.png',
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),

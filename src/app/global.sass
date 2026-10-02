@@ -29,10 +29,10 @@ button
     display: block
     font-size: 14px
     cursor: pointer
-    border-radius: 0.75rem
+    border-radius: 16px
     background: $base-color
     color: $base-color-element-text
-    padding: 10px 58px
+    padding: 13px 58px
     border: none
     text-align: center
     text-decoration: none
@@ -42,12 +42,14 @@ button
         background: #21a806
     &.small
         padding: 11px 30px
+    &.disabled
+        background: gray
 
 input, select
     padding: 10px 15px
     box-sizing: border-box
     border: 0.06rem solid rgb(209, 209, 209)
-    border-radius: 0.75rem
+    border-radius: 16px
     color: rgb(165, 165, 165)
     font-size: 0.88rem
     width: 100%
@@ -131,8 +133,8 @@ form
         text-align: center
     .popup-close-x-mark
         position: absolute
-        top: 20px
-        right: 20px
+        top: 10px
+        right: 10px
         display: flex
         justify-content: center
         align-items: center
@@ -159,6 +161,29 @@ form
     background-color: rgba(0, 0, 0, .7)
     &.popup-open
         display: block
+
+.legal-document-popup-background
+    position: fixed
+    z-index: 99998
+
+.popup.legal-document-popup
+    position: fixed
+    z-index: 99999
+    width: min(90vw, 50rem)
+    max-height: 85vh
+    overflow-y: auto
+    box-sizing: border-box
+    text-align: left
+    .legal-document-popup__content
+        text-align: left
+        h2
+            margin: 0 0 1rem
+        h3
+            margin: 1rem 0 0.5rem
+        p
+            line-height: 1.5
+        a
+            color: blue
 
 .ItemsHeader__center
     text-align: center

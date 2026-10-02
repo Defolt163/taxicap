@@ -48,6 +48,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
 
     const [activeOrder, setActiveOrder] = useState(null)
     const [step, setStep] = useState(0)
+    const [onlineDrivers, setOnlineDrivers] = useState(null)
     const previousOrderStatusRef = useRef(null)
     const isCreatingOrderRef = useRef(false)
     async function checkActiveOrder() {
@@ -116,12 +117,12 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
             return null;
         }
     }
-    useEffect(()=>{
-        checkActiveOrder()
+    useEffect(() => {
+        if (userData) checkActiveOrder()
+    }, [userData])
 
-        if (step < 2 && !activeOrder) {
-            return
-        }
+    useEffect(() => {
+        if (!userData || (step < 2 && !activeOrder?.id)) return
 
         const checkWhenActive = () => {
             if (document.visibilityState === "visible") {
@@ -138,7 +139,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
             window.removeEventListener("focus", checkWhenActive)
             window.clearInterval(statusInterval)
         }
-    }, [userData, step, activeOrder])
+    }, [userData, step, activeOrder?.id])
 
     const stompClientRef = useSocket({
         onOrderCreated: (orderId) => {
@@ -179,6 +180,8 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
         onDriverLocation: (location) => { // ✅ Добавить этот обработчик
             console.log("📍 Driver location received:", location);
         },
+
+        onDriversOnline: setOnlineDrivers,
 
         onOrderCompleted: (orderId) => {  // ✅ Добавить
             //console.log("✅ Order completed:", orderId);
@@ -393,10 +396,10 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
         const token = getCookie('token');
         if (fastAddress == "" && (addressFrom === "" || addressTo === "")){
             console.log("fastAddress", fastAddress)
-            popupError(`${addressFrom == "" ? "Откуда едем?" : "Куда едем?"}`)
+            showPopup(`${addressFrom == "" ? "Откуда едем?" : "Куда едем?"}`)
         }
         if (fastAddress && addressFrom == ""){
-            popupError("Откуда едем?")
+            showPopup("Откуда едем?")
             return
         }
         if(fastAddress){
@@ -404,7 +407,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
         }
 
         try {
-            await fetch(`/api/geo`, {
+            const response = await fetch(`/api/geo`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -414,17 +417,28 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                     "from": addressFrom,
                     "to": addressTo != "" ? addressTo : fastAddress
                 })
-            }).then((request) =>{
-                return request.json()
-            }).then((result)=>{
-                console.log(result)
-                shapeDecoder(result.shape)
-                setRouteData(result)
-            }).catch((error)=>{
-                popupError(error.message)
-            })
+            });
+
+            const responseText = await response.text();
+            let result;
+            try {
+                result = JSON.parse(responseText);
+            } catch {
+                result = responseText;
+            }
+
+            if (!response.ok) {
+                throw new Error(typeof result === 'string' ? result : result.message || 'Ошибка определения маршрута');
+            }
+
+            if (!result || typeof result !== 'object' || !result.shape) {
+                throw new Error('Не удалось построить маршрут по указанным адресам');
+            }
+
+            shapeDecoder(result.shape)
+            setRouteData(result)
         } catch (error){
-            popupError(error.message)
+            showPopup(error.message)
         }
     }
     const handleCreateOrder = async () => {
@@ -619,6 +633,9 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
         }}
     return(
         <div className={`MapUi`}>
+            <div className="DriversOnlineCount">
+                Водителей в сети: {onlineDrivers === null ? '...' : onlineDrivers}
+            </div>
             {renderStepContent()}
         </div>
     )

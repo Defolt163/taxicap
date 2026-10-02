@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import pool from '../../accountDB'
 import jwt from 'jsonwebtoken';
+import { checkRateLimit } from '../../rateLimit'
 
 const SECRET_KEY = process.env.JWT_SECRET_KEY; // Секрет для JWT
 
@@ -14,12 +15,34 @@ export async function PUT(req) {
 
   try {
     const decoded = jwt.verify(token, SECRET_KEY);
+    let rateLimit;
+    try {
+      rateLimit = await checkRateLimit('profile-save', decoded.id, 5, 60);
+    } catch (error) {
+      console.error('Profile rate limiter unavailable:', error);
+    }
+    if (rateLimit && !rateLimit.allowed) {
+      return NextResponse.json(
+        { message: 'Слишком много запросов. Попробуйте позже.' },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } }
+      );
+    }
+
     const { UserName, UserPhone, UserEmail } = await req.json();
-    //console.log("USER", UserName, UserPhone, UserEmail)
-    pool.query(
-      'UPDATE accounts SET UserName = ?, UserPhone = ?, UserEmail = ? WHERE UserId = ?', [UserName, UserPhone, UserEmail, decoded.id]
+    const [rows] = await pool.query('SELECT UserEmail FROM accounts WHERE UserId = ?', [decoded.id]);
+    if (!rows.length) {
+      return NextResponse.json({ message: 'Пользователь не найден' }, { status: 404 });
+    }
+
+    if (UserEmail && UserEmail.trim().toLowerCase() !== rows[0].UserEmail?.trim().toLowerCase()) {
+      return NextResponse.json({ message: 'Для смены email требуется подтверждение' }, { status: 400 });
+    }
+
+    await pool.query(
+      'UPDATE accounts SET UserName = ?, UserPhone = ? WHERE UserId = ?',
+      [UserName, UserPhone, decoded.id]
     );
-      return new Response({ status: 200 });
+    return NextResponse.json({ message: 'Данные обновлены' });
   } catch (error) {
       console.error('Ошибка при получении пользователя:', error.message);
       return new Response(JSON.stringify(), { status: 401 });

@@ -4,14 +4,13 @@ import './style.sass'
 import emailjs from '@emailjs/browser'
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import {
-    InputOTP,
-    InputOTPGroup,
-    InputOTPSlot,
-} from "@/components/ui/input-otp"
 import { toast } from "sonner"
 import { Toaster } from '@/components/ui/sonner'
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader } from '@/components/ui/alert-dialog'
+import { usePopup } from "../../components/PopupContext"
+import EmailCodePopup from "../../components/ui/Popups/EmailCodePopup"
+import UserAgreementDialog from "../../components/ui/Popups/UserAgreementDialog"
+import UserPersonalDataDialog from "../../components/ui/Popups/UserPersonalDataDialog"
 
 export default function SignInPage(){
     function setCookie(name, value, days) {
@@ -25,6 +24,7 @@ export default function SignInPage(){
             duration: 5000,
         })
     }
+    const { showChoicePopup, showPopup } = usePopup();
     const router = useRouter()
     const [step, setStep] = useState(0)
     const [phoneNumber, setPhoneNumber] = useState('')
@@ -54,11 +54,11 @@ export default function SignInPage(){
         if (digits.length >= 9) parts.push(digits.substring(8, 10));
     
         return parts
-          .map((part, index) => {
-            if (index === 0) return part;
-            return '-' + part;
-          })
-          .join('');
+        .map((part, index) => {
+        if (index === 0) return part;
+        return '-' + part;
+        })
+        .join('');
     };
     
     const handleChange = (e) => {
@@ -68,52 +68,41 @@ export default function SignInPage(){
         setRawPhone(raw)
     };
 
-    async function getUsersEmail() {
-        try {
-          const response = await fetch(`/api/account-data/emails?inputEmail=${userEmail}`, {
-            method: 'GET',
-          });
-          if (response.status === 200) {
-            // Email уже существует
-            setTogglerPopupInvalidEmail('popup-open');
-          } else if (response.status === 404) {
-            // Email свободен
-            setTogglerConfirmEmailPopup('popup-open');
-            sendMessage();
-          } else {
-            // Нестандартный ответ
-            console.warn("Неожиданный статус:", response.status);
-          }
-      
-        } catch (error) {
-          console.error("Ошибка запроса:", error);
-        }
-    }
+    const [agreementStatus, setAgreementStatus] = useState(false)
+    const [adverseStatus, setAdverseStatus] = useState(false)
 
     async function sendMessage(){
-        setTogglerPopupLoadingData('popup-open')
-        const response = await fetch('/api/send-message?type=send-code', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(
-                { 
-                    userEmail: userEmail,
-                    userName: userName, 
-                    rawPhone: '',
-                    authType: 'sign-up'
-                }
-            )
-        })
-        if(response.status == 400){
-            setTogglerPopupLoadingData('')
-            setTogglerPopupInvalidEmail('popup-open')
-        }else if(response.ok){
-            setTogglerPopupLoadingData('')
-            setTogglerConfirmEmailPopup('popup-open');
-        }else if(!response.ok){
-            setAlertError(true)
+        if(
+            userName === "" || /\d/.test(userName) || 
+            userEmail === "" || 
+            /\S+@\S+\.\S+/.test(userEmail) === false){
+                showPopup("Убедитесь, правильно ли вы ввели свои данные")
+        }else{
+            setTogglerPopupLoadingData('popup-open')
+            const response = await fetch('/api/send-message?type=send-code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(
+                    { 
+                        userEmail: userEmail,
+                        userName: userName, 
+                        rawPhone: '',
+                        authType: 'sign-up'
+                    }
+                )
+            })
+            if(response.status == 400){
+                setTogglerPopupLoadingData('')
+                setTogglerPopupInvalidEmail('popup-open')
+            }else if(response.ok){
+                setTogglerPopupLoadingData('')
+                setTogglerConfirmEmailPopup('popup-open');
+            }else if(!response.ok){
+                setAlertError(true)
+                showPopup("Ошибка сервера")
+            }
         }
     }
       
@@ -132,7 +121,8 @@ export default function SignInPage(){
                         userEmail: userEmail, 
                         rawPhone: rawPhone,
                         code: inputConfirmEmail,
-                        authType: 'sign-up'
+                        authType: 'sign-up',
+                        personalDataConsent: agreementStatus,
                     }
                 ),
             });
@@ -148,16 +138,16 @@ export default function SignInPage(){
                 }
             } else if (response.status == 400 ){
                 setTogglerPopupLoadingData('')
-                setTogglerPopupInvalidEmail('popup-open')
+                showPopup("Эта электронная почта уже используется")
             } else if (response.status == 401){
                 setTogglerPopupLoadingData('')
                 setErrorConfirmEmail("Неверный код")
             }
             else {
-                setAlertError(true)
+                showPopup("Ошибка сервера")
             }
         } catch (error) {
-            setAlertError(true)
+            showPopup("Ошибка сервера")
         }
     }
     
@@ -177,6 +167,7 @@ export default function SignInPage(){
                                     id="Name"
                                     value={userName}
                                     onChange={(e)=>setUserName(e.target.value)}
+                                    className="input_form"
                                 />
                             </div>
                             <div className='mt-2'>
@@ -188,46 +179,45 @@ export default function SignInPage(){
                                     id="Email"
                                     value={userEmail}
                                     onChange={(e)=>setUserEmail(e.target.value)}
+                                    className="input_form"
                                 />
                             </div>
-                            <div className="Button" 
-                                onClick={()=>{
-                                    userName === "" || /\d/.test(userName) || userEmail === "" || 
-                                    /\S+@\S+\.\S+/.test(userEmail) === false ? 
-                                    setTogglerPopup('popup-open') : sendMessage()}}>Продолжить</div>
-                            <>
-                                <div className={`popup popup-input-error ${togglerPopup}`}>
-                                    <h3 className='popup-input-error__text'>Убедитесь, правильно ли вы ввели свои данные</h3>
-                                <div className='Button PopupButton' onClick={()=>{setTogglerPopup('')}}>Закрыть</div>
+                            <div className='mt-2 checkbox_user-agreement'>
+                                <input 
+                                    className="checkbox" 
+                                    id="policy" 
+                                    type="checkbox" 
+                                    required 
+                                    checked={agreementStatus} 
+                                    onChange={(e)=>setAgreementStatus(e.target.checked)}
+                                />
+                                <div className="agreement_copy">
+                                    <label htmlFor="policy">
+                                        Я принимаю условия &nbsp;
+                                        <UserAgreementDialog>
+                                            <span className="agreement_link">Пользовательского соглашения</span>
+                                        </UserAgreementDialog>
+                                        &nbsp;и даю согласие на &nbsp;
+                                        <UserPersonalDataDialog>
+                                            <span className="agreement_link">обработку персональных данных</span>
+                                        </UserPersonalDataDialog>
+                                    </label>
                                 </div>
-                                <div className={`popup-background ${togglerPopup}`}></div>
-                            </>
-                            <>
-                                <div className={`popup popup-input-error ${togglerPopupInvalidEmail}`}>
-                                    <h3 className='popup-input-error__text'>Эта электронная почта уже используется</h3>
-                                <div className='Button PopupButton' onClick={()=>{setTogglerPopupInvalidEmail('')}}>Закрыть</div>
-                                </div>
-                                <div className={`popup-background ${togglerPopupInvalidEmail}`}></div>
-                            </>
-                            <>
-                                <div className={`popup popup-input-error popup-email-code ${togglerConfirmEmailPopup}`}>
-                                    <div className="popup-close-x-mark" onClick={()=>{setTogglerConfirmEmailPopup("")}}><i className="fa-solid fa-xmark"></i></div>
-                                    <h3 className='popup-input-error__text'>Введите код подтверждения</h3>
-                                    <h4 className="popup-input-error__text">Код подтверждения отправлен вам на Email: {userEmail}</h4>
-                                    <h5 className='mb-3 text-sm'>Проверьте папку спам</h5>
-                                    <InputOTP className="popup-input" maxLength={4} value={inputConfirmEmail} onChange={(value)=>{setInputConfirmEmail(value)}}>
-                                        <InputOTPGroup>
-                                            <InputOTPSlot index={0}/>
-                                            <InputOTPSlot index={1}/>
-                                            <InputOTPSlot index={2}/>
-                                            <InputOTPSlot index={3}/>
-                                        </InputOTPGroup>
-                                    </InputOTP>
-                                    <h4 className="popup-input-error__text popup-input-error__text_message">{errorConfirmEmail}</h4>
-                                <div style={{marginTop: '10px'}} className='Button PopupButton' onClick={()=>{signUpSend()}}>Подтвердить</div>
-                                </div>
-                                <div className={`popup-background ${togglerConfirmEmailPopup}`}></div>
-                            </>
+                            </div>
+                            <div className='mt-2 checkbox_user-agreement'>
+                                <input 
+                                    className="checkbox" 
+                                    id="adverse" 
+                                    type="checkbox"
+                                    checked={adverseStatus} 
+                                    onChange={(e)=>setAdverseStatus(e.target.checked)}
+                                />
+                                <label for='adverse'>
+                                    Я согласен получать рекламные и информационные сообщения
+                                </label>
+                            </div>
+                            <div className={`Button ${!agreementStatus ? 'disabled' : ''}`} 
+                                onClick={()=>{agreementStatus ? sendMessage() : null}}>Продолжить</div>
                         </div>
                         <div className="AccountSign">Уже есть аккаунт? <Link href='/mobile/sign-in'>Войдите</Link></div>
                     </>
@@ -245,7 +235,7 @@ export default function SignInPage(){
                                         value={phoneNumber}
                                         onChange={handleChange}
                                         placeholder="___-___-__-__"
-                                        className="my-2"
+                                        className="my-2 input_form"
                                     />
                                 </div>
                             </div>
@@ -266,18 +256,15 @@ export default function SignInPage(){
                     <Toaster visibleToasts={1}/>
                 </div>
             </div>
-            <AlertDialog open={alertError} onOpenChange={setAlertError}>
-                <AlertDialogContent className='w-11/12'>
-                    <AlertDialogHeader>
-                        <AlertDialogDescription>
-                            Ошибка сервера
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogAction onClick={() => setAlertError(false)}>Закрыть</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <EmailCodePopup
+                isOpen={Boolean(togglerConfirmEmailPopup)}
+                email={userEmail}
+                value={inputConfirmEmail}
+                onChange={setInputConfirmEmail}
+                errorMessage={errorConfirmEmail}
+                onClose={() => setTogglerConfirmEmailPopup('')}
+                onConfirm={signUpSend}
+            />
             <div>
                 <div className={`popup-background ${togglerPopupLoadingData}`}></div>
                 <div className={`popup popup-input-error ${togglerPopupLoadingData}`}>

@@ -1,5 +1,5 @@
 .Authentication
-    input, select
+    .input_form, select
         padding: 10px 15px
         box-sizing: border-box
         border: 0.06rem solid rgb(209, 209, 209)
@@ -7,10 +7,35 @@
         color: rgb(165, 165, 165)
         font-size: 0.88rem
         width: 100%
+    .checkbox
+        width: auto
+        margin-top: 8px
+        margin-right: 10px
     h1
         font-size: 32px
         text-align: center
     .AuthForm
+        .checkbox_user-agreement
+            display: flex
+            align-items: flex-start
+            width: auto
+            .agreement_link
+                color: blue
+            .agreement_copy
+                display: flex
+                flex-wrap: wrap
+                align-items: baseline
+                gap: 0 4px
+                label
+                    display: inline
+                    margin: 0
+                .agreement_link
+                    padding: 0
+                    border: 0
+                    background: none
+                    font: inherit
+                    text-decoration: underline
+                    cursor: pointer
         label
             display: block
             margin-bottom: 5px
@@ -18,7 +43,7 @@
             input
                 margin-bottom: 10px
         .Button
-            margin-top: 10px
+            margin-top: 15px
         .AuthActions
             display: flex
             align-items: center
@@ -45,3 +70,9 @@
     font-size: 0.9rem
     a
         color: blue
+
+
+.image_logo
+    width: 40%
+    border-radius: 15px
+    margin: 60px auto 40px

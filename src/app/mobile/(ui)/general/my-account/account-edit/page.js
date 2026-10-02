@@ -5,11 +5,12 @@ import './style.sass'
 import Cookies from 'js-cookie'
 import Image from 'next/image'
 import cameraIco from '/public/ico/camera.svg'
-import emailjs from '@emailjs/browser'
 import { useData } from '@/app/mobile/components/DataContext'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { toast } from "sonner"
 import { Toaster } from '@/components/ui/sonner'
+import { usePopup } from '@/app/mobile/components/PopupContext'
+import EmailCodePopup from '@/app/mobile/components/ui/Popups/EmailCodePopup'
 
 export default function EditAccountPage(){
     function getCookie(name) {
@@ -18,7 +19,12 @@ export default function EditAccountPage(){
         if (parts.length === 2) return parts.pop().split(';').shift();
         return null; // Если куки нет
     }
+    function setCookie(name, value, days) {
+        const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString()
+        document.cookie = `${name}=${value}; expires=${expires}; path=/`
+    }
     const { userData, setUserData, loadingStatus } = useData()
+    const { showChoicePopup, showPopup } = usePopup();
     useEffect(()=>{
         if(userData && userData.Approved == 3){
             toast.warning("Ваше фото находится на модерации", {
@@ -90,51 +96,135 @@ export default function EditAccountPage(){
     const [editEmail, setEditEmail] = useState(userData && userData.UserEmail)
 
     const [togglerChangingPopup, setTogglerChangingPopup] = useState('')
+    const [isSavingProfile, setIsSavingProfile] = useState(false)
 
     async function editInfoProfile(){
-        const token = getCookie('token');
-        await fetch(`/api/account-data/edit-account-data`, {
-            method: "PUT",
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-                "UserName": editName, 
-                "UserPhone": "8"+editPhone,
-                "UserEmail": editEmail
+        if (isSavingProfile) return
+        setIsSavingProfile(true)
+
+        try {
+            if (editEmail.trim().toLowerCase() !== userData.UserEmail.trim().toLowerCase()) {
+                await sendEmail()
+                return
+            }
+
+            const token = getCookie('token');
+            const response = await fetch(`/api/account-data/edit-account-data`, {
+                method: "PUT",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    UserName: editName,
+                    UserPhone: "8" + editPhone,
+                })
             })
-        })
-        .then(()=>{
+            if (response.status === 429) {
+                const result = await response.json().catch(() => ({}))
+                showPopup(result.message || 'Слишком много запросов. Попробуйте позже.')
+                return
+            }
+            if (!response.ok) {
+                const result = await response.json().catch(() => ({}))
+                throw new Error(result.message || 'Не удалось обновить данные профиля')
+            }
+            setUserData({ ...userData, UserName: editName, UserPhone: Number("8" + editPhone) })
             setTogglerChangingPopup('popup-open')
-        })
-        .catch(error =>{
-            console.log(error)
-        })
+        } catch (error) {
+            showPopup(error.message)
+        } finally {
+            setIsSavingProfile(false)
+        }
     }
     // Проверка введенного Email
     const [togglerPopup, setTogglerPopup] = useState('') // Открытие popup с ошибкой ввода Email
-    const [emailCode, setEmailCode] = useState(0)
     const [inputPasswordCode, setInputPasswordCode] = useState('')
     const [errorConfirmEmail, setErrorConfirmEmail] = useState('')
     const [togglerSendEmail, setTogglerSendEmail] = useState('') // Открытие popup С кодом
     const [togglerPopupInvalidEmail, setTogglerPopupInvalidEmail] = useState('')
     const [togglerPhoneNumberErrorPopup, setTogglerPhoneNumberErrorPopup] = useState('')
 
-    useEffect(()=>{
-        setEmailCode(Math.floor(1000 + Math.random() * 9000))
-    },[])
-    function sendEmail(){
-        setTogglerSendEmail('popup-open')
-        emailjs.send("service_taxicap", "template_rkv2tvg", {
-            'message': `${emailCode}`, 
-            'email-to': `${editEmail}`
-        }, "L1XK15ZnEN_oq838c")
-        .then((result) => {
-            console.log(result)
-        }, (error) => {
-            console.log(error)
-        })
+    async function sendEmail() {
+        const token = getCookie('token')
+        const normalizedEmail = editEmail.trim().toLowerCase()
+        if (!/\S+@\S+\.\S+/.test(normalizedEmail)) {
+            showPopup('Введите корректный email')
+            return
+        }
+
+        try {
+            const response = await fetch('/api/send-message?type=send-code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ authType: 'email-change', userEmail: normalizedEmail }),
+            })
+
+            if (response.status === 409) {
+                setTogglerPopupInvalidEmail('popup-open')
+                return
+            }
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}))
+                throw new Error(error.message || 'Не удалось отправить код')
+            }
+
+            setInputPasswordCode('')
+            setErrorConfirmEmail('')
+            setTogglerSendEmail('popup-open')
+        } catch (error) {
+            showPopup(error.message)
+        }
+    }
+
+    async function confirmEmailChange() {
+        const token = getCookie('token')
+        setErrorConfirmEmail('')
+        try {
+            const response = await fetch('/api/send-message?type=verify-code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    authType: 'email-change',
+                    userEmail: editEmail.trim().toLowerCase(),
+                    code: inputPasswordCode,
+                    userName: editName,
+                    userPhone: "8" + editPhone,
+                }),
+            })
+            const result = await response.json()
+
+            if (response.status === 409) {
+                setTogglerSendEmail('')
+                setTogglerPopupInvalidEmail('popup-open')
+                return
+            }
+            if (response.status === 401) {
+                setErrorConfirmEmail('Неверный или истекший код')
+                return
+            }
+            if (!response.ok) throw new Error(result.message || 'Не удалось изменить email')
+
+            setCookie('token', result.token, 7)
+            setEditEmail(result.email)
+            setInputPasswordCode('')
+            setTogglerSendEmail('')
+            setUserData({
+                ...userData,
+                UserName: editName,
+                UserPhone: Number("8" + editPhone),
+                UserEmail: result.email,
+            })
+            setTogglerChangingPopup('popup-open')
+        } catch (error) {
+            showPopup(error.message)
+        }
     }
 
     if (loadingStatus) {
@@ -163,7 +253,7 @@ export default function EditAccountPage(){
                                 </div>
                             </div> */}
                             <Avatar className='user-photo w-3/4 h-auto'>
-                                <AvatarImage  className='object-cover' src={userData && userData.UserImage || filePreviewUrl} />
+                                <AvatarImage  className='object-cover' src={userData && `/${userData.UserImage}` || filePreviewUrl} />
                                 <AvatarFallback className='aspect-square text-7xl'>{userData && userData.UserName.slice(0,1)}</AvatarFallback>
                             </Avatar>
                             <h3 className='underline decoration-solid' onClick={handleEditPhotoClick}>Изменить фото</h3>
@@ -186,7 +276,7 @@ export default function EditAccountPage(){
                             editEmail !== '' ? 
                             (editEmail === userData.UserEmail ? setTogglerPopupInvalidEmail('popup-open') : sendEmail()) :
                             editPhone.length < 10 ? setTogglerPhoneNumberErrorPopup('popup-open') : editInfoProfile()}}>Сохранить</div> */}
-                        <div className='Button' onClick={()=>{editInfoProfile()}}>Сохранить</div>
+                        <div className={`Button ${isSavingProfile ? 'disabled' : ''}`} onClick={editInfoProfile}>Сохранить</div>
                     </div>
                 </div>
             </div>
@@ -212,19 +302,17 @@ export default function EditAccountPage(){
                     <div className='Button PopupButton' onClick={()=>{setTogglerPhoneNumberErrorPopup('')}}>Закрыть</div>
                 </div>
             </>
-            <>
-                <div className={`popup popup-input-error ${togglerSendEmail}`}>
-                    <div className="popup-close-x-mark" onClick={()=>{setTogglerSendEmail("")}}><i className="fa-solid fa-xmark"></i></div>
-                    <h3 className='popup-input-error__text'>Введите код подтверждения</h3>
-                    <h4 className="popup-input-error__text">Код подтверждения отправлен вам на Email: {editEmail}</h4>
-                    <input className="popup-input" type="number" required value={inputPasswordCode} onChange={(e)=>{setInputPasswordCode(e.target.value)}}/>
-                    <h4 className="popup-input-error__text popup-input-error__text_message">{errorConfirmEmail}</h4>
-                <div className='Button PopupButton' 
-                    onClick={()=>{inputPasswordCode.trim() === emailCode.toString().trim() ? 
-                    [setTogglerSendEmail(""), editInfoProfile()] : setErrorConfirmEmail("Неверный код")}}>Войти</div>
-                </div>
-                <div className={`popup-background ${togglerSendEmail}`}></div>
-            </>
+            <EmailCodePopup
+                isOpen={togglerSendEmail === 'popup-open'}
+                email={editEmail}
+                value={inputPasswordCode}
+                onChange={setInputPasswordCode}
+                errorMessage={errorConfirmEmail}
+                onClose={() => setTogglerSendEmail('')}
+                onConfirm={confirmEmailChange}
+                confirmLabel="Подтвердить email"
+                length={6}
+            />
         </>
     )
 }

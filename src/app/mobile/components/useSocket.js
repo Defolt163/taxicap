@@ -79,6 +79,7 @@ const useSocket = ({onOrderCreated,
     onOrderCompleted,
     onNewOrder,
     onDriverLocation,
+    onDriversOnline,
     onOrderCanceledByDriver }) => {
       const [isConnected, setIsConnected] = useState(false)
       const stompClientRef = useRef(null);
@@ -93,6 +94,7 @@ const useSocket = ({onOrderCreated,
         onOrderCompleted,
         onNewOrder,
         onDriverLocation,
+        onDriversOnline,
         onOrderCanceledByDriver,
       };
 
@@ -121,6 +123,14 @@ const useSocket = ({onOrderCreated,
                 /* if (onOrderCreated) {
                     onOrderCreated(orderId);
                 } */
+            });
+
+            client.subscribe("/user/queue/driversOnline", (msg) => {
+              handlersRef.current.onDriversOnline?.(Number(msg.body));
+            });
+
+            client.subscribe("/topic/driversOnline", (msg) => {
+              handlersRef.current.onDriversOnline?.(Number(msg.body));
             });
 
             client.subscribe("/user/queue/orderCanceled", (msg) => {
@@ -164,13 +174,6 @@ const useSocket = ({onOrderCreated,
                 handlersRef.current.onOrderCompleted?.(orderId);
             });
 
-            // Подписка на общий топик завершения
-            client.subscribe("/topic/orderCompleted", (msg) => {
-                const orderId = Number(msg.body);
-                console.log("✅ Order completed (topic):", orderId);
-                handlersRef.current.onOrderCompleted?.(orderId);
-            });
-
             /* if (role === 0) {
               client.subscribe("/topic/orders", (msg) => {
                 const orderId = JSON.parse(msg.body);
@@ -187,6 +190,7 @@ const useSocket = ({onOrderCreated,
             }
 
             handlersRef.current.onNewOrder?.();
+            client.publish({ destination: "/app/driversOnline", body: "" });
           },
           onWebSocketClose: () => setIsConnected(false),
           onDisconnect: () => setIsConnected(false),

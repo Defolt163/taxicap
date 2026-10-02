@@ -5,7 +5,7 @@ import { PopupProvider } from '../../components/PopupContext'
 import GlobalPopup from '../../components/ui/Popups/GlobalPopup'
 
 export const metadata = {
-  title: "REVVO",
+  title: "Поехали",
   description: "Добро пожаловать",
 }
 export const viewport = {

@@ -86,6 +86,47 @@ export default function MyAccountPage(){
         }
     }
 
+    const [disableDriverMode, setDisableDriverMode] = useState(false)
+    async function checkActiveOrder() {
+        const token = getCookie("token");
+
+        if (!userData) return null;
+
+        try {
+            const response = await fetch("/api/orders-data/check-order", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+            });
+
+            const res = await response.json();
+
+            if (!res.length) {
+                return null;
+            }
+
+            const order = res[0];
+
+            if (order.orderStatus == "created" || 
+                order.orderStatus === "active" ||
+                order.orderStatus === "processed") {
+                setDisableDriverMode(true)
+            } else {
+                setDisableDriverMode(false)
+            }
+
+        } catch (error) {
+            console.error(error);
+            return null;
+        }
+    }
+
+    useEffect(()=>{
+        checkActiveOrder()
+    }, [userData])
+
 
     // UPDATE accounts SET VehicleBrand = 'Toyota', VehicleModel = 'Camry', VehicleColor = 'Black', VehicleNumber = 'A123BC' WHERE UserId = 1; 
 
@@ -97,7 +138,7 @@ export default function MyAccountPage(){
                 <div className='MyAccountPageAccount'>
                     <div className='AccountCard'>
                         <Avatar className='AccountCardIco'>
-                            <AvatarImage src={userData && userData.UserImage} />
+                            <AvatarImage src={userData && `/${userData.UserImage}`} />
                             <AvatarFallback>{userData && userData.UserName.slice(0,1)}</AvatarFallback>
                         </Avatar>
                         {/* <div style={{backgroundImage: `url(${userData.UserImage === null ? '/ico/man-user.svg' : userData.UserImage})`}} className='AccountCardIco' alt='user ico'/> */}
@@ -119,19 +160,21 @@ export default function MyAccountPage(){
                 <PushNotifications />
                 <div className='AccountToggleModeBox'>
                     <label className='AccountToggleMode' htmlFor='driver-mode'>Режим водителя</label>
-                    <label className="TogglerWrapper">
-                        <input id='driver-mode' className='TogglerChecker' type="checkbox" checked={Boolean(userData?.DriverMode === 1) } onChange={(e) => {
-                            if (e.target.checked && userData.DriverMode === 0) {
-                                updateDriverMode(1)
-                            } else {
-                                //setDriverMode(driverMode === 1 ? 0 : 1)
-                                updateDriverMode(userData && userData.DriverMode === 1 ? 0 : 1)
-                            }
-                        }}/>
-                        <div className="TogglerSlider">
-                            <div className="TogglerKnob"></div>
-                        </div>
-                    </label>
+                    {disableDriverMode ? <p className='text-gray-500 text-sm'>Недоступно при активной поездке</p> :
+                        <label className="TogglerWrapper">
+                            <input id='driver-mode' className='TogglerChecker' type="checkbox" checked={Boolean(userData?.DriverMode === 1) } onChange={(e) => {
+                                if (e.target.checked && userData.DriverMode === 0) {
+                                    updateDriverMode(1)
+                                } else {
+                                    //setDriverMode(driverMode === 1 ? 0 : 1)
+                                    updateDriverMode(userData && userData.DriverMode === 1 ? 0 : 1)
+                                }
+                            }}/>
+                            <div className="TogglerSlider">
+                                <div className="TogglerKnob"></div>
+                            </div>
+                        </label>
+                    }
                 </div>
                 {userData && userData.DriverMode !== 0 && userData.VehicleBrand !== null? 
                     <>

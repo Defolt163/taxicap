@@ -44,7 +44,7 @@ export async function POST(request) {
       drivers.forEach((user) => ids.add(Number(user.UserId)));
     }
 
-    if (ids.size === 0) return Response.json({ sent: 0 });
+    if (ids.size === 0) return Response.json({ matched: 0, sent: 0, failed: 0 });
 
     const placeholders = Array.from(ids, () => '?').join(',');
     const [subscriptions] = await pool.query(
@@ -60,6 +60,7 @@ export async function POST(request) {
     });
 
     let sent = 0;
+    let failed = 0;
     await Promise.all(subscriptions.map(async (subscription) => {
       try {
         await webpush.sendNotification({
@@ -73,10 +74,11 @@ export async function POST(request) {
         } else {
           console.error('Push delivery error:', error.message);
         }
+        failed += 1;
       }
     }));
 
-    return Response.json({ sent });
+    return Response.json({ matched: subscriptions.length, sent, failed });
   } catch (error) {
     console.error('Push notify error:', error);
     return Response.json({ message: 'Push notification failed' }, { status: 500 });

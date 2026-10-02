@@ -5,6 +5,30 @@ import Cookies from 'js-cookie'
 import PagesHeader from "../../../../components/PagesHeader/PagesHeader"
 import { useData } from '@/app/mobile/components/DataContext'
 
+
+const LETTERS = "АВЕКМНОРСТУХ";
+
+function normalizePlate(input) {
+  // Оставляем только разрешённые буквы и цифры
+  const cleaned = input
+    .toUpperCase()
+    .replace(/[^АВЕКМНОРСТУХABEKMHOPCTYX0-9]/g, "");
+
+  // Формат: L DDD LL DD(D)
+  const match = cleaned.match(
+    /^([АВЕКМНОРСТУХABEKMHOPCTYX])?(\d{0,3})?([АВЕКМНОРСТУХABEKMHOPCTYX]{0,2})?(\d{0,3})?$/
+  );
+  if (!match) return cleaned;
+
+  const [, l1, d1, l2, d2] = match;
+  let result = "";
+  if (l1) result += l1;
+  if (d1) result += d1;
+  if (l2) result += l2;
+  if (d2) result += d2;
+  return result;
+}
+
 export default function AddCarPage(){
     function getCookie(name) {
         const value = `; ${document.cookie}`;
@@ -23,14 +47,18 @@ export default function AddCarPage(){
     const [vehicleBrand, setVehicleBrand] = useState(userData && userData.VehicleBrand !== null ? userData.VehicleBrand : '')
     const [vehicleModel, setVehicleModel] = useState(userData && userData.VehicleModel !== null ? userData.VehicleModel : '')
     const [vehicleColor, setVehicleColor] = useState("Black")
-    const [vehicleId, setVehicleId] = useState(userData && userData.VehicleNumber !== null ? userData.VehicleNumber : '')
+    //const [vehicleId, setVehicleId] = useState(userData && userData.VehicleNumber !== null ? userData.VehicleNumber : '')
+    const [plate, setPlate] = useState(userData && userData.VehicleNumber !== null ? userData.VehicleNumber : '');
     const [togglerPopupChangeSuccess, setTogglerPopupChangeSuccess] = useState('')
     const [togglerPopupChangeError, setTogglerPopupChangeError] = useState('')
     const [togglerPopupInputError, setTogglerPopupInputError] = useState('')
 
+    const handleChange = (e) => {
+        setPlate(normalizePlate(e.target.value));
+    };
     async function changeCar(){
         const token = getCookie('token');
-        const allFieldsValid = ([vehicleBrand, vehicleModel, vehicleColor, vehicleId]
+        const allFieldsValid = ([vehicleBrand, vehicleModel, vehicleColor, plate]
             .every(field => field !== '' && field !== null))
         const allFieldDatabase =([userData.VehicleBrand, userData.VehicleModel, userData.VehicleColor, userData.VehicleId]
             .every(field => field !== '' && field !== null)
@@ -48,7 +76,7 @@ export default function AddCarPage(){
                     "VehicleBrand": vehicleBrand,
                     "VehicleModel": vehicleModel,
                     "VehicleColor": vehicleColor,
-                    "VehicleNumber": vehicleId
+                    "VehicleNumber": plate
                 })
                 })
                 if(response.ok){
@@ -120,8 +148,11 @@ export default function AddCarPage(){
                                 id="vehicle-id"
                                 type="text"
                                 required={userData && userData.VehicleNumber === null}
-                                value={vehicleId}
-                                onChange={(e) => setVehicleId(e.target.value)}
+                                pattern="[A-Z] \d{3} [A-Z]{2} \d{2,3}"
+                                value={plate}
+                                onChange={handleChange}
+                                maxLength={9}
+                                placeholder="A000BC163"
                                 />
                             </div>
                             <div className="Button" onClick={()=>{changeCar()}}>Сохранить</div>

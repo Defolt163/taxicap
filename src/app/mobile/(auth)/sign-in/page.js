@@ -3,12 +3,8 @@ import { useEffect, useState } from "react"
 import emailjs from '@emailjs/browser';
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-    InputOTP,
-    InputOTPGroup,
-    InputOTPSlot,
-  } from "@/components/ui/input-otp"
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader } from '@/components/ui/alert-dialog';
+import EmailCodePopup from "../../components/ui/Popups/EmailCodePopup";
 
 export default function SignInPage(){
     const router = useRouter()
@@ -104,6 +100,7 @@ export default function SignInPage(){
                             id="Email"
                             value={inputEmail}
                             onChange={(e)=>setInputEmail(e.target.value)}
+                            className="input_form"
                         />
                         <div className="Button" 
                             onClick={()=>{
@@ -118,31 +115,24 @@ export default function SignInPage(){
                             </div>
                             <div className={`popup-background ${togglerPopup}`}></div>
                         </>
-                        <>
-                            <div className={`popup popup-input-error popup-email-code ${togglerSendEmail}`}>
-                                <div className="popup-close-x-mark" onClick={()=>{setTogglerSendEmail(""), setInputPasswordCode(""), setErrorConfirmEmail("")}}><i className="fa-solid fa-xmark"></i></div>
-                                <h3 className='popup-input-error__text'>Введите код подтверждения</h3>
-                                <h4 className="popup-input-error__text">Код подтверждения отправлен вам на Email: {inputEmail}</h4>
-                                <h5 className='mb-3 text-sm'>Проверьте папку спам</h5>
-                                <InputOTP className="popup-input" maxLength={4} value={inputPasswordCode} onChange={(value)=>{setInputPasswordCode(value)}}>
-                                    <InputOTPGroup>
-                                        <InputOTPSlot index={0}/>
-                                        <InputOTPSlot index={1}/>
-                                        <InputOTPSlot index={2}/>
-                                        <InputOTPSlot index={3}/>
-                                    </InputOTPGroup>
-                                </InputOTP>
-                                <h4 className="popup-input-error__text popup-input-error__text_message">{errorConfirmEmail}</h4>
-                                <div style={{marginTop: '10px'}} className='Button PopupButton' 
-                                    onClick={()=>{SignIn()}}
-                                >Войти</div>
-                            </div>
-                            <div className={`popup-background ${togglerSendEmail}`}></div>
-                        </>
                     </div>
                     <div className="AccountSign">Нет аккаунта? <Link href='/mobile/sign-up'>Зарегистрируйтесь</Link></div>
                 </div>
             </div>
+            <EmailCodePopup
+                isOpen={togglerSendEmail === 'popup-open'}
+                email={inputEmail}
+                value={inputPasswordCode}
+                onChange={setInputPasswordCode}
+                errorMessage={errorConfirmEmail}
+                onClose={() => {
+                    setTogglerSendEmail('')
+                    setInputPasswordCode('')
+                    setErrorConfirmEmail('')
+                }}
+                onConfirm={SignIn}
+                confirmLabel="Войти"
+            />
             <AlertDialog open={alertError} onOpenChange={setAlertError}>
                 <AlertDialogContent className='w-11/12'>
                     <AlertDialogHeader>

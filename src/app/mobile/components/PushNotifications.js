@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { usePopup } from './PopupContext'
+import { useData } from './DataContext'
 
 function getCookie(name) {
   const value = `; ${document.cookie}`
@@ -17,6 +18,7 @@ function urlBase64ToUint8Array(value) {
 
 export default function PushNotifications() {
   const { showPopup } = usePopup()
+  const { userData } = useData()
   const [supported, setSupported] = useState(false)
   const [subscription, setSubscription] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -24,22 +26,73 @@ export default function PushNotifications() {
 
   useEffect(() => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return
+    if (!userData?.UserId) return
 
     setSupported(true)
-    navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' })
-      .then((registration) => registration.pushManager.getSubscription())
-      .then(setSubscription)
-      .catch((error) => console.error('Push registration error:', error))
-  }, [])
+    let cancelled = false
+
+    async function registerAndSync() {
+      const registration = await navigator.serviceWorker.register('/sw.js', {
+        scope: '/',
+        updateViaCache: 'none',
+      })
+      let currentSubscription = await registration.pushManager.getSubscription()
+
+      if (currentSubscription) {
+        const expectedKey = urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY)
+        const currentKey = currentSubscription.options.applicationServerKey
+        const currentKeyBytes = currentKey ? new Uint8Array(currentKey) : null
+        const keyMatches = currentKeyBytes && currentKeyBytes.length === expectedKey.length &&
+          expectedKey.every((byte, index) => byte === currentKeyBytes[index])
+
+        if (!keyMatches) {
+          await currentSubscription.unsubscribe()
+          await fetch('/api/push/subscribe', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${getCookie('token')}`,
+            },
+            body: JSON.stringify({ endpoint: currentSubscription.endpoint }),
+          })
+          currentSubscription = null
+        }
+      }
+
+      if (cancelled) return
+      setSubscription(currentSubscription)
+
+      const token = getCookie('token')
+      if (!currentSubscription || !token) return
+
+      const response = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(currentSubscription.toJSON()),
+      })
+      if (!response.ok) throw new Error(`Push subscription sync failed: ${response.status}`)
+    }
+
+    registerAndSync().catch((error) => {
+      console.error('Push registration error:', error)
+      setError('Не удалось синхронизировать push-подписку')
+      showPopup('Не удалось синхронизировать push-подписку')
+    })
+
+    return () => { cancelled = true }
+  }, [userData?.UserId, showPopup])
 
   async function togglePush() {
     setBusy(true)
     setError('')
     try {
-      const registration = await navigator.serviceWorker.ready
       let nextSubscription = subscription
 
       if (nextSubscription) {
+        const registration = await navigator.serviceWorker.ready
         await nextSubscription.unsubscribe()
         await fetch('/api/push/subscribe', {
           method: 'DELETE',
@@ -50,12 +103,20 @@ export default function PushNotifications() {
         return
       }
 
-      const permission = await Notification.requestPermission()
+      if (Notification.permission === 'denied') {
+        showPopup('Уведомления заблокированы в настройках сайта Microsoft Edge')
+        return
+      }
+
+      const permission = Notification.permission === 'granted'
+        ? 'granted'
+        : await Notification.requestPermission()
       if (permission !== 'granted') {
         showPopup('Разрешите уведомления в настройках браузера')
         return
       }
 
+      const registration = await navigator.serviceWorker.ready
       nextSubscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY),

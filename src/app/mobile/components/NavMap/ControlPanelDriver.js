@@ -33,6 +33,7 @@ import { useData } from '../DataContext'
 import { toast } from 'sonner'
 
 import phoneIco from '@/../public/ico/ui/phone-solid-full.svg'
+import { HiMiniXMark, HiOutlineCheck } from 'react-icons/hi2'
 
 export default function ControlDriverPanel({ onLocationSelect }){
     const { userData, loadingStatus, setUserData } = useData()
@@ -498,10 +499,10 @@ export default function ControlDriverPanel({ onLocationSelect }){
                             <>
                                 <div className={`OrderActions`}>
                                     <div className='OrderAction' onClick={()=>{handleOrderIteration()}}>
-                                    <i className="fa-solid fa-xmark"></i>
+                                        <HiMiniXMark />
                                     </div>
                                     <div className='OrderAction' onClick={()=>{orders?.[orderIteration] && takeOrder(orders[orderIteration].id)}}>
-                                    <i className="fa-solid fa-check"></i>
+                                       <HiOutlineCheck />
                                     </div>
                                 </div>
                             </>

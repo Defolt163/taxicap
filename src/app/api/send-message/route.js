@@ -1,7 +1,9 @@
 import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
+import { randomInt } from 'crypto';
 import { createClient } from 'redis';
 import pool from '../accountDB'
+import { checkRateLimit } from '../rateLimit'
 
 const SECRET_KEY = process.env.JWT_SECRET_KEY; // Секрет для JWT
 const { REDIS_URL, REDIS_PORT } = process.env;
@@ -56,6 +58,76 @@ export async function POST(req) {
         }
     }else if(sendType == 'send-code'){
         const { userEmail, authType, rawPhone, userName } = await req.json();
+        if (authType === 'email-change') {
+            const token = req.headers.get('authorization')?.split(' ')[1];
+            if (!token) return Response.json({ message: 'Необходима авторизация' }, { status: 401 });
+
+            let decoded;
+            try {
+                decoded = jwt.verify(token, SECRET_KEY);
+            } catch {
+                return Response.json({ message: 'Недействительная сессия' }, { status: 401 });
+            }
+
+            try {
+                const rateLimit = await checkRateLimit('email-change-code', decoded.id, 3, 600);
+                if (!rateLimit.allowed) {
+                    return Response.json(
+                        { message: 'Слишком много запросов. Попробуйте позже.' },
+                        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } }
+                    );
+                }
+            } catch (error) {
+                console.error('Email change rate limiter unavailable:', error);
+            }
+
+            const normalizedEmail = userEmail?.trim().toLowerCase();
+            if (!normalizedEmail || !/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
+                return Response.json({ message: 'Некорректный email' }, { status: 400 });
+            }
+
+            const [currentUserRows] = await pool.query(
+                'SELECT UserEmail FROM accounts WHERE UserId = ?',
+                [decoded.id]
+            );
+            if (!currentUserRows.length) return Response.json({ message: 'Пользователь не найден' }, { status: 404 });
+            if (currentUserRows[0].UserEmail?.toLowerCase() === normalizedEmail) {
+                return Response.json({ message: 'Это уже ваш текущий email' }, { status: 400 });
+            }
+
+            const [existingUsers] = await pool.query(
+                'SELECT UserId FROM accounts WHERE UserEmail = ? AND UserId <> ? LIMIT 1',
+                [normalizedEmail, decoded.id]
+            );
+            if (existingUsers.length) {
+                return Response.json({ message: 'Эта электронная почта уже используется' }, { status: 409 });
+            }
+
+            const generatedCode = String(randomInt(100000, 1000000));
+            if (process.env.NODE_ENV !== 'production') {
+                console.info('[email-change] Verification code:', generatedCode);
+            }
+            const redisKey = `email-change:${decoded.id}:${normalizedEmail}`;
+            await client.setEx(redisKey, 600, generatedCode);
+
+            const transporter = nodemailer.createTransport({
+                service: 'yandex',
+                auth: {
+                    user: 'defol7@yandex.ru',
+                    pass: 'wbhoblkcgtjtxzjl',
+                },
+            });
+
+            await transporter.sendMail({
+                from: 'defol7@yandex.ru',
+                to: normalizedEmail,
+                subject: 'Подтверждение нового email',
+                html: `<p>Ваш код подтверждения нового адреса email:</p><p style="font-size:24px"><strong>${generatedCode}</strong></p><p>Код действует 10 минут.</p>`,
+            });
+
+            return Response.json({ message: 'Код отправлен' });
+        }
+
         if(authType === 'sign-up' && rawPhone === ''){
             const [rows] = await pool.query('SELECT * FROM accounts WHERE UserEmail = ?', [userEmail]);
 
@@ -158,7 +230,55 @@ export async function POST(req) {
         }
     }
     if (sendType === 'verify-code') {
-        const { userEmail, code, authType, userName, rawPhone } = await req.json();
+        const { userEmail, code, authType, userName, rawPhone, personalDataConsent, userPhone } = await req.json();
+
+        if (authType === 'email-change' && code !== '') {
+            const token = req.headers.get('authorization')?.split(' ')[1];
+            if (!token) return Response.json({ message: 'Необходима авторизация' }, { status: 401 });
+
+            let decoded;
+            try {
+                decoded = jwt.verify(token, SECRET_KEY);
+            } catch {
+                return Response.json({ message: 'Недействительная сессия' }, { status: 401 });
+            }
+
+            const normalizedEmail = userEmail?.trim().toLowerCase();
+            const redisKey = `email-change:${decoded.id}:${normalizedEmail}`;
+            const storedCode = await client.get(redisKey);
+            if (!storedCode || storedCode !== String(code).trim()) {
+                return Response.json({ message: 'Неверный или истекший код' }, { status: 401 });
+            }
+
+            const [existingUsers] = await pool.query(
+                'SELECT UserId FROM accounts WHERE UserEmail = ? AND UserId <> ? LIMIT 1',
+                [normalizedEmail, decoded.id]
+            );
+            if (existingUsers.length) {
+                await client.del(redisKey);
+                return Response.json({ message: 'Эта электронная почта уже используется' }, { status: 409 });
+            }
+
+            await pool.query(
+                'UPDATE accounts SET UserName = ?, UserPhone = ?, UserEmail = ? WHERE UserId = ?',
+                [userName, userPhone, normalizedEmail, decoded.id]
+            );
+            await client.del(redisKey);
+
+            const [updatedUsers] = await pool.query(
+                'SELECT UserId, UserName, UserEmail, DriverMode FROM accounts WHERE UserId = ?',
+                [decoded.id]
+            );
+            const updatedUser = updatedUsers[0];
+            const updatedToken = jwt.sign({
+                id: updatedUser.UserId,
+                name: updatedUser.UserName,
+                email: updatedUser.UserEmail,
+                role: updatedUser.DriverMode,
+            }, SECRET_KEY, { expiresIn: '7d' });
+
+            return Response.json({ token: updatedToken, email: updatedUser.UserEmail });
+        }
         
         if(authType === 'sign-in'){
             const storedCode = await client.get(userEmail); 
@@ -202,10 +322,19 @@ export async function POST(req) {
                     { status: 200 }
                 );
             } else if(rawPhone !== '' && storedCode === code){
+                if (personalDataConsent !== true) {
+                    return new Response(JSON.stringify({ success: false, message: 'Необходимо согласие на обработку персональных данных' }), { status: 400 });
+                }
+
+                const forwardedFor = req.headers.get('x-forwarded-for');
+                const consentIp = forwardedFor?.split(',')[0].trim() || req.headers.get('x-real-ip') || null;
+
                 await client.del(userEmail);
                 await pool.query(
-                    'INSERT INTO accounts (UserName, UserPhone, UserEmail) VALUES (?, ?, ?)',
-                    [userName, rawPhone, userEmail]
+                    `INSERT INTO accounts
+                        (UserName, UserPhone, UserEmail, PersonalDataConsent, PersonalDataConsentAt, PersonalDataConsentIp)
+                     VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?)`,
+                    [userName, rawPhone, userEmail, personalDataConsent, consentIp]
                 );
       
                 // Получение сохраненного пользователя
