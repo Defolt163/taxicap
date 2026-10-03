@@ -1,0 +1,81 @@
+@import ../../../variables
+.agreements_and_information
+    h1
+        font-size: 22px
+        text-align: center
+        margin-bottom: 20px
+        font-weight: bold
+    h2
+        font-size: 18px
+        font-weight: bold
+        margin: 10px 5px
+    p
+        font-size: 16px
+    table
+        width: 100%
+        border-collapse: collapse
+        thead
+            th
+                padding: 12px 15px
+                text-align: left
+                border-bottom: 1px solid #ddd
+                background-color: $base-color
+                color: white
+                font-weight: bold
+        tbody
+            td
+                padding: 12px 15px
+                text-align: left
+                border-bottom: 1px solid #ddd
+
+@media screen and ( max-width: 992px )
+    .agreements_and_information
+        h1
+            font-size: 18px
+            margin-bottom: 20px
+        h2
+            font-size: 15px
+            font-weight: bold
+            margin: 10px 5px
+        p
+            font-size: 14px
+        ul
+            li
+                font-size: 14px
+        .table_wrapper
+            overflow-x: scroll
+            table
+                font-size: 15px
+                thead
+                    th
+                        padding: 8px 9px
+                        font-weight: bold
+                tbody
+                    td
+                        padding: 8px 9px
+
+@media screen and ( max-width: 440px )
+    .agreements_and_information
+        h1
+            font-size: 16px
+            margin-bottom: 20px
+        h2
+            font-size: 15px
+            font-weight: bold
+            margin: 5px 0px
+        p
+            font-size: 14px
+        ul
+            li
+                font-size: 14px
+        .table_wrapper
+            overflow-x: scroll
+            table
+                font-size: 14px
+                thead
+                    th
+                        padding: 3px 4px
+                        font-weight: bold
+                tbody
+                    td
+                        padding: 3px 4px

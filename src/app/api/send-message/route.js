@@ -57,7 +57,8 @@ export async function POST(req) {
             return new Response({ status: 500 });
         }
     }else if(sendType == 'send-code'){
-        const { userEmail, authType, rawPhone, userName } = await req.json();
+        //const { userEmail, authType, rawPhone, userName } = await req.json();
+        const { userEmail, authType, userName, rawPhone, personalDataConsent, ageStatus } = await req.json();
         if (authType === 'email-change') {
             const token = req.headers.get('authorization')?.split(' ')[1];
             if (!token) return Response.json({ message: 'Необходима авторизация' }, { status: 401 });
@@ -129,6 +130,14 @@ export async function POST(req) {
         }
 
         if(authType === 'sign-up' && rawPhone === ''){
+
+            if (personalDataConsent !== true) {
+                return new Response(JSON.stringify({message: 'Необходимо согласие на обработку персональных данных' }), { status: 400 });
+            }
+            if (ageStatus !== true) {
+                return new Response(JSON.stringify({ message: 'Необходимо подтверждение возраста' }), { status: 400 });
+            }
+
             const [rows] = await pool.query('SELECT * FROM accounts WHERE UserEmail = ?', [userEmail]);
 
             if (rows.length > 0) {
@@ -153,7 +162,7 @@ export async function POST(req) {
                 const mailOptions = {
                     from: 'defol7@yandex.ru',
                     to: userEmail,
-                    subject: 'Авторизация SwiftDrive',
+                    subject: 'Авторизация "Поехали"',
                     html: `
                         <p>Здравствуйте!</p>
                         <p><span style="font-size: 18pt;">Ваш код для подтверждения Email:</span></p>
@@ -163,7 +172,7 @@ export async function POST(req) {
                         <p>Если это сообщение отправлено вам по ошибке, просто проигнорируйте его</p>
                         <p>&nbsp;</p>
                         <blockquote>
-                        <p><span style="text-decoration: underline;">С уважением SwiftDrive</span></p>
+                        <p><span style="text-decoration: underline;">С уважением сервис "Поехали"</span></p>
                         </blockquote>
                     `
                 };
@@ -206,9 +215,9 @@ export async function POST(req) {
             const mailOptions = {
                 from: 'defol7@yandex.ru',
                 to: userEmail,
-                subject: 'Авторизация REVVO',
+                subject: 'Авторизация "Поехали"',
                 html: `
-                    <p>Здравствуйте, ${userName}</p>
+                    <p>Здравствуйте!</p>
                     <p><span style="font-size: 18pt;">Ваш код для подтверждения Email:</span></p>
                     <p style="padding: 12px; border-left: 4px solid #d0d0d0; font-style: italic;">
                         <span style="font-size: 24pt;"><strong>${generatedCode}</strong></span>
@@ -216,7 +225,7 @@ export async function POST(req) {
                     <p>Если это сообщение отправлено вам по ошибке, просто проигнорируйте его</p>
                     <p>&nbsp;</p>
                     <blockquote>
-                    <p><span style="text-decoration: underline;">С уважением REVVO</span></p>
+                    <p><span style="text-decoration: underline;">С уважением "Поехали"</span></p>
                     </blockquote>
                 `
             };
@@ -230,7 +239,7 @@ export async function POST(req) {
         }
     }
     if (sendType === 'verify-code') {
-        const { userEmail, code, authType, userName, rawPhone, personalDataConsent, userPhone } = await req.json();
+        const { userEmail, code, authType, userName, rawPhone, personalDataConsent, ageStatus, userPhone } = await req.json();
 
         if (authType === 'email-change' && code !== '') {
             const token = req.headers.get('authorization')?.split(' ')[1];
@@ -325,6 +334,9 @@ export async function POST(req) {
                 if (personalDataConsent !== true) {
                     return new Response(JSON.stringify({ success: false, message: 'Необходимо согласие на обработку персональных данных' }), { status: 400 });
                 }
+                if (ageStatus !== true) {
+                    return new Response(JSON.stringify({ success: false, message: 'Необходимо подтверждение возраста' }), { status: 400 });
+                }
 
                 const forwardedFor = req.headers.get('x-forwarded-for');
                 const consentIp = forwardedFor?.split(',')[0].trim() || req.headers.get('x-real-ip') || null;
@@ -332,9 +344,9 @@ export async function POST(req) {
                 await client.del(userEmail);
                 await pool.query(
                     `INSERT INTO accounts
-                        (UserName, UserPhone, UserEmail, PersonalDataConsent, PersonalDataConsentAt, PersonalDataConsentIp)
-                     VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?)`,
-                    [userName, rawPhone, userEmail, personalDataConsent, consentIp]
+                        (UserName, UserPhone, UserEmail, PersonalDataConsent, AgeStatus, AdverseStatus, PersonalDataConsentAt, PersonalDataConsentIp)
+                     VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)`,
+                    [userName, rawPhone, userEmail, personalDataConsent, ageStatus, adverseStatus, consentIp]
                 );
       
                 // Получение сохраненного пользователя

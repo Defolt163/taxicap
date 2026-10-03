@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescript
 import { usePopup } from "../../components/PopupContext"
 import EmailCodePopup from "../../components/ui/Popups/EmailCodePopup"
 import UserAgreementDialog from "../../components/ui/Popups/UserAgreementDialog"
-import UserPersonalDataDialog from "../../components/ui/Popups/UserPersonalDataDialog"
+import UserPersonalDataDialog from "../../components/ui/Popups/PersonalDataProcessingDialog"
 
 export default function SignInPage(){
     function setCookie(name, value, days) {
@@ -70,6 +70,8 @@ export default function SignInPage(){
 
     const [agreementStatus, setAgreementStatus] = useState(false)
     const [adverseStatus, setAdverseStatus] = useState(false)
+    const [ageStatus, setAgeStatus] = useState(false)
+
 
     async function sendMessage(){
         if(
@@ -89,13 +91,16 @@ export default function SignInPage(){
                         userEmail: userEmail,
                         userName: userName, 
                         rawPhone: '',
-                        authType: 'sign-up'
+                        authType: 'sign-up',
+                        ageStatus: ageStatus,
+                        personalDataConsent: agreementStatus
                     }
                 )
             })
             if(response.status == 400){
                 setTogglerPopupLoadingData('')
-                setTogglerPopupInvalidEmail('popup-open')
+                const data = await response.json()
+                showPopup(data.message)
             }else if(response.ok){
                 setTogglerPopupLoadingData('')
                 setTogglerConfirmEmailPopup('popup-open');
@@ -123,6 +128,8 @@ export default function SignInPage(){
                         code: inputConfirmEmail,
                         authType: 'sign-up',
                         personalDataConsent: agreementStatus,
+                        ageStatus: ageStatus,
+                        adverseStatus: adverseStatus
                     }
                 ),
             });
@@ -166,7 +173,7 @@ export default function SignInPage(){
                                     placeholder="Имя" 
                                     id="Name"
                                     value={userName}
-                                    onChange={(e)=>setUserName(e.target.value)}
+                                    onChange={(e)=>setUserName(e.target.value.replace(/[^А-Яа-яЁё]/g, ''))}
                                     className="input_form"
                                 />
                             </div>
@@ -191,8 +198,8 @@ export default function SignInPage(){
                                     checked={agreementStatus} 
                                     onChange={(e)=>setAgreementStatus(e.target.checked)}
                                 />
-                                <div className="agreement_copy">
-                                    <label htmlFor="policy">
+                                <div className="checkbox_user-agreement">
+                                    <label htmlFor="policy" className='checkbox_label'>
                                         Я принимаю условия &nbsp;
                                         <UserAgreementDialog>
                                             <span className="agreement_link">Пользовательского соглашения</span>
@@ -204,6 +211,18 @@ export default function SignInPage(){
                                     </label>
                                 </div>
                             </div>
+                            <div className='mt-2 checkbox_user-agreement items-center'>
+                                <input 
+                                    className="checkbox" 
+                                    id="age" 
+                                    type="checkbox"
+                                    checked={ageStatus} 
+                                    onChange={(e)=>setAgeStatus(e.target.checked)}
+                                />
+                                <label for='age' className='checkbox_label'>
+                                    Мне исполнилось 18 лет
+                                </label>
+                            </div>
                             <div className='mt-2 checkbox_user-agreement'>
                                 <input 
                                     className="checkbox" 
@@ -212,12 +231,12 @@ export default function SignInPage(){
                                     checked={adverseStatus} 
                                     onChange={(e)=>setAdverseStatus(e.target.checked)}
                                 />
-                                <label for='adverse'>
+                                <label for='adverse' className='checkbox_label'>
                                     Я согласен получать рекламные и информационные сообщения
                                 </label>
                             </div>
-                            <div className={`Button ${!agreementStatus ? 'disabled' : ''}`} 
-                                onClick={()=>{agreementStatus ? sendMessage() : null}}>Продолжить</div>
+                            <div className={`Button ${!agreementStatus || !ageStatus || userName == "" || userEmail == "" ? 'disabled' : ''}`} 
+                                onClick={()=>{agreementStatus && ageStatus && userName !== "" && userEmail !== "" ? sendMessage() : null}}>Продолжить</div>
                         </div>
                         <div className="AccountSign">Уже есть аккаунт? <Link href='/mobile/sign-in'>Войдите</Link></div>
                     </>

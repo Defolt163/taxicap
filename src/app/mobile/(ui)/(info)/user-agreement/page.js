@@ -1,5 +1,6 @@
+import ConsentProcessingPersonalData from "@/app/mobile/components/legal/ConsentProcessingPersonalData";
 import PagesHeader from "../../../components/PagesHeader/PagesHeader"
-import UserAgreementContent from "../../../components/legal/UserAgreementContent"
+import UserAgreementContent from "../../../components/legal/PersonalDataProcessing"
 import '../style.sass'
 import {
   AccordionContent,
@@ -7,6 +8,9 @@ import {
   AccordionRoot,
   AccordionTrigger
 } from "@/components/tailgrids/core/accordion";
+import UserAgreement from "@/app/mobile/components/legal/UserAgreement";
+import CookiePolicyContent from "@/app/mobile/components/legal/CookiePolicyContent";
+import ServiceOpreatingRulesContent from "@/app/mobile/components/legal/ServiceOpreatingRulesContent";
 
 export default function faqPage(){
     return(
@@ -17,35 +21,40 @@ export default function faqPage(){
                 </div>
                 <AccordionRoot>
                     <AccordionItem>
-                        <AccordionTrigger>Политика обработки персональных данных</AccordionTrigger>
+                        <AccordionTrigger>Политика использования персональных данных</AccordionTrigger>
                         <AccordionContent>
-                        We offer a 30-day return policy on all unused items in their original
-                        packaging.
+                            <UserAgreementContent />
                         </AccordionContent>
                     </AccordionItem>
 
                     <AccordionItem>
                         <AccordionTrigger>Согласие на обработку персональных данных</AccordionTrigger>
                         <AccordionContent>
-                        Standard shipping typically takes 5-7 business days. Express options
-                        are available at checkout.
+                            <ConsentProcessingPersonalData />
                         </AccordionContent>
                     </AccordionItem>
 
                     <AccordionItem>
-                        <AccordionTrigger>Политика использования Cookie</AccordionTrigger>
+                        <AccordionTrigger>Пользовательское соглашение "Поехали"</AccordionTrigger>
                         <AccordionContent>
-                        Standard shipping typically takes 5-7 business days. Express options
-                        are available at checkout.
+                            <UserAgreement />
                         </AccordionContent>
                     </AccordionItem>
 
                     <AccordionItem>
-                        <AccordionTrigger>Пользовательское соглашение приложения REVVO</AccordionTrigger>
+                        <AccordionTrigger>Политика использования Cookie и локального хранилища</AccordionTrigger>
                         <AccordionContent>
-                        <UserAgreementContent />
+                            <CookiePolicyContent />
                         </AccordionContent>
                     </AccordionItem>
+
+                    <AccordionItem>
+                        <AccordionTrigger>Правила тестовой эксплуатации сервиса "Поехали</AccordionTrigger>
+                        <AccordionContent>
+                            <ServiceOpreatingRulesContent />
+                        </AccordionContent>
+                    </AccordionItem>
+
                 </AccordionRoot>
             </div>
         </div>
