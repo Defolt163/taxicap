@@ -11,6 +11,11 @@ const latUp = parseFloat(process.env.NEXT_PUBLIC_LAT_UP);
 const lonUp = parseFloat(process.env.NEXT_PUBLIC_LON_UP);
 const latBottom = parseFloat(process.env.NEXT_PUBLIC_LAT_BOTTOM);
 const lonBottom = parseFloat(process.env.NEXT_PUBLIC_LON_BOTTOM);
+const mapBounds = L.latLngBounds(
+  [Math.min(latUp, latBottom) - 0.085, Math.min(lonUp, lonBottom) - 0.03],
+  [Math.max(latUp, latBottom) + 0.04, Math.max(lonUp, lonBottom) + 0.03]
+);
+
 export default function Map({ coordinates, driverPosition }) {
   const [mapKey] = useState(() => `taxi-map-${++mapInstanceId}`);
   const mapRef = useRef(null);
@@ -66,6 +71,9 @@ export default function Map({ coordinates, driverPosition }) {
       ref={mapRef}
       center={[54.434501, 51.467061]} 
       zoom={13.5} 
+      minZoom={12}
+      maxBounds={mapBounds}
+      maxBoundsViscosity={0.9}
       style={{ height: '80dvh', width: '100%' }}
     >
       <TileLayer url="/api/tiles/{z}/{x}/{y}.png" />

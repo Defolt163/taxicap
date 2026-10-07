@@ -3,12 +3,6 @@ import pool from '../../accountDB';
 
 const internalSecret = process.env.PUSH_INTERNAL_SECRET;
 
-webpush.setVapidDetails(
-  'mailto:m.romanov.biz@gmail.com',
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-);
-
 async function ensureTable() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS push_subscriptions (
@@ -58,6 +52,16 @@ export async function POST(request) {
       data,
       url: '/mobile/general',
     });
+
+    if (subscriptions.length > 0) {
+      const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      const privateKey = process.env.VAPID_PRIVATE_KEY;
+      if (!publicKey || !privateKey) {
+        throw new Error('VAPID keys are not configured');
+      }
+
+      webpush.setVapidDetails('mailto:m.romanov.biz@gmail.com', publicKey, privateKey);
+    }
 
     let sent = 0;
     let failed = 0;

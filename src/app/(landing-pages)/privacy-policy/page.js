@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from "react";
-import HeaderPageComponent from "../../components/Header/Header";
+import HeaderPageComponent from "../components/header/header";
 import './private-policy-page.sass'
 
 export default function PrivatePage(){

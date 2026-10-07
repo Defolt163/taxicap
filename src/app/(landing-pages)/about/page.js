@@ -1,7 +1,7 @@
 'use client'
 import Image from "next/image";
-import HeaderPageComponent from "../../components/Header/Header";
-import LogoShort from '/public/logo/white-short-logo.svg'
+import HeaderPageComponent from "../components/header/header";
+import LogoShort from '@/../public/logo/logo_new_white.svg'
 import './about-page.sass'
 import { useEffect } from "react";
 

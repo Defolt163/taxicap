@@ -6,21 +6,33 @@ import pool from '../accountDB'
 import { checkRateLimit } from '../rateLimit'
 
 const SECRET_KEY = process.env.JWT_SECRET_KEY; // Секрет для JWT
-const { REDIS_URL, REDIS_PORT } = process.env;
-// Создаем клиента Redis с новым API
-const client = createClient({
-  url: `redis://${REDIS_URL}:${REDIS_PORT}`, // URL для подключения, можно также указать пароль, если он используется
-});
+let client;
+let connectPromise;
 
-client.connect(); // Подключаемся к Redis
+async function getRedisClient() {
+    if (!client) {
+        const { REDIS_URL, REDIS_PORT } = process.env;
+        if (!REDIS_URL || !REDIS_PORT) {
+            throw new Error('Redis connection settings are not configured');
+        }
 
-client.on('connect', () => {
-  console.log('Подключено к Redis');
-});
+        client = createClient({ url: `redis://${REDIS_URL}:${REDIS_PORT}` });
+        client.on('connect', () => console.log('Подключено к Redis'));
+        client.on('error', (err) => console.error('Ошибка Redis:', err));
+    }
 
-client.on('error', (err) => {
-  console.error('Ошибка Redis:', err);
-});
+    if (!client.isOpen) {
+        if (!connectPromise) {
+            connectPromise = client.connect().finally(() => {
+                connectPromise = null;
+            });
+        }
+        await connectPromise;
+    }
+
+    return client;
+}
+
 export async function POST(req) {
     const { searchParams } = new URL(req.url);
     const sendType = searchParams.get("type");
@@ -57,6 +69,7 @@ export async function POST(req) {
             return new Response({ status: 500 });
         }
     }else if(sendType == 'send-code'){
+        const client = await getRedisClient();
         //const { userEmail, authType, rawPhone, userName } = await req.json();
         const { userEmail, authType, userName, rawPhone, personalDataConsent, ageStatus } = await req.json();
         if (authType === 'email-change') {
@@ -239,6 +252,7 @@ export async function POST(req) {
         }
     }
     if (sendType === 'verify-code') {
+        const client = await getRedisClient();
         const { userEmail, code, authType, userName, rawPhone, personalDataConsent, ageStatus, userPhone } = await req.json();
 
         if (authType === 'email-change' && code !== '') {

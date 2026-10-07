@@ -5,15 +5,19 @@ const redisState = globalThis.__taxicapRateLimitRedis || {
   connectPromise: null,
 }
 
-if (!redisState.client) {
-  const { REDIS_URL, REDIS_PORT } = process.env
-  redisState.client = createClient({ url: `redis://${REDIS_URL}:${REDIS_PORT}` })
-  redisState.client.on('error', (error) => console.error('Rate limit Redis error:', error))
-}
-
 globalThis.__taxicapRateLimitRedis = redisState
 
 async function ensureRedisConnected() {
+  if (!redisState.client) {
+    const { REDIS_URL, REDIS_PORT } = process.env
+    if (!REDIS_URL || !REDIS_PORT) {
+      throw new Error('Redis connection settings are not configured')
+    }
+
+    redisState.client = createClient({ url: `redis://${REDIS_URL}:${REDIS_PORT}` })
+    redisState.client.on('error', (error) => console.error('Rate limit Redis error:', error))
+  }
+
   if (redisState.client.isOpen) return
   if (!redisState.connectPromise) {
     redisState.connectPromise = redisState.client.connect().finally(() => {

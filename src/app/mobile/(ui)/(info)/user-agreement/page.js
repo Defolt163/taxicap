@@ -35,7 +35,7 @@ export default function faqPage(){
                     </AccordionItem>
 
                     <AccordionItem>
-                        <AccordionTrigger>Пользовательское соглашение "Поехали"</AccordionTrigger>
+                        <AccordionTrigger>Пользовательское соглашение &quot;Поехали&quot;</AccordionTrigger>
                         <AccordionContent>
                             <UserAgreement />
                         </AccordionContent>
@@ -49,7 +49,7 @@ export default function faqPage(){
                     </AccordionItem>
 
                     <AccordionItem>
-                        <AccordionTrigger>Правила тестовой эксплуатации сервиса "Поехали</AccordionTrigger>
+                        <AccordionTrigger>Правила тестовой эксплуатации сервиса &quot;Поехали&quot;</AccordionTrigger>
                         <AccordionContent>
                             <ServiceOpreatingRulesContent />
                         </AccordionContent>

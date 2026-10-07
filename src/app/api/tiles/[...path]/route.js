@@ -7,7 +7,8 @@ export async function GET(request, { params }) {
   
   const { path } = await params;
   const tilePath = path.join('/');
-  const tileUrl = `http://localhost:8080/tile/${tilePath}`;
+  const apiServerUrl = (process.env.API_SERVER_URL || 'http://localhost:8080').replace(/\/+$/, '');
+  const tileUrl = `${apiServerUrl}/tile/${tilePath}`;
   
   try {
     const response = await fetch(tileUrl, {
@@ -28,6 +29,7 @@ export async function GET(request, { params }) {
       }
     });
   } catch (error) {
-    return new Response('Error', { status: 500 });
+    console.error('Tile proxy request failed:', error);
+    return new Response('Tile service unavailable', { status: 502 });
   }
 }

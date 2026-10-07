@@ -21,19 +21,22 @@ const nextConfig = {
 module.exports = withPWA(nextConfig); */
 module.exports = {
   reactStrictMode: false,
+  output: 'standalone',
   async rewrites() {
+    const apiServerUrl = process.env.API_SERVER_URL || 'http://localhost:8080'
+
     return [
       {
         source: '/tiles/:path*',
-        destination: 'http://localhost:8080/tile/:path*',
+        destination: `${apiServerUrl}/tile/:path*`,
       },
       {
         source: '/api/geo/:path*',
-        destination: 'http://localhost:8080/api/geo/:path*',
+        destination: `${apiServerUrl}/api/geo/:path*`,
       },
       {
         source: '/ws/:path*',
-        destination: 'http://localhost:8080/ws/:path*',
+        destination: `${apiServerUrl}/ws/:path*`,
       },
     ]
   },
