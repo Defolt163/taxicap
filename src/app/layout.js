@@ -7,6 +7,8 @@ import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
 import { ToastAction } from "@/components/ui/toast"
 import Head from 'next/head'
+import CookieBanner from './components/CookieNotification/CookieNotification'
+import YandexMetrika from './components/YandexMetrika/YandexMetrika'
 
 
 export default function RootLayout({ children }) {
@@ -37,7 +39,9 @@ export default function RootLayout({ children }) {
             <meta name="apple-mobile-web-app-title" content="Поехали"/>
             <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
           </Head>
+          <CookieBanner/>
           {children}
+          <YandexMetrika />
           <div><Toaster position="top-center" richColors/></div>
         </body>
         <Script src="https://kit.fontawesome.com/073ad96d9b.js" crossorigin="anonymous"></Script>
