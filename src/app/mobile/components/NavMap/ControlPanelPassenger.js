@@ -49,6 +49,9 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
     const [activeOrder, setActiveOrder] = useState(null)
     const [step, setStep] = useState(0)
     const [onlineDrivers, setOnlineDrivers] = useState(null)
+    const [locating, setLocating] = useState(false)
+    const [locationError, setLocationError] = useState('')
+    const mapApiKey = process.env.NEXT_PUBLIC_MAP_API_KEY
     const previousOrderStatusRef = useRef(null)
     const isCreatingOrderRef = useRef(false)
     async function checkActiveOrder() {
@@ -331,6 +334,65 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
     const [addressFrom, setAddressFrom] = useState("")
     const [addressTo, setAddressTo] = useState("")
 
+    function useCurrentLocation() {
+        setLocationError('')
+
+        if (!window.isSecureContext) {
+            setLocationError('Для определения местоположения откройте приложение по HTTPS.')
+            return
+        }
+        if (!navigator.geolocation) {
+            setLocationError('Этот браузер не поддерживает определение местоположения.')
+            return
+        }
+        if (!mapApiKey) {
+            setLocationError('Не настроен ключ геокодирования. Введите адрес вручную.')
+            return
+        }
+
+        setLocating(true)
+        navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+            try {
+                const query = new URLSearchParams({
+                    lat: String(coords.latitude),
+                    lon: String(coords.longitude),
+                    format: 'json',
+                    apiKey: mapApiKey,
+                })
+                const response = await fetch(`https://api.geoapify.com/v1/geocode/reverse?${query}`)
+                if (!response.ok) {
+                    throw new Error(`Reverse geocoding failed: ${response.status}`)
+                }
+
+                const result = await response.json()
+                const address = result.results?.[0]?.address_line1 || result.results?.[0]?.formatted
+                if (!address) {
+                    setLocationError('Не удалось определить адрес. Введите его вручную.')
+                    return
+                }
+                setAddressFrom(address)
+            } catch (error) {
+                console.error('Reverse geocoding error:', error)
+                setLocationError('Не удалось определить адрес. Проверьте подключение и введите его вручную.')
+            } finally {
+                setLocating(false)
+            }
+        }, (error) => {
+            setLocating(false)
+            if (error.code === error.PERMISSION_DENIED) {
+                setLocationError('Доступ запрещён. Разрешите геолокацию для сайта в настройках iPhone и повторите попытку.')
+            } else if (error.code === error.POSITION_UNAVAILABLE) {
+                setLocationError('Не удалось получить координаты. Проверьте, включены ли службы геолокации на iPhone.')
+            } else {
+                setLocationError('Не удалось определить местоположение. Попробуйте ещё раз или введите адрес вручную.')
+            }
+        }, {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 15000,
+        })
+    }
+
     function shapeDecoder(encodedMessage) {
         var index = 0,
             lat = 0,
@@ -502,6 +564,10 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                             <label className='AddressInputLabel' htmlFor="input-from"><div className="AddressInputIco"><Image width={25} src={anglesDown} alt='angles down'/></div></label>
                             <input className='InputUiMap' placeholder='Текущий адрес' id='input-from' value={addressFrom} onChange={(e)=>setAddressFrom(e.target.value)}/>
                         </div>
+                        <button className='CurrentLocationButton' type='button' onClick={useCurrentLocation} disabled={locating}>
+                            {locating ? 'Определяем местоположение…' : 'Определить адрес по геопозиции'}
+                        </button>
+                        {locationError && <p className='CurrentLocationError' role='status'>{locationError}</p>}
                         <div className='AddressInputBlockItem AddressFuckedInputBlockItem'>
                             <label className='AddressInputLabel' htmlFor="input-to"><div className="AddressInputIco"><Image width={25} src={shopIco} alt='shop'/></div></label>
                             <input className='InputUiMap' placeholder='Куда поедете?' id='input-to' value={addressTo} onChange={(e)=>setAddressTo(e.target.value)}/>

@@ -194,17 +194,14 @@ export default function ControlDriverPanel({ onLocationSelect }){
         getOrders()
     }, [userData])
 
-    navigator.geolocation.getCurrentPosition(
-        (position) => {
-            console.log(position.coords);
-        },
-        (error) => {
-            console.log(error.code, error.message);
-        }
-    );
     const watchIdRef = useRef(null);
     const currentOrderId = useRef(null);
     useEffect(() => {
+        if (!window.isSecureContext || !navigator.geolocation) {
+            console.error('Driver location tracking requires HTTPS and browser geolocation support');
+            return;
+        }
+
         watchIdRef.current = navigator.geolocation.watchPosition(
             (position) => {
                 if (!currentOrderId.current) return;

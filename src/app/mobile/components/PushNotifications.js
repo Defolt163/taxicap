@@ -23,12 +23,33 @@ export default function PushNotifications() {
   const [subscription, setSubscription] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [supportMessage, setSupportMessage] = useState('')
 
   useEffect(() => {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return
     if (!userData?.UserId) return
 
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+    const isInstalled = window.matchMedia('(display-mode: standalone)').matches ||
+      navigator.standalone === true
+
+    if (isIOS && !isInstalled) {
+      setSupportMessage('На iPhone push-уведомления доступны, если добавить приложение на экран «Домой» и открыть его оттуда. В Safari нажмите «Поделиться» → «На экран Домой».')
+      return
+    }
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+      setSupportMessage('Push-уведомления не поддерживаются этим браузером. На iPhone установите приложение на экран «Домой» и используйте iOS 16.4 или новее.')
+      return
+    }
+    if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
+      setSupportMessage('Push-уведомления не настроены на сервере. Обратитесь к администратору.')
+      return
+    }
+
     setSupported(true)
+    setSupportMessage(Notification.permission === 'denied'
+      ? 'Уведомления запрещены в настройках сайта. Разрешите их в настройках iPhone или браузера.'
+      : '')
     let cancelled = false
 
     async function registerAndSync() {
@@ -61,6 +82,9 @@ export default function PushNotifications() {
 
       if (cancelled) return
       setSubscription(currentSubscription)
+        if (Notification.permission === 'denied') {
+          setSupportMessage('Уведомления запрещены в настройках сайта. Разрешите их в настройках iPhone или браузера.')
+        }
 
       const token = getCookie('token')
       if (!currentSubscription || !token) return
@@ -104,7 +128,11 @@ export default function PushNotifications() {
       }
 
       if (Notification.permission === 'denied') {
-        showPopup('Уведомления заблокированы в настройках сайта Microsoft Edge')
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+        showPopup(isIOS
+          ? 'Разрешите уведомления для приложения в настройках iPhone и повторите попытку'
+          : 'Разрешите уведомления для сайта в настройках браузера')
         return
       }
 
@@ -133,6 +161,7 @@ export default function PushNotifications() {
 
       if (!response.ok) throw new Error('Failed to save push subscription')
       setSubscription(nextSubscription)
+      setSupportMessage('')
     } catch (error) {
       console.error('Push subscription error:', error)
       showPopup('Не удалось включить уведомления')
@@ -141,17 +170,19 @@ export default function PushNotifications() {
     }
   }
 
-  if (!supported) return null
+  if (!userData?.UserId) return null
 
   return (
-    <div className='AccountToggleModeBox'>
-        <label className='AccountToggleMode' htmlFor='notification'>Уведомления</label>
-        <label className="TogglerWrapper">
-            <input id='notification' className='TogglerChecker' type="checkbox" checked={Boolean(subscription)} onChange={togglePush} disabled={busy}/>
-            <div className="TogglerSlider">
-                <div className="TogglerKnob"></div>
-            </div>
-        </label>
+    <div className='AccountToggleModeBox AccountNotificationBox'>
+      <label className='AccountToggleMode' htmlFor='notification'>Уведомления</label>
+      <label className="TogglerWrapper">
+        <input id='notification' className='TogglerChecker' type="checkbox" checked={Boolean(subscription)} onChange={togglePush} disabled={!supported || busy}/>
+        <div className="TogglerSlider">
+          <div className="TogglerKnob"></div>
+        </div>
+      </label>
+      {supportMessage && <p className='AccountNotificationHint' role='status'>{supportMessage}</p>}
+      {error && <p className='AccountNotificationHint' role='alert'>{error}</p>}
     </div>
   )
 }

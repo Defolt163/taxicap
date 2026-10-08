@@ -18,6 +18,21 @@
         font-weight: 600
     .AddressInputBlock
         width: 100%
+        .CurrentLocationButton
+            display: block
+            margin: 8px 0 12px auto
+            padding: 4px 0
+            border: 0
+            background: transparent
+            color: $base-color
+            font-size: 0.875rem
+            font-weight: 500
+            &:disabled
+                opacity: 0.6
+        .CurrentLocationError
+            margin: 0 0 12px
+            color: #b42318
+            font-size: 0.8125rem
         .AddressInputBlockItem
             position: relative
             display: flex
