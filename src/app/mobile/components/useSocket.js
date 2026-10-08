@@ -40,7 +40,7 @@ const useSocket = (userData) => {
         console.log("✅ Connected to WebSocket");
       },
       onDisconnect: () => {
-        console.log("❌ Disconnected from WebSocket");
+        //console.log("❌ Disconnected from WebSocket");
       },
       onStompError: (frame) => {
         console.error("STOMP error:", frame);
@@ -110,13 +110,13 @@ const useSocket = ({onOrderCreated,
           reconnectDelay: 5000,
 
           onConnect: () => {
-            console.log("CONNECTED");
+            //console.log("CONNECTED");
             setIsConnected(true);
 
             client.subscribe("/user/queue/orderCreated", (msg) => {
                 const orderId = Number(msg.body);
 
-                console.log("USER CREATED:", orderId);
+                //console.log("USER CREATED:", orderId);
 
                 handlersRef.current.onOrderCreated?.(Number(msg.body));
 
@@ -135,14 +135,14 @@ const useSocket = ({onOrderCreated,
 
             client.subscribe("/user/queue/orderCanceled", (msg) => {
               handlersRef.current.onOrderCanceled?.(Number(msg.body));
-              console.log("ORDER CANCELED:", msg.body);
+              //console.log("ORDER CANCELED:", msg.body);
             });
 
             const payload = jwtDecode(token);
 
             client.subscribe("/user/queue/orderAccepted", (msg) => {
                 const order = JSON.parse(msg.body);
-                console.log("ORDER ACCEPTED", order);
+                //console.log("ORDER ACCEPTED", order);
                 handlersRef.current.onOrderAccepted?.(order);
             });
 
@@ -153,38 +153,38 @@ const useSocket = ({onOrderCreated,
             client.subscribe("/user/queue/inTime", (msg) => {
               const order = JSON.parse(msg.body);
               handlersRef.current.onOrderInWork?.(order);
-              console.log("ORDER in work:", msg.body);
+              //console.log("ORDER in work:", msg.body);
             });
 
             client.subscribe(`/user/queue/driverLocation`, (msg) => {
                 const location = JSON.parse(msg.body);
-                console.log("📍 DRIVER LOCATION (user queue):", location);
+                //console.log("📍 DRIVER LOCATION (user queue):", location);
                 handlersRef.current.onDriverLocation?.(location);
             });
 
             client.subscribe("/user/queue/orderCanceledByDriver", (msg) => {
                 const orderId = Number(msg.body);
-                console.log("❌ Order canceled by driver:", orderId);
+                //console.log("❌ Order canceled by driver:", orderId);
                 handlersRef.current.onOrderCanceledByDriver?.(orderId);
             });
 
             client.subscribe("/user/queue/orderCompleted", (msg) => {
                 const orderId = Number(msg.body);
-                console.log("✅ Order completed:", orderId);
+                //console.log("✅ Order completed:", orderId);
                 handlersRef.current.onOrderCompleted?.(orderId);
             });
 
             /* if (role === 0) {
               client.subscribe("/topic/orders", (msg) => {
                 const orderId = JSON.parse(msg.body);
-                console.log("ORDER CREATED:", orderId);
+                //console.log("ORDER CREATED:", orderId);
                 onOrderCreated?.(orderId);
               });
             } */
 
             if (payload.role === 1) {
               client.subscribe("/topic/orders", (msg) => {
-                console.log("NEW ORDER:", msg.body);
+                //console.log("NEW ORDER:", msg.body);
                 handlersRef.current.onOrderCreated?.(Number(msg.body));
               });
             }

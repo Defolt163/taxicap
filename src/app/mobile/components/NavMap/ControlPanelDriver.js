@@ -76,7 +76,7 @@ export default function ControlDriverPanel({ onLocationSelect }){
     
     const stompClientRef = useSocket({
         onOrderCreated: (orderId) => {
-            console.log("ORDER CREATED for driver", orderId);
+            //console.log("ORDER CREATED for driver", orderId);
             getOrders()
         },
         onOrderAccepted: (order) => {
@@ -180,7 +180,7 @@ export default function ControlDriverPanel({ onLocationSelect }){
         if(orders.length != 0){
             setStep(1)
         }
-        console.log("FFF", orders)
+        //console.log("FFF", orders)
     },[orders])
     const [activeOrder, setActiveOrder] = useState(null)
 
@@ -207,7 +207,7 @@ export default function ControlDriverPanel({ onLocationSelect }){
             .then((res) => {
                 decryptData(res.orders.encryptedData, res.orders.iv)
             }).catch(error => {
-                console.log(error)
+                //console.log(error)
             })
         }
     }
@@ -226,8 +226,8 @@ export default function ControlDriverPanel({ onLocationSelect }){
         watchIdRef.current = navigator.geolocation.watchPosition(
             (position) => {
                 if (!currentOrderId.current) return;
-                console.log("WATCH", position.coords);
-                console.log("ORDER", currentOrderId.current);
+                //console.log("WATCH", position.coords);
+                //console.log("ORDER", currentOrderId.current);
                 sendDriverLocation(
                     stompClientRef,
                     currentOrderId.current,
@@ -236,8 +236,8 @@ export default function ControlDriverPanel({ onLocationSelect }){
                 );
             },
             (error) => {
-                console.log(error.code);
-                console.log(error.message);
+                //console.log(error.code);
+                //console.log(error.message);
             },
             {
                 enableHighAccuracy: true,
@@ -262,7 +262,7 @@ export default function ControlDriverPanel({ onLocationSelect }){
             "/user/queue/orderCanceledByPassenger",
             (message) => {
                 const orderId = Number(message.body);
-                console.log("❌ Canceled by passenger:", orderId);
+                //console.log("❌ Canceled by passenger:", orderId);
                 if (activeOrder?.id === orderId) {
                     popupError("Пассажир отменил заказ");
                     setActiveOrder(null);
@@ -277,7 +277,7 @@ export default function ControlDriverPanel({ onLocationSelect }){
         const sub2 = stompClientRef.current.subscribe(
             "/topic/orderCanceled",
             (message) => {
-                console.log("❌ Order canceled:", Number(message.body));
+                //console.log("❌ Order canceled:", Number(message.body));
                 setStep(0);
                 getOrders(); // ✅ Просто обновляем список
             }
@@ -291,20 +291,20 @@ export default function ControlDriverPanel({ onLocationSelect }){
 
     useEffect(() => {
         if (!stompClientRef.current?.connected) {
-            console.log("❌ STOMP not connected");
+            //console.log("❌ STOMP not connected");
             return;
         }
         
-        console.log("✅ STOMP connected, subscribing...");
+        //console.log("✅ STOMP connected, subscribing...");
         
         const subscription = stompClientRef.current.subscribe(
             "/user/queue/orderAccepted",
             (message) => {
-                console.log("📩 RAW MESSAGE:", message);
-                console.log("📩 MESSAGE BODY:", message.body);
+                //console.log("📩 RAW MESSAGE:", message);
+                //console.log("📩 MESSAGE BODY:", message.body);
                 
                 const order = JSON.parse(message.body);
-                console.log("✅ Order accepted:", order);
+                //console.log("✅ Order accepted:", order);
                 setActiveOrder(order);
             }
         );
@@ -314,7 +314,7 @@ export default function ControlDriverPanel({ onLocationSelect }){
 
     // Отмена поездки
     const handleCancelOrder = () => {
-        console.log("ACTIVE ORDER", activeOrder)
+        //console.log("ACTIVE ORDER", activeOrder)
             showChoicePopup(
                 "Клиент ждет. Вы уверены, что хотите отменить заказ?",
                 [
@@ -379,7 +379,7 @@ export default function ControlDriverPanel({ onLocationSelect }){
             "/user/queue/orderCompleted",
             (message) => {
                 const orderId = Number(message.body);
-                console.log("✅ Order completed:", orderId);
+                //console.log("✅ Order completed:", orderId);
                 
                 if (activeOrder?.id === orderId) {
                     hideLoading()
@@ -412,8 +412,8 @@ export default function ControlDriverPanel({ onLocationSelect }){
             })
             .then((res) => {
                 if(res.length != 0){
-                    console.log("reZZzz", res)
-                    console.log("активно принятый", res)
+                    //console.log("reZZzz", res)
+                    //console.log("активно принятый", res)
                     shapeDecoder(res[0].encodedWay)
                     setActiveOrder(res[0])
                     currentOrderId.current = res[0].id
@@ -421,7 +421,7 @@ export default function ControlDriverPanel({ onLocationSelect }){
                     setTogglerOpenOrder(true)
                 }
             }).catch(error => {
-                console.log(error)
+                //console.log(error)
             })
         }
     }

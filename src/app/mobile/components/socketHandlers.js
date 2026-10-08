@@ -33,7 +33,7 @@ export function registerPassengerHandlers(stompClient, userId, orderId, setHasAc
   // Подписываемся на обновления заказа для конкретного пользователя
   const subscription1 = stompClient.subscribe(`/queue/complete/${userId}`, (message) => {
     const orderId = JSON.parse(message.body);
-    console.log(`Order ${orderId} completed`);
+    //console.log(`Order ${orderId} completed`);
     setHasAccepted(true);
   });
 
@@ -59,7 +59,7 @@ export function registerDriverHandlers(stompClient, fetchOrders, checkDriverOrde
   // Подписываемся на новые заказы
   const subscription1 = stompClient.subscribe("/topic/orders", (message) => {
     const newOrder = JSON.parse(message.body);
-    console.log("New order received:", newOrder);
+    //console.log("New order received:", newOrder);
     fetchOrders();
     orderCreatedSound?.play();
   });
@@ -67,7 +67,7 @@ export function registerDriverHandlers(stompClient, fetchOrders, checkDriverOrde
   // Подписываемся на принятые заказы
   const subscription2 = stompClient.subscribe("/topic/orderAccepted", (message) => {
     const orderId = JSON.parse(message.body);
-    console.log("Order accepted:", orderId);
+    //console.log("Order accepted:", orderId);
     fetchOrders();
     checkDriverOrders?.();
   });
@@ -84,7 +84,7 @@ export const sendOrder = (clientRef, data) => {
   const client = clientRef.current;
   if (!client || !client.connected) return;
 
-  console.log(data)
+  //console.log(data)
 
   client.publish({
     destination: "/app/sendOrder",
@@ -105,7 +105,7 @@ export const cancelOrder = (clientRef, orderId) => {
 export const cancelOrderByDriver = (clientRef, orderId) => {
     const client = clientRef.current;
     if (!client || !client.connected) {
-        console.log("❌ Socket not connected");
+        //console.log("❌ Socket not connected");
         return;
     }
     
@@ -114,18 +114,18 @@ export const cancelOrderByDriver = (clientRef, orderId) => {
         body: JSON.stringify(orderId)
     });
     
-    console.log("✅ Cancel order by driver sent:", orderId);
+    //console.log("✅ Cancel order by driver sent:", orderId);
 };
 
 // Отправка событий от водителя
 export const acceptOrder = (clientRef, orderId) => {
     const client = clientRef.current;
-    console.log("📤 Sending acceptOrder:", { orderId });
+    //console.log("📤 Sending acceptOrder:", { orderId });
     
     if (!client || !client.connected) return;
     
     const body = JSON.stringify({ orderId });
-    console.log("📤 Body:", body); // Должно быть: {"orderId":123}
+    //console.log("📤 Body:", body); // Должно быть: {"orderId":123}
     
     client.publish({
         destination: "/app/acceptOrder",
@@ -139,14 +139,14 @@ export const acceptOrder = (clientRef, orderId) => {
       destination: "/app/completeOrder",
       body: JSON.stringify({ userId, orderId })
     });
-    console.log("✅ Order completed for user:", userId);
+    //console.log("✅ Order completed for user:", userId);
   }
 }; */
 
 export const completeOrder = (clientRef, orderId) => {
     const client = clientRef.current;
     if (!client || !client.connected) {
-        console.log("❌ Socket not connected");
+        //console.log("❌ Socket not connected");
         return;
     }
     
@@ -155,18 +155,18 @@ export const completeOrder = (clientRef, orderId) => {
         body: JSON.stringify(orderId)  // ✅ Просто ID
     });
     
-    console.log("✅ Complete order sent:", orderId);
+    //console.log("✅ Complete order sent:", orderId);
 };
 
 export const sendDriverLocation = (clientRef, orderId, lat, lon) => {
   const client = clientRef.current;
 
     if (!client || !client.connected) {
-        console.log("NOT CONNECTED");
+        //console.log("NOT CONNECTED");
         return;
     }
 
-    console.log("SENDING LOCATION");
+    //console.log("SENDING LOCATION");
 
   client.publish({
     destination: "/app/sendDriverLocation",
@@ -184,14 +184,14 @@ export const sendDriverLocation = (clientRef, orderId, lat, lon) => {
       destination: "/app/inTime",
       body: JSON.stringify({ userId, orderId })
     });
-    console.log("✅ Order started for user:", userId);
+    //console.log("✅ Order started for user:", userId);
   }
 }; */
 export const workOrder = (clientRef, orderId) => {
     const client = clientRef.current;
     
     if (!client || !client.connected) {
-        console.log("❌ Socket not connected");
+        //console.log("❌ Socket not connected");
         return;
     }
     
@@ -200,7 +200,7 @@ export const workOrder = (clientRef, orderId) => {
         body: JSON.stringify({ orderId })
     });
     
-    console.log("✅ workOrder sent for order:", orderId);
+    //console.log("✅ workOrder sent for order:", orderId);
 };
 
 export const joinOrderRoom = (stompClient, orderId) => {
@@ -209,6 +209,6 @@ export const joinOrderRoom = (stompClient, orderId) => {
       destination: "/app/joinOrderRoom",
       body: JSON.stringify(orderId)
     });
-    console.log("🟢 Joined room for order:", orderId);
+    //console.log("🟢 Joined room for order:", orderId);
   }
 };

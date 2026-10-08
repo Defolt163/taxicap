@@ -145,7 +145,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
     const stompClientRef = useSocket({
         onOrderCreated: (orderId) => {
             hideLoading();
-            console.log("ORDER CREATED", orderId);
+            //console.log("ORDER CREATED", orderId);
             isCreatingOrderRef.current = false;
             setStep(2)
         },
@@ -163,7 +163,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
         },
 
         onOrderAccepted: (order) => {
-            console.log("Driver found", order);
+            //console.log("Driver found", order);
             showPopup("Нашли водителя");
             setActiveOrder(order)
             previousOrderStatusRef.current = order.orderStatus;
@@ -171,7 +171,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
         },
 
         onOrderCanceledByDriver: (orderId) => {  // ✅ Новый обработчик
-            //console.log("❌ Order canceled by driver:", orderId);
+            ////console.log("❌ Order canceled by driver:", orderId);
             showPopup("Водитель отменил заказ");
             setActiveOrder(null);
             setStep(0);
@@ -179,11 +179,11 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
         },
 
         /* onOrderInWork: (order) => {
-            console.log("status changed", order);
+            //console.log("status changed", order);
         }, */
 
         onDriverLocation: (location) => { // ✅ Добавить этот обработчик
-            console.log("📍 Driver location received:", location);
+            //console.log("📍 Driver location received:", location);
         },
 
         onDriversOnline: setOnlineDrivers,
@@ -205,7 +205,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
     useEffect(() => {
         // Подписываемся на изменение статуса заказа
         if (!activeOrder?.id || !stompClientRef.current?.connected) {
-            console.log("Ожидание соедниения");
+            //console.log("Ожидание соедниения");
             return;
         }
         
@@ -213,7 +213,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
             `/topic/order/${activeOrder.id}/status`,
             (message) => {
                 const status = message.body;
-                console.log("📢 Order status changed to:", status);
+                //console.log("📢 Order status changed to:", status);
                 checkActiveOrder()
                 if (status === 'processed') {
                     setActiveOrder(prev => ({ 
@@ -233,7 +233,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
     // Геокодирование водителя
     useEffect(() => {
         // Ждем когда появится активный заказ и подключится сокет
-        console.log("ПОдп", stompClientRef.current?.connected)
+        //console.log("ПОдп", stompClientRef.current?.connected)
         if (!activeOrder?.id) return
         
         //console.log("🚗 Подписываемся на координаты для заказа:", activeOrder.id);
@@ -243,7 +243,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
             if (stompClientRef.current?.connected) {
                 clearInterval(checkConnection);
                 
-                console.log("🚗 Подписываемся на координаты для заказа:", activeOrder.id);
+                //console.log("🚗 Подписываемся на координаты для заказа:", activeOrder.id);
 
                 
                 
@@ -251,7 +251,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                     `/topic/order/${activeOrder.id}/location`,
                     (message) => {
                         const location = JSON.parse(message.body);
-                        console.log("📍 Получены координаты водителя:", location);
+                        //console.log("📍 Получены координаты водителя:", location);
                         if (onDriverPosition) {
                             onDriverPosition(location);
                         }
@@ -278,7 +278,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
     const handleCancelOrder = async () => {
         const order = await checkActiveOrder();
 
-        console.log("active", order);
+        //console.log("active", order);
 
         if (!order) return;
 
@@ -388,7 +388,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
         }
         return coordinates;
         
-        //console.log(coordinates)
+        ////console.log(coordinates)
     };
 
     const [routeData, setRouteData] = useState(null)
@@ -396,7 +396,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
     async function sendDriveData(fastAddress) {
         const token = getCookie('token');
         if (fastAddress == "" && (addressFrom === "" || addressTo === "")){
-            console.log("fastAddress", fastAddress)
+            //console.log("fastAddress", fastAddress)
             showPopup(`${addressFrom == "" ? "Откуда едем?" : "Куда едем?"}`)
         }
         if (fastAddress && addressFrom == ""){
@@ -474,7 +474,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
     };
     useEffect(() => {
         const handler = (e) => {
-            console.log("EVENT RECEIVED", e.detail);
+            //console.log("EVENT RECEIVED", e.detail);
             handleNextStep()
         };
 
@@ -482,7 +482,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
 
         return () => {
             window.removeEventListener("orderCreated", handler);
-            console.log("listener removed");
+            //console.log("listener removed");
         }
     }, []);
     //Шаги оформления заказа

@@ -16,10 +16,6 @@ export default function SetAccount(){
     const [vehicleId, setVehicleId] = useState("")
     const [insertNumber, setInsertNumber] = useState("")
 
-    useEffect(()=>{
-        console.log("Color:", vehicleColor)
-    }, [vehicleColor])
-
     // Получение sessionId из кук
     const [sessionKey, setSessionKey] = useState('')
     async function myHandler() {
@@ -46,11 +42,11 @@ export default function SetAccount(){
                 "VehicleNumber": vehicleId
             }),
         }).then(()=>{
-            console.log("Saved!")
+            //console.log("Saved!")
             router.push('/mobile/general')
         })
         .catch(error =>{
-            console.log(error)
+            //console.log(error)
         })
     }
 

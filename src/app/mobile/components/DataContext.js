@@ -47,7 +47,7 @@ export function DataProvider({ children }) {
                     }
                     setCookie('token', 'notAuth', 7)
                 } else {
-                    console.log("Резул", result)
+                    //console.log("Резул", result)
                     setCookie('token', result.newToken, 7);
                     decryptData(result.user.encryptedData, result.user.iv)
                     setLoadingStatus(false)
@@ -89,7 +89,7 @@ export function DataProvider({ children }) {
         let parsedData = JSON.parse(decrypted)
         setUserData(parsedData[0])
         // Выводим расшифрованные данные
-        console.log('Резул', parsedData[0]);
+        //console.log('Резул', parsedData[0]);
 
     }
     

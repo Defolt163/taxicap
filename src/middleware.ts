@@ -17,8 +17,8 @@ export function middleware(request) {
   const userAgent = request.headers.get('user-agent');
 
   // Логируем User-Agent для отладки
-  console.log('Middleware is running');
-  console.log('User-Agent:', userAgent);
+  //console.log('Middleware is running');
+  //console.log('User-Agent:', userAgent);
 
   // Проверяем, является ли устройство мобильным
   const isMobile = isMobileDevice(userAgent);

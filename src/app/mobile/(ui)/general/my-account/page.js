@@ -54,7 +54,7 @@ export default function MyAccountPage(){
                 });
             }
         } catch (error){
-            console.log(`Ошибка ${error}`)
+            //console.log(`Ошибка ${error}`)
         }
     }
 

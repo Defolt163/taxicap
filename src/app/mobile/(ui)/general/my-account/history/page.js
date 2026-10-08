@@ -34,7 +34,7 @@ export default function MyAccountPage(){
         let decrypted = decipher.update(encryptedBuffer, 'hex', 'utf8');
         decrypted += decipher.final('utf8');
         let parsedData = JSON.parse(decrypted)
-        console.log(parsedData)
+        //console.log(parsedData)
         setUserOrders(parsedData)
     }
 

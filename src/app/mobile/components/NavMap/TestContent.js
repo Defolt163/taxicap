@@ -21,7 +21,7 @@ export default function NavMapTest(){
     };
     const handleDriverPosition = (position) => {
         setDriverPosition(position);
-        console.log("position", position)
+        //console.log("position", position)
     };
 
     return(
