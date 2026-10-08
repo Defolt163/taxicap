@@ -38,7 +38,7 @@ import documentIco from '@/../public/ico/ui/landmark-solid-full.svg'
 export default function ControlPassengerPanel({ onLocationSelect, onDriverPosition }){
     const { userData, loadingStatus, setUserData } = useData()
 
-    const { showChoicePopup, showPopup } = usePopup();
+    const { showChoicePopup, showPopup, showLoading, hideLoading  } = usePopup();
     function getCookie(name) {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
@@ -49,8 +49,6 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
     const [activeOrder, setActiveOrder] = useState(null)
     const [step, setStep] = useState(0)
     const [onlineDrivers, setOnlineDrivers] = useState(null)
-    const [locating, setLocating] = useState(false)
-    const [locationError, setLocationError] = useState('')
     const mapApiKey = process.env.NEXT_PUBLIC_MAP_API_KEY
     const previousOrderStatusRef = useRef(null)
     const isCreatingOrderRef = useRef(false)
@@ -146,23 +144,27 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
 
     const stompClientRef = useSocket({
         onOrderCreated: (orderId) => {
+            hideLoading();
             console.log("ORDER CREATED", orderId);
             isCreatingOrderRef.current = false;
             setStep(2)
         },
 
         onOrderCanceled: () => {
+            hideLoading();
             showPopup(`К сожалению, машина не найдена`)
             setStep(0)
             setRouteData(null)
             onLocationSelect({
                 routeCoordinates: null,
             });
+            toast("Заказ отменен");
+            setActiveOrder(null);
         },
 
         onOrderAccepted: (order) => {
             console.log("Driver found", order);
-            showPopup("Водитель взял ваш заказ");
+            showPopup("Нашли водителя");
             setActiveOrder(order)
             previousOrderStatusRef.current = order.orderStatus;
             setStep(3);
@@ -288,13 +290,8 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                         text: "Да, отменить",
                         className: "button red",
                         onClick: () => {
+                            showLoading('Отменяем поездку...')
                             cancelOrder(stompClientRef, order.id);
-                            toast("Заказ отменен");
-                            setStep(0);
-                            setActiveOrder(null);
-                            onLocationSelect({
-                                routeCoordinates: null,
-                            });
                         },
                     },
                     {
@@ -312,13 +309,14 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                         text: "Да, отменить",
                         className: "button red",
                         onClick: () => {
+                            showLoading('Отменяем поездку...')
                             cancelOrder(stompClientRef, order.id);
-                            toast("Заказ отменен");
+                            /* toast("Заказ отменен");
                             setStep(0);
                             setActiveOrder(null);
                             onLocationSelect({
                                 routeCoordinates: null,
-                            });
+                            }); */
                         },
                     },
                     {
@@ -333,65 +331,6 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
 
     const [addressFrom, setAddressFrom] = useState("")
     const [addressTo, setAddressTo] = useState("")
-
-    function useCurrentLocation() {
-        setLocationError('')
-
-        if (!window.isSecureContext) {
-            setLocationError('Для определения местоположения откройте приложение по HTTPS.')
-            return
-        }
-        if (!navigator.geolocation) {
-            setLocationError('Этот браузер не поддерживает определение местоположения.')
-            return
-        }
-        if (!mapApiKey) {
-            setLocationError('Не настроен ключ геокодирования. Введите адрес вручную.')
-            return
-        }
-
-        setLocating(true)
-        navigator.geolocation.getCurrentPosition(async ({ coords }) => {
-            try {
-                const query = new URLSearchParams({
-                    lat: String(coords.latitude),
-                    lon: String(coords.longitude),
-                    format: 'json',
-                    apiKey: mapApiKey,
-                })
-                const response = await fetch(`https://api.geoapify.com/v1/geocode/reverse?${query}`)
-                if (!response.ok) {
-                    throw new Error(`Reverse geocoding failed: ${response.status}`)
-                }
-
-                const result = await response.json()
-                const address = result.results?.[0]?.address_line1 || result.results?.[0]?.formatted
-                if (!address) {
-                    setLocationError('Не удалось определить адрес. Введите его вручную.')
-                    return
-                }
-                setAddressFrom(address)
-            } catch (error) {
-                console.error('Reverse geocoding error:', error)
-                setLocationError('Не удалось определить адрес. Проверьте подключение и введите его вручную.')
-            } finally {
-                setLocating(false)
-            }
-        }, (error) => {
-            setLocating(false)
-            if (error.code === error.PERMISSION_DENIED) {
-                setLocationError('Доступ запрещён. Разрешите геолокацию для сайта в настройках iPhone и повторите попытку.')
-            } else if (error.code === error.POSITION_UNAVAILABLE) {
-                setLocationError('Не удалось получить координаты. Проверьте, включены ли службы геолокации на iPhone.')
-            } else {
-                setLocationError('Не удалось определить местоположение. Попробуйте ещё раз или введите адрес вручную.')
-            }
-        }, {
-            enableHighAccuracy: true,
-            maximumAge: 0,
-            timeout: 15000,
-        })
-    }
 
     function shapeDecoder(encodedMessage) {
         var index = 0,
@@ -467,7 +406,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
         if(fastAddress){
             setAddressTo(fastAddress)
         }
-
+        showLoading("Загрузка маршрута")
         try {
             const response = await fetch(`/api/geo`, {
                 method: 'POST',
@@ -480,7 +419,6 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                     "to": addressTo != "" ? addressTo : fastAddress
                 })
             });
-
             const responseText = await response.text();
             let result;
             try {
@@ -488,7 +426,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
             } catch {
                 result = responseText;
             }
-
+            hideLoading();
             if (!response.ok) {
                 throw new Error(typeof result === 'string' ? result : result.message || 'Ошибка определения маршрута');
             }
@@ -500,12 +438,15 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
             shapeDecoder(result.shape)
             setRouteData(result)
         } catch (error){
+            hideLoading();
             showPopup(error.message)
         }
     }
     const handleCreateOrder = async () => {
+        showLoading('Создаем поездку...');
         const existingOrder = await checkActiveOrder();
         if (existingOrder) {
+            hideLoading();
             showPopup("У вас уже есть незавершённый заказ");
             return;
         }
@@ -564,10 +505,6 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                             <label className='AddressInputLabel' htmlFor="input-from"><div className="AddressInputIco"><Image width={25} src={anglesDown} alt='angles down'/></div></label>
                             <input className='InputUiMap' placeholder='Текущий адрес' id='input-from' value={addressFrom} onChange={(e)=>setAddressFrom(e.target.value)}/>
                         </div>
-                        <button className='CurrentLocationButton' type='button' onClick={useCurrentLocation} disabled={locating}>
-                            {locating ? 'Определяем местоположение…' : 'Определить адрес по геопозиции'}
-                        </button>
-                        {locationError && <p className='CurrentLocationError' role='status'>{locationError}</p>}
                         <div className='AddressInputBlockItem AddressFuckedInputBlockItem'>
                             <label className='AddressInputLabel' htmlFor="input-to"><div className="AddressInputIco"><Image width={25} src={shopIco} alt='shop'/></div></label>
                             <input className='InputUiMap' placeholder='Куда поедете?' id='input-to' value={addressTo} onChange={(e)=>setAddressTo(e.target.value)}/>
@@ -698,11 +635,13 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
             )
         }}
     return(
-        <div className={`MapUi`}>
-            <div className="DriversOnlineCount">
-                Водителей в сети: {onlineDrivers === null ? '...' : onlineDrivers}
+        <>
+            <div className={`MapUi`}>
+                <div className="DriversOnlineCount">
+                    Водителей в сети: {onlineDrivers === null ? '...' : onlineDrivers}
+                </div>
+                {renderStepContent()}
             </div>
-            {renderStepContent()}
-        </div>
+        </>
     )
 }

@@ -39,8 +39,10 @@ export default function ControlDriverPanel({ onLocationSelect }){
     const { userData, loadingStatus, setUserData } = useData()
     const [togglerOpenOrder, setTogglerOpenOrder] = useState(false)
     const [pendingOrderId, setPendingOrderId] = useState(null)
+    const pendingCancellationOrderIdRef = useRef(null)
+    const cancellationTimeoutRef = useRef(null)
     
-    const { showPopup, showChoicePopup } = usePopup();
+    const { showPopup, showChoicePopup, showLoading, hideLoading } = usePopup();
     function getCookie(name) {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
@@ -84,11 +86,30 @@ export default function ControlDriverPanel({ onLocationSelect }){
             setStep(1)
             setTogglerOpenOrder(true)
             shapeDecoder(order.encodedWay)
+            hideLoading();
+        },
+        onOrderCanceled: (orderId) => {
+            if (pendingCancellationOrderIdRef.current !== Number(orderId)) return
+
+            clearTimeout(cancellationTimeoutRef.current)
+            cancellationTimeoutRef.current = null
+            pendingCancellationOrderIdRef.current = null
+            hideLoading()
+            setStep(0)
+            setTogglerOpenOrder(false)
+            setActiveOrder(null)
+            currentOrderId.current = null
+            onLocationSelect({ routeCoordinates: null })
+            toast("Заказ отменен")
         },
         onOrderClaimed: getOrders,
         onNewOrder: getOrders,
 
     });
+
+    useEffect(() => () => {
+        clearTimeout(cancellationTimeoutRef.current)
+    }, [])
 
     function popupError(popupText,){
         showPopup(popupText, {
@@ -301,14 +322,22 @@ export default function ControlDriverPanel({ onLocationSelect }){
                         text: "Да, отменить",
                         className: "button red",
                         onClick: () => {
+                            if (!stompClientRef.current?.connected) {
+                                showPopup("Нет соединения с сервером. Проверьте интернет и попробуйте снова.")
+                                return
+                            }
+
+                            pendingCancellationOrderIdRef.current = activeOrder.id
+                            showLoading('Отменяем...')
                             cancelOrderByDriver(stompClientRef, activeOrder.id);
-                            toast("Заказ отменен");
-                            setStep(0);
-                            setTogglerOpenOrder(false)
-                            setActiveOrder(null);
-                            onLocationSelect({
-                                routeCoordinates: null,
-                            });
+                            cancellationTimeoutRef.current = setTimeout(() => {
+                                if (pendingCancellationOrderIdRef.current !== activeOrder.id) return
+
+                                pendingCancellationOrderIdRef.current = null
+                                cancellationTimeoutRef.current = null
+                                hideLoading()
+                                showPopup("Сервер не подтвердил отмену. Проверьте состояние заказа и попробуйте снова.")
+                            }, 15000)
                         },
                     },
                     {
@@ -330,6 +359,7 @@ export default function ControlDriverPanel({ onLocationSelect }){
                     text: "Завершить",
                     className: "button red",
                     onClick: () => {
+                        showLoading('Загрузка...')
                         completeOrder(stompClientRef, activeOrder.id);
                     },
                 },
@@ -352,6 +382,7 @@ export default function ControlDriverPanel({ onLocationSelect }){
                 console.log("✅ Order completed:", orderId);
                 
                 if (activeOrder?.id === orderId) {
+                    hideLoading()
                     toast("Поездка завершена");
                     setStep(0);
                     setTogglerOpenOrder(false)
@@ -399,18 +430,40 @@ export default function ControlDriverPanel({ onLocationSelect }){
     }, [userData])
 
     function takeOrder(orderId){
+        showLoading('Бронируем поездку...');
         if (pendingOrderId || activeOrder) return;
         setPendingOrderId(orderId)
         acceptOrder(stompClientRef, orderId);
     }
 
     function acceptPassanger(orderId){
+        showLoading('Загрузка...');
         workOrder(stompClientRef, orderId);
-        setActiveOrder(prev => ({ 
+        /* setActiveOrder(prev => ({ 
             ...prev, 
             orderStatus: 'processed' 
-        }));
+        })); */
     }
+
+    useEffect(() => {
+        const client = stompClientRef.current;
+        if (!client?.connected || !activeOrder?.id) return;
+
+        const subscription = client.subscribe(
+            `/topic/order/${activeOrder.id}/status`,
+            (message) => {
+                if (message.body !== 'processed') return;
+
+                hideLoading();
+                setActiveOrder((order) => ({
+                    ...order,
+                    orderStatus: 'processed',
+                }));
+            }
+        );
+
+        return () => subscription.unsubscribe();
+    }, [activeOrder?.id, stompClientRef.current?.connected]);
 
     //Шаги оформления заказа
     const [step, setStep] = useState(0)

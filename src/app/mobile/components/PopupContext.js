@@ -18,6 +18,17 @@ export function PopupProvider({ children }) {
         setPopup({ isOpen: false, errorText: '', action: null });
     };
 
+    const showLoading = (message = 'Загрузка...') => {
+        setPopup({ isOpen: true, errorText: message, type: 'loading' });
+    };
+
+    const hideLoading = () => {
+        setPopup((currentPopup) => currentPopup.type === 'loading'
+            ? { isOpen: false, errorText: '', action: null }
+            : currentPopup
+        );
+    };
+
     const showChoicePopup = (errorText, actions, type = 'default') => {
         setPopup({
             isOpen: true,
@@ -28,7 +39,7 @@ export function PopupProvider({ children }) {
     };
 
     return (
-        <PopupContext.Provider value={{ popup, showPopup, hidePopup, showChoicePopup }}>
+        <PopupContext.Provider value={{ popup, showPopup, hidePopup, showChoicePopup, showLoading, hideLoading }}>
         {children}
         </PopupContext.Provider>
     );

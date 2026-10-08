@@ -1,12 +1,24 @@
 'use client';
 import Link from 'next/link';
 import { usePopup } from '../../PopupContext';
+import { Spinner } from '@/components/ui/spinner';
 
 export default function GlobalPopup() {
     const { popup, hidePopup } = usePopup();
 
     if (!popup.isOpen) return null;
-    console.log(popup);
+
+    if (popup.type === 'loading') {
+        return (
+            <div className="LoadingPopupContainer">
+                <div className="popup-background popup-open"></div>
+                <div className="LoadingPopup" role="status" aria-live="polite">
+                    <Spinner className="LoadingPopupSpinner" />
+                    <h3>{popup.errorText}</h3>
+                </div>
+            </div>
+        );
+    }
     
     return (
         <div>
@@ -22,8 +34,8 @@ export default function GlobalPopup() {
                         </Link>
                     ) : (
                         <button className="Button PopupButton" onClick={() => {
-                            popup.action.onClick?.();
                             hidePopup();
+                            popup.action.onClick?.();
                         }}>
                             {popup.action.text}
                         </button>
@@ -48,8 +60,8 @@ export default function GlobalPopup() {
                                     key={index}
                                     className={`Button mt-2 ${action.className || ''}`}
                                     onClick={() => {
-                                        action.onClick?.();
                                         if (!action.keepOpen) hidePopup();
+                                        action.onClick?.();
                                     }}
                                 >
                                     {action.text}

@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import './style.sass'
 
 export default function CookiePolicyContent() {
@@ -5,7 +6,7 @@ export default function CookiePolicyContent() {
     <div className="agreements_and_information">
       <h1>ПОЛИТИКА COOKIE И ЛОКАЛЬНОГО ХРАНИЛИЩА</h1>
       <p className='text-sm mb-4'>Режим A | актуальность 03.10.2026</p>
-      <p>Оператор текущего проекта: Романов Михаил Александрович. Контакт: m.romanov.biz@gmail.com. Сайт: poehali163.ru.</p>
+      <p>Оператор текущего проекта: Романов Михаил Александрович. Контакт: <Link href={'mailto:srt.def163@ya.ru'}>srt.def163@ya.ru</Link>. Сайт: poehali163.ru.</p>
 
       <div className='table_wrapper'>
         <table>

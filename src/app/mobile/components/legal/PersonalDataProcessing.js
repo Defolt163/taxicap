@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import './style.sass'
 
 export default function PersonalDataProcessing() {
@@ -5,10 +6,10 @@ export default function PersonalDataProcessing() {
     <div className="agreements_and_information">
       <h1>ПОЛИТИКА В ОТНОШЕНИИ ОБРАБОТКИ ПЕРСОНАЛЬНЫХ ДАННЫХ</h1>
       <p className='text-sm mb-4'>Режим A | актуальность 03.10.2026</p>
-      <p>Оператор текущего проекта: Романов Михаил Александрович. Контакт: m.romanov.biz@gmail.com. Сайт: poehali163.ru.</p>
+      <p>Оператор текущего проекта: Романов Михаил Александрович. Контакт: <Link href={'mailto:srt.def163@ya.ru'}>srt.def163@ya.ru</Link>. Сайт: poehali163.ru.</p>
 
       <h2>1. Общие положения</h2>
-      <p>Оператор: Романов Михаил Александрович.<br/>Контакт: m.romanov.biz@gmail.com.<br/> Сайт: poehali163.ru.<br/> Публичный домашний адрес в текущей версии не раскрывается</p>
+      <p>Оператор: Романов Михаил Александрович.<br/>Контакт: <Link href={'mailto:srt.def163@ya.ru'}>srt.def163@ya.ru</Link>.<br/> Сайт: poehali163.ru.<br/> Публичный домашний адрес в текущей версии не раскрывается</p>
       
       <h2>2. Цели</h2>
       <ul className='list-disc ml-8'>

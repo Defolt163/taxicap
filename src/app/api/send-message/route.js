@@ -46,13 +46,13 @@ export async function POST(req) {
         const transporter = nodemailer.createTransport({
             service: 'yandex',
             auth: {
-                user: 'defol7@yandex.ru',
-                pass: 'wbhoblkcgtjtxzjl',
+                user: 'srt.def163@yandex.ru',
+                pass: 'skqffmxmixykjayz',
             },
         });
     
         const mailOptions = {
-            from: 'defol7@yandex.ru',
+            from: 'srt.def163@yandex.ru',
             to: 'iperrogames346@gmail.com',
             subject: 'Обратная связь',
             html: `
@@ -127,13 +127,13 @@ export async function POST(req) {
             const transporter = nodemailer.createTransport({
                 service: 'yandex',
                 auth: {
-                    user: 'defol7@yandex.ru',
-                    pass: 'wbhoblkcgtjtxzjl',
+                    user: 'srt.def163@yandex.ru',
+                    pass: 'skqffmxmixykjayz',
                 },
             });
 
             await transporter.sendMail({
-                from: 'defol7@yandex.ru',
+                from: 'srt.def163@yandex.ru',
                 to: normalizedEmail,
                 subject: 'Подтверждение нового email',
                 html: `<p>Ваш код подтверждения нового адреса email:</p><p style="font-size:24px"><strong>${generatedCode}</strong></p><p>Код действует 10 минут.</p>`,
@@ -167,13 +167,13 @@ export async function POST(req) {
                 const transporter = nodemailer.createTransport({
                     service: 'yandex',
                     auth: {
-                        user: 'defol7@yandex.ru',
-                        pass: 'wbhoblkcgtjtxzjl',
+                        user: 'srt.def163@yandex.ru',
+                        pass: 'skqffmxmixykjayz',
                     },
                 });
             
                 const mailOptions = {
-                    from: 'defol7@yandex.ru',
+                    from: 'srt.def163@yandex.ru',
                     to: userEmail,
                     subject: 'Авторизация "Поехали"',
                     html: `
@@ -218,15 +218,15 @@ export async function POST(req) {
             const transporter = nodemailer.createTransport({
                 service: 'yandex',
                 auth: {
-                    user: 'defol7@yandex.ru',
-                    pass: 'wbhoblkcgtjtxzjl',
+                    user: 'srt.def163@yandex.ru',
+                    pass: 'skqffmxmixykjayz',
                 },
             });
 
             console.log("transporter", transporter)
         
             const mailOptions = {
-                from: 'defol7@yandex.ru',
+                from: 'srt.def163@yandex.ru',
                 to: userEmail,
                 subject: 'Авторизация "Поехали"',
                 html: `
