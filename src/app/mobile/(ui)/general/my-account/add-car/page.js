@@ -1,31 +1,55 @@
 'use client'
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import './style.sass'
 import Cookies from 'js-cookie'
 import PagesHeader from "../../../../components/PagesHeader/PagesHeader"
 import { useData } from '@/app/mobile/components/DataContext'
 
 
-const LETTERS = "АВЕКМНОРСТУХ";
 
-function normalizePlate(input) {
-  // Оставляем только разрешённые буквы и цифры
-  const cleaned = input
-    .toUpperCase()
-    .replace(/[^АВЕКМНОРСТУХABEKMHOPCTYX0-9]/g, "");
+const LETTERS = "АВЕКМНОРСТУХABEKMHOPCTYX";
 
-  // Формат: L DDD LL DD(D)
-  const match = cleaned.match(
-    /^([АВЕКМНОРСТУХABEKMHOPCTYX])?(\d{0,3})?([АВЕКМНОРСТУХABEKMHOPCTYX]{0,2})?(\d{0,3})?$/
-  );
-  if (!match) return cleaned;
+// Позиции: 0 = буква, 1-3 = цифры, 4-5 = буквы, 6 = пробел, 7-9 = цифры региона
+const PATTERN = ["L", "D", "D", "D", "L", "L", "D", "D", "D"];
 
-  const [, l1, d1, l2, d2] = match;
+function isLetter(ch) {
+  return LETTERS.includes(ch.toUpperCase());
+}
+
+function isDigit(ch) {
+  return /\d/.test(ch);
+}
+
+// Построение маски из сырых символов
+function buildMask(raw) {
   let result = "";
-  if (l1) result += l1;
-  if (d1) result += d1;
-  if (l2) result += l2;
-  if (d2) result += d2;
+  let pos = 0;
+
+  for (const ch of raw) {
+    if (pos >= PATTERN.length) break;
+    const type = PATTERN[pos];
+
+    if (type === "L" && isLetter(ch)) {
+      result += ch.toUpperCase();
+      pos++;
+    } else if (type === "D" && isDigit(ch)) {
+      result += ch;
+      pos++;
+    } else if (type === "D") {
+      pos++;
+      // повторно обработать текущий символ на новой позиции
+      if (type === " " && pos < PATTERN.length) {
+        const nextType = PATTERN[pos];
+        if (nextType === "L" && isLetter(ch)) {
+          result += ch.toUpperCase();
+          pos++;
+        } else if (nextType === "D" && isDigit(ch)) {
+          result += ch;
+          pos++;
+        }
+      }
+    }
+  }
   return result;
 }
 
@@ -37,7 +61,7 @@ export default function AddCarPage(){
         return null; // Если куки нет
     }
     const { userData, setUserData, loadingStatus } = useData()
-    const [togglerPopupLoadingData, setTogglerPopupLoadingData] = useState('popup-open')
+    const [togglerPopupLoadingData, setTogglerPopupLoadingData] = useState('popup-open') //useState('popup-open')
     useEffect(() => {
         if (!loadingStatus) {
           setTogglerPopupLoadingData('');
@@ -53,9 +77,24 @@ export default function AddCarPage(){
     const [togglerPopupChangeError, setTogglerPopupChangeError] = useState('')
     const [togglerPopupInputError, setTogglerPopupInputError] = useState('')
 
-    const handleChange = (e) => {
+    /* const handleChange = (e) => {
         setPlate(normalizePlate(e.target.value));
+    }; */
+
+    const inputRef = useRef(null);
+    const handleChange = (e) => {
+        const raw = e.target.value;
+        const masked = buildMask(raw);
+        setPlate(masked);
+
+        // Курсор в конец — простой вариант.
+        // Для сложного позиционирования см. примечание ниже.
+        requestAnimationFrame(() => {
+        const el = inputRef.current;
+        if (el) el.setSelectionRange(masked.length, masked.length);
+        });
     };
+
     async function changeCar(){
         const token = getCookie('token');
         const allFieldsValid = ([vehicleBrand, vehicleModel, vehicleColor, plate]
@@ -73,10 +112,10 @@ export default function AddCarPage(){
                         'Authorization': `Bearer ${token}`,
                     },
                     body: JSON.stringify({
-                    "VehicleBrand": vehicleBrand,
-                    "VehicleModel": vehicleModel,
+                    "VehicleBrand": vehicleBrand.toUpperCase(),
+                    "VehicleModel": vehicleModel.toUpperCase(),
                     "VehicleColor": vehicleColor,
-                    "VehicleNumber": plate
+                    "VehicleNumber": plate.toUpperCase()
                 })
                 })
                 if(response.ok){
@@ -105,11 +144,12 @@ export default function AddCarPage(){
                             <div className='GetStartedFormItem VehicleParams'>
                                 <label htmlFor="vehicle-brand">Марка:</label>
                                 <input
-                                id="vehicle-brand"
-                                type="text"
-                                required={userData && userData.VehicleBrand === null}
-                                value={vehicleBrand}
-                                onChange={(e) => setVehicleBrand(e.target.value)}
+                                    id="vehicle-brand"
+                                    type="text"
+                                    required={userData && userData.VehicleBrand === null}
+                                    value={vehicleBrand.toUpperCase()}
+                                    onChange={(e) => setVehicleBrand(e.target.value)}
+                                    placeholder="KIA"
                                 />
                             </div>
                             <div className='GetStartedFormItem VehicleParams'>
@@ -118,7 +158,7 @@ export default function AddCarPage(){
                                 id="vehicle-model"
                                 type="text"
                                 required={userData && userData.VehicleModel === null}
-                                value={vehicleModel}
+                                value={vehicleModel.toUpperCase()}
                                 onChange={(e) => setVehicleModel(e.target.value)}
                                 />
                             </div>
@@ -127,6 +167,7 @@ export default function AddCarPage(){
                                 <select
                                     id="vehicle-color"
                                     type="text"
+                                    className="VehicleParams_select"
                                     required={userData && userData.VehicleColor === null}
                                     value={vehicleColor}
                                     onChange={(e) => setVehicleColor(e.target.value)}
@@ -149,6 +190,7 @@ export default function AddCarPage(){
                                 type="text"
                                 required={userData && userData.VehicleNumber === null}
                                 pattern="[A-Z] \d{3} [A-Z]{2} \d{2,3}"
+                                ref={inputRef}
                                 value={plate}
                                 onChange={handleChange}
                                 maxLength={9}

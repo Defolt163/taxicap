@@ -98,6 +98,30 @@ export default function EditAccountPage(){
     const [togglerChangingPopup, setTogglerChangingPopup] = useState('')
     const [isSavingProfile, setIsSavingProfile] = useState(false)
 
+    const [rawPhone, setRawPhone] = useState('')
+    const formatPhone = (value) => {
+        // Удаляем всё, кроме цифр
+        const digits = value.replace(/\D/g, '').substring(0, 10);
+        const parts = [];
+    
+        if (digits.length > 0) parts.push(digits.substring(0, 3));
+        if (digits.length >= 4) parts.push(digits.substring(3, 6));
+        if (digits.length >= 7) parts.push(digits.substring(6, 8));
+        if (digits.length >= 9) parts.push(digits.substring(8, 10));
+    
+        return parts
+        .map((part, index) => {
+        if (index === 0) return part;
+        return '-' + part;
+        })
+        .join('');
+    };
+    const phoneMask = (e) => {
+        const raw = e.target.value.replace(/\D/g, '').substring(0, 10);
+        const formatted = formatPhone(e.target.value);
+        setEditPhone(formatted);
+        setRawPhone(raw)
+    };
     async function editInfoProfile(){
         if (isSavingProfile) return
         setIsSavingProfile(true)
@@ -117,7 +141,7 @@ export default function EditAccountPage(){
                 },
                 body: JSON.stringify({
                     UserName: editName,
-                    UserPhone: "8" + editPhone,
+                    UserPhone: "8" + rawPhone,
                 })
             })
             if (response.status === 429) {
@@ -260,15 +284,8 @@ export default function EditAccountPage(){
                             {selectedFile && (<button className={`Button upload-btn`} onClick={handleUpload}>Загрузить фото</button>)}
                             <input className='input-field' value={editName} onChange={(e)=>{setEditName(e.target.value)}}/>
                             <div className='input-field_phone'>
-                                <input className='input-field_phone__mask' value={editPhone} 
-                                    onChange={(e)=>{let inputValue = e.target.value
-                                    if ( inputValue.startsWith("8") ||
-                                        inputValue.startsWith("7") ||
-                                        inputValue.startsWith("+")
-                                        ){
-                                        inputValue = inputValue.substring(1)
-                                    }
-                                    setEditPhone(inputValue)}}/>
+                                <input className='input-field input-field_phone__mask' value={editPhone} 
+                                    onChange={phoneMask} placeholder="___-___-__-__"/>
                             </div>
                             <input className='input-field' value={editEmail} onChange={(e)=>{setEditEmail(e.target.value)}}/>
                         </div>
