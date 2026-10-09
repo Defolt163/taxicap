@@ -2,7 +2,7 @@
 import Script from 'next/script'
 import './global.sass'
 import './global.css'
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
 import { ToastAction } from "@/components/ui/toast"
@@ -41,7 +41,9 @@ export default function RootLayout({ children }) {
           </Head>
           <CookieBanner/>
           {children}
-          <YandexMetrika />
+          <Suspense>
+            <YandexMetrika />
+          </Suspense>
           <div><Toaster position="top-center" richColors/></div>
         </body>
         <Script src="https://kit.fontawesome.com/073ad96d9b.js" crossorigin="anonymous"></Script>

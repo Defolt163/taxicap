@@ -16,6 +16,12 @@ export default function CookieBanner({}) {
             document.cookie = `${name}=${encodeURIComponent(value)}; ${expiresStr}; path=/; SameSite=Lax`;
         }
     }
+
+    function deleteCookies(names) {
+        for (const name of names) {
+                document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`;
+            }
+    }
     const [cookieShow, setCookieShow] = useState(false)
 
     async function acceptCookies(analyticsStatus){
@@ -55,6 +61,7 @@ export default function CookieBanner({}) {
         const consentId = await getCookie("consent_id")
         if (typeof consentId !== "string" || consentId.trim() === "" ){
             setCookieShow(true)
+            deleteCookies(['consent_id', 'analytics', 'necessary', 'policy_version'])
         }else{
             const response = await fetch('/api/cookie-consent', {
                 method: 'GET',
@@ -64,6 +71,7 @@ export default function CookieBanner({}) {
             })
             if(response.ok){
                 setCookieShow(true)
+                deleteCookies(['consent_id', 'analytics', 'necessary', 'policy_version'])
             }else if(response.status === 400){
                 console.log(response.status)
                 const data = await response.json()
@@ -74,6 +82,7 @@ export default function CookieBanner({}) {
                     policy_version: data.policy_version
                 }, 365)
                 setCookieShow(false)
+                window.dispatchEvent(new Event('cookie-consent-changed'));
             }
         }
     }
