@@ -1,11 +1,11 @@
 'use client';
 
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import { useEffect, useState } from 'react';
 
 const COUNTER_ID = 113570169;
-const base = "https://poehali163.ru";
+const base = 'https://poehali163.ru';
 
 export default function YandexMetrika() {
     const pathName = usePathname();
@@ -18,17 +18,18 @@ export default function YandexMetrika() {
     function getCookie(name) {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
+
         if (parts.length === 2) {
             return decodeURIComponent(parts.pop().split(';').shift());
         }
+
         return null;
     }
 
     // Проверяем согласие и слушаем его изменения
     useEffect(() => {
         const check = () => {
-            const analytics = getCookie('analytics');
-            setEnabled(analytics === 'true');
+            setEnabled(getCookie('analytics') === 'true');
         };
 
         check();
@@ -40,9 +41,14 @@ export default function YandexMetrika() {
         };
     }, []);
 
-    // Отправляем просмотр только при согласии и готовой Метрике
+    // Отправляем просмотр страницы только после согласия
+    // и инициализации Метрики
     useEffect(() => {
-        if (!enabled || !metrikaReady || typeof window.ym !== 'function') {
+        if (
+            !enabled ||
+            !metrikaReady ||
+            typeof window.ym !== 'function'
+        ) {
             return;
         }
 
@@ -52,7 +58,7 @@ export default function YandexMetrika() {
         window.ym(COUNTER_ID, 'hit', url);
     }, [enabled, metrikaReady, pathName, searchParams]);
 
-    // Не подключаем Метрику до согласия
+    // Не загружаем Метрику без согласия
     if (!enabled) {
         return null;
     }
@@ -81,14 +87,20 @@ export default function YandexMetrika() {
                     k.async=1;
                     k.src=r;
                     a.parentNode.insertBefore(k,a);
-                })(window,document,"script",
-                    "https://mc.yandex.ru/metrika/tag.js","ym");
+                })(window,document,'script',
+                    'https://mc.yandex.ru/metrika/tag.js?id=${COUNTER_ID}',
+                    'ym');
 
-                window.ym(${COUNTER_ID},"init",{
-                    defer:true,
+                window.ym(${COUNTER_ID},'init',{
+                    ssr:true,
+                    webvisor:true,
                     clickmap:true,
+                    ecommerce:'dataLayer',
+                    referrer:document.referrer,
+                    url:location.href,
+                    accurateTrackBounce:true,
                     trackLinks:true,
-                    accurateTrackBounce:true
+                    defer:true
                 });
             `}
         </Script>
