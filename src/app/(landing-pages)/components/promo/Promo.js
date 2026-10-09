@@ -9,7 +9,7 @@ export default function LandingPromo(){
                 <div className='promo_content'>
                     <h1>Поехали</h1>
                     <h2>Найди поездку <br/> или создай свою</h2>
-                    <p>Сервис для создания и бронирования поездок по Шентале</p>
+                    <p>Участвуйте в открытом бета-тестировании сервиса для создания и бронирования поездок по Шентале</p>
                     <div className='promo_buttons'>
                         <Link href={'/mobile'} className='Button w-max'>Открыть приложение</Link>
                     </div>
