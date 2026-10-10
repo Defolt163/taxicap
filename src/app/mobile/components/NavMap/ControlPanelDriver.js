@@ -193,6 +193,9 @@ export default function ControlDriverPanel({ onLocationSelect }){
     }, [orders.length, activeOrder, onLocationSelect])
 
     function getOrders(){
+        if(!userData.VehicleBrand && !userData.VehicleNumber && !activeOrder){
+            return null
+        }
         const token = getCookie('token');
         if (token) {
             fetch(`/api/orders-data/get-orders`, {
@@ -213,6 +216,7 @@ export default function ControlDriverPanel({ onLocationSelect }){
     }
     useEffect(()=>{
         getOrders()
+        //console.log(userData)
     }, [userData])
 
     const watchIdRef = useRef(null);
@@ -563,9 +567,24 @@ export default function ControlDriverPanel({ onLocationSelect }){
             )
         }
     }
-    return(
-        <div className={`MapUi`}>
-            {renderStepContent()}
-        </div>
-    )
+    if(!userData.VehicleBrand && !userData.VehicleNumber && !activeOrder){
+        return (
+            <div>
+                <div className="popup-background popup-open"></div>
+                <div className={`popup popup-input-error popup-open`}>
+                    <h3 className="popup-input-error__text">Для поиска, укажите данные вашего автомобиля</h3>
+                        <Link href={'/mobile/general/my-account'} transitionTypes={['slide-in']} className="Button PopupButton">
+                            Начать
+                        </Link>
+                </div>
+            </div>
+        );
+    }else{
+        return(
+            <div className={`MapUi`}>
+                {renderStepContent()}
+            </div>
+        )
+    }
+    
 }
