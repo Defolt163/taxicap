@@ -51,7 +51,7 @@ export async function POST(req) {
             SECRET_KEY,
             { expiresIn: '7d' }
         );
-        console.log('Сгенерирован токен:', token);
+        //console.log('Сгенерирован токен:', token);
         // Преобразуем данные из базы в строку
         const dataToEncrypt = JSON.stringify(rows);
         // Шифруем данные
@@ -72,15 +72,15 @@ export async function POST(req) {
 
 async function getUserFromToken(token) {
     try {
-        console.log('Токен, который пришел на сервер:', token);
+        //console.log('Токен, который пришел на сервер:', token);
 
         const decoded = jwt.verify(token, SECRET_KEY);
-        console.log('Декодированный токен:', decoded);
+        //console.log('Декодированный токен:', decoded);
 
         const userId = decoded.id;
-        console.log('Результаты запроса в базу данных11:', decoded.id);
+        //console.log('Результаты запроса в базу данных11:', decoded.id);
         const [rows] = await pool.query('SELECT a.*, m.UserPhoto, m.Approved, m.PhotoWarningDescription FROM accounts a JOIN userphoto m ON a.UserId = m.User WHERE a.UserId = ?', [decoded.id]);
-        console.log('Результаты запроса в базу данных:', rows);
+        //console.log('Результаты запроса в базу данных:', rows);
         if (rows.length === 0) {
             throw new Error('Invalid token or user not found');
             //return new Response(JSON.stringify(), { status: 401 });
@@ -96,7 +96,7 @@ async function getUserFromToken(token) {
         );
 
         
-        console.log('Сгенерирован новый токен:', newToken);
+        //console.log('Сгенерирован новый токен:', newToken);
 
         /* return new Response(
             JSON.stringify({ message: 'Готово', token }),
@@ -124,7 +124,7 @@ export async function GET(req) {
 
     try {
         const user = await getUserFromToken(token);
-        console.log('Данные пользователя:', user);
+        //console.log('Данные пользователя:', user);
         return new Response(JSON.stringify(user), { status: 200 });
     } catch (error) {
         console.error('Ошибка при получении пользователя:', error.message);

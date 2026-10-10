@@ -160,9 +160,9 @@ export async function POST(req) {
                 );
             } else {
                 const generatedCode = Math.floor(1000 + Math.random() * 9000)
-                console.log(`Код для ${userEmail}: ${generatedCode}`);
+                //console.log(`Код для ${userEmail}: ${generatedCode}`);
                 await client.setEx(userEmail, 6000, String(generatedCode));
-                console.log(`Код для ${userEmail} сохранен в Redis`);
+                //console.log(`Код для ${userEmail} сохранен в Redis`);
                 
                 const transporter = nodemailer.createTransport({
                     service: 'yandex',
@@ -211,9 +211,9 @@ export async function POST(req) {
                 );
             }
             const generatedCode = Math.floor(1000 + Math.random() * 9000)
-            console.log(`Код для ${userEmail}: ${generatedCode}`);
+            //console.log(`Код для ${userEmail}: ${generatedCode}`);
             await client.setEx(userEmail, 6000, String(generatedCode));
-            console.log(`Код для ${userEmail} сохранен в Redis`);
+            //console.log(`Код для ${userEmail} сохранен в Redis`);
             
             const transporter = nodemailer.createTransport({
                 service: 'yandex',
@@ -253,7 +253,7 @@ export async function POST(req) {
     }
     if (sendType === 'verify-code') {
         const client = await getRedisClient();
-        const { userEmail, code, authType, userName, rawPhone, personalDataConsent, ageStatus, userPhone } = await req.json();
+        const { userEmail, code, authType, userName, rawPhone, personalDataConsent, ageStatus, userPhone, adverseStatus } = await req.json();
 
         if (authType === 'email-change' && code !== '') {
             const token = req.headers.get('authorization')?.split(' ')[1];

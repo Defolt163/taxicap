@@ -36,11 +36,11 @@ export async function GET(req) {
         const [rows] = await pool.query(`
             ${userStatus == 'passenger' ? 'SELECT * FROM orders WHERE UserId = ? AND OrderStatus = "complete"' : 
             userStatus == 'driver' ? 'SELECT * FROM orders WHERE DriverId = ? AND OrderStatus = "complete"' : null}`, [decoded.id, userStatus]);
-        console.log('Результаты запроса в базу данных:', rows);
+        //console.log('Результаты запроса в базу данных:', rows);
 
         // Преобразуем данные из базы в строку
         const dataToEncrypt = JSON.stringify(rows);
-        console.log('шифрование:', dataToEncrypt);
+        //console.log('шифрование:', dataToEncrypt);
         // Шифруем данные
         const { iv, encryptedData } = encryptData(dataToEncrypt);
         return new Response(

@@ -32,7 +32,7 @@ export async function GET(req) {
       return NextResponse.json({ message: "Недостаточно прав" }, { status: 403 });
     }
     const [rows] = await pool.query('SELECT id, customerPhone, customerName, userId, driverName, driverId, driverPhone, vehicleBrand, vehicleModel, vehicleColor, vehicleNumber, orderStatus, addressFrom, addressTo, price, paymentMethod, driverImage, customerImage, encodedWay, routeDistanceKm FROM orders WHERE orderStatus = "created"', );
-    console.log('Результаты запроса в базу данных:', rows);
+    //console.log('Результаты запроса в базу данных:', rows);
 
     // Преобразуем данные из базы в строку
     const dataToEncrypt = JSON.stringify(rows);
