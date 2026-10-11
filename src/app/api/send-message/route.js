@@ -160,7 +160,7 @@ export async function POST(req) {
                 );
             } else {
                 const generatedCode = Math.floor(1000 + Math.random() * 9000)
-                //console.log(`Код для ${userEmail}: ${generatedCode}`);
+                console.log(`Код для ${userEmail}: ${generatedCode}`);
                 await client.setEx(userEmail, 6000, String(generatedCode));
                 //console.log(`Код для ${userEmail} сохранен в Redis`);
                 
@@ -196,10 +196,10 @@ export async function POST(req) {
                 } catch (error) {
                     return new Response({ status: 500 });
                 }
-                return new Response(
+                /* return new Response(
                     JSON.stringify(),
                     { status: 404 }
-                );
+                ); */
             }
         }else{
             const [rows] = await pool.query('SELECT UserEmail FROM accounts WHERE UserEmail = ?', [userEmail]);
