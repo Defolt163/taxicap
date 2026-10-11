@@ -6,6 +6,11 @@ import pool from '../accountDB'
 import { checkRateLimit } from '../rateLimit'
 
 const SECRET_KEY = process.env.JWT_SECRET_KEY; // Секрет для JWT
+
+const SMTP_MAIL_SERVICE = process.env.SMTP_SERVICE;
+const SMTP_MAIL_LOGIN = process.env.SMTP_USER;
+const SMTP_MAIL_PASSWORD = process.env.SMTP_PASSWORD;
+
 let client;
 let connectPromise;
 
@@ -44,15 +49,15 @@ export async function POST(req) {
         const { userMessage } = await req.json();
     
         const transporter = nodemailer.createTransport({
-            service: 'yandex',
+            service: SMTP_MAIL_SERVICE,
             auth: {
-                user: 'srt.def163@yandex.ru',
-                pass: 'skqffmxmixykjayz',
+                user: SMTP_MAIL_LOGIN,
+                pass: SMTP_MAIL_PASSWORD,
             },
         });
     
         const mailOptions = {
-            from: 'srt.def163@yandex.ru',
+            from: SMTP_MAIL_LOGIN,
             to: 'iperrogames346@gmail.com',
             subject: 'Обратная связь',
             html: `
@@ -125,15 +130,15 @@ export async function POST(req) {
             await client.setEx(redisKey, 600, generatedCode);
 
             const transporter = nodemailer.createTransport({
-                service: 'yandex',
+                service: SMTP_MAIL_SERVICE,
                 auth: {
-                    user: 'srt.def163@yandex.ru',
-                    pass: 'skqffmxmixykjayz',
+                    user: SMTP_MAIL_LOGIN,
+                    pass: SMTP_MAIL_PASSWORD,
                 },
             });
 
             await transporter.sendMail({
-                from: 'srt.def163@yandex.ru',
+                from: SMTP_MAIL_LOGIN,
                 to: normalizedEmail,
                 subject: 'Подтверждение нового email',
                 html: `<p>Ваш код подтверждения нового адреса email:</p><p style="font-size:24px"><strong>${generatedCode}</strong></p><p>Код действует 10 минут.</p>`,
@@ -160,20 +165,20 @@ export async function POST(req) {
                 );
             } else {
                 const generatedCode = Math.floor(1000 + Math.random() * 9000)
-                console.log(`Код для ${userEmail}: ${generatedCode}`);
+                //console.log(`Код для ${userEmail}: ${generatedCode}`);
                 await client.setEx(userEmail, 6000, String(generatedCode));
                 //console.log(`Код для ${userEmail} сохранен в Redis`);
                 
                 const transporter = nodemailer.createTransport({
-                    service: 'yandex',
+                    service: SMTP_MAIL_SERVICE,
                     auth: {
-                        user: 'srt.def163@yandex.ru',
-                        pass: 'skqffmxmixykjayz',
+                        user: SMTP_MAIL_LOGIN,
+                        pass: SMTP_MAIL_PASSWORD,
                     },
                 });
-            
+                //console.log(transporter)
                 const mailOptions = {
-                    from: 'srt.def163@yandex.ru',
+                    from: SMTP_MAIL_LOGIN,
                     to: userEmail,
                     subject: 'Авторизация "Поехали"',
                     html: `
@@ -194,6 +199,7 @@ export async function POST(req) {
                     await transporter.sendMail(mailOptions);
                     return new Response(JSON.stringify(), { status: 200 });
                 } catch (error) {
+                    console.log(error)
                     return new Response({ status: 500 });
                 }
                 /* return new Response(
@@ -203,7 +209,7 @@ export async function POST(req) {
             }
         }else{
             const [rows] = await pool.query('SELECT UserEmail FROM accounts WHERE UserEmail = ?', [userEmail]);
-            console.log('DLINA', rows.length)
+            //console.log('DLINA', rows.length)
             if (rows.length <= 0) {
                 return new Response(
                     JSON.stringify({ message: 'Пользователя нет' }),
@@ -216,17 +222,17 @@ export async function POST(req) {
             //console.log(`Код для ${userEmail} сохранен в Redis`);
             
             const transporter = nodemailer.createTransport({
-                service: 'yandex',
+                service: SMTP_MAIL_SERVICE,
                 auth: {
-                    user: 'srt.def163@yandex.ru',
-                    pass: 'skqffmxmixykjayz',
+                    user: SMTP_MAIL_LOGIN,
+                    pass: SMTP_MAIL_PASSWORD,
                 },
             });
 
-            console.log("transporter", transporter)
+            //console.log("transporter", transporter)
         
             const mailOptions = {
-                from: 'srt.def163@yandex.ru',
+                from: SMTP_MAIL_LOGIN,
                 to: userEmail,
                 subject: 'Авторизация "Поехали"',
                 html: `
@@ -305,13 +311,13 @@ export async function POST(req) {
         
         if(authType === 'sign-in'){
             const storedCode = await client.get(userEmail); 
-            console.log("REDIS CODE", storedCode);
+            //console.log("REDIS CODE", storedCode);
             if (!storedCode) {
             return new Response(JSON.stringify({ success: false, message: 'Код не найден или истек' }), { status: 401 });
             }
             // Если код совпал
             if (storedCode === code) {
-                console.log('Код верный');
+                //console.log('Код верный');
                 // Удаляем код из Redis, чтобы он больше не использовался
                 await client.del(userEmail);
         
@@ -334,12 +340,12 @@ export async function POST(req) {
             }
         }else if(authType === 'sign-up' && code !== ''){
             const storedCode = await client.get(userEmail); 
-            console.log("REDIS CODE", storedCode);
+            //console.log("REDIS CODE", storedCode);
             if (!storedCode) {
                 return new Response(JSON.stringify({ success: false, message: 'Код не найден или истек' }), { status: 401 });
             }
             if (rawPhone == '' && storedCode === code) {
-                console.log('Код 200');
+                //console.log('Код 200');
                 return new Response(
                     JSON.stringify({message: 'OK'}),
                     { status: 200 }
