@@ -13,6 +13,11 @@ import UserAgreement from "@/app/mobile/components/legal/UserAgreement";
 import CookiePolicyContent from "@/app/mobile/components/legal/CookiePolicyContent";
 import ServiceOpreatingRulesContent from "@/app/mobile/components/legal/ServiceOpreatingRulesContent";
 
+export const metadata = {
+  title: "Поехали - Справочник",
+  description: "Информационная доска",
+}
+
 export default function PolicyPage(){
     return(
         <div className="info_page">

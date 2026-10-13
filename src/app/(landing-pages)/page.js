@@ -8,6 +8,11 @@ import Install from "./components/Install/Install";
 import LandingFooter from "./components/footer/footer";
 import Header from "./components/header/header";
 
+export const metadata = {
+  title: "Поехали",
+  description: "Добро пожаловать",
+}
+
 export default function MainPage(){
     return(
         <div className="landing">
