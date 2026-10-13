@@ -592,7 +592,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                 return(
                 <>
                     <div className='AddressInputBlock DriveActive'>
-                    <h3 className='ItemsHeader ItemsHeader__center'>Водитель прибудет через <br/>  минут</h3>
+                    {/* <h3 className='ItemsHeader ItemsHeader__center'>Водитель прибудет через <br/>  минут</h3> */}
                     <div className='AccountBlock'>
                         {/* <div className='AccountIco' style={{backgroundImage: `url(${activeOrder !== undefined ? activeOrder[0].DriverImage : '/ico/man-user.svg'})`}}></div> */}
                         <div className='AccountBlockInfo'>
