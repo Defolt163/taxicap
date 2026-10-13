@@ -6,7 +6,7 @@ import GlobalPopup from "../components/ui/Popups/GlobalPopup";
 
 export default function LoginLayout({ children }) {
     return (
-        <>
+        <div className="auth_wrapper">
             <PopupProvider>
                 <div className="container h-dvh" style={{paddingTop: '2rem'}}>
                     <Image src={logo} alt="logo" className='image_logo'/>
@@ -14,6 +14,6 @@ export default function LoginLayout({ children }) {
                 </div>
                 <GlobalPopup />
             </PopupProvider>
-        </>
+        </div>
     );
 }

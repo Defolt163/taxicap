@@ -1,68 +1,71 @@
-.Authentication
-    .input_form, select
-        padding: 10px 15px
-        box-sizing: border-box
-        border: 0.06rem solid rgb(209, 209, 209)
-        border-radius: 0.75rem
-        color: rgb(165, 165, 165)
-        font-size: 16px
-        width: 100%
-    .checkbox
-        width: 13px
-        margin-top: 5px
-        margin-right: 10px
-    h1
-        font-size: 32px
-        text-align: center
-    .AuthForm
-        .checkbox_user-agreement
-            display: flex
-            align-items: flex-start
-            width: auto
-            .checkbox_label
-                margin-bottom: 0
-            .agreement_link
-                color: blue
-            .agreement_copy
+.auth_wrapper
+    position: relative
+    min-height: 840px
+    .Authentication
+        .input_form, select
+            padding: 10px 15px
+            box-sizing: border-box
+            border: 0.06rem solid rgb(209, 209, 209)
+            border-radius: 0.75rem
+            color: rgb(165, 165, 165)
+            font-size: 16px
+            width: 100%
+        .checkbox
+            width: 13px
+            margin-top: 5px
+            margin-right: 10px
+        h1
+            font-size: 32px
+            text-align: center
+        .AuthForm
+            .checkbox_user-agreement
                 display: flex
-                flex-wrap: wrap
-                align-items: baseline
-                gap: 0 4px
-                label
-                    display: inline
-                    margin: 0
+                align-items: flex-start
+                width: auto
+                .checkbox_label
+                    margin-bottom: 0
                 .agreement_link
-                    padding: 0
-                    border: 0
-                    background: none
-                    font: inherit
-                    text-decoration: underline
-                    cursor: pointer
-        label
-            display: block
-            margin-bottom: 5px
-        &:last-child
-            input
-                margin-bottom: 10px
-        .Button
-            margin-top: 15px
-        .AuthActions
-            display: flex
-            align-items: center
-            justify-content: space-between
-            .Button
-                padding: 14px 20px
-                &.GeneralButtonReturn
-                    width: 40px
-                    height: 40px
-                    background-color: #fff
-                    border: 1px solid rgb(209, 209, 209)
-                    color: #000
-                    border-radius: 10px
+                    color: blue
+                .agreement_copy
                     display: flex
-                    justify-content: center
-                    align-items: center
-                    padding: 0
+                    flex-wrap: wrap
+                    align-items: baseline
+                    gap: 0 4px
+                    label
+                        display: inline
+                        margin: 0
+                    .agreement_link
+                        padding: 0
+                        border: 0
+                        background: none
+                        font: inherit
+                        text-decoration: underline
+                        cursor: pointer
+            label
+                display: block
+                margin-bottom: 5px
+            &:last-child
+                input
+                    margin-bottom: 10px
+            .Button
+                margin-top: 15px
+            .AuthActions
+                display: flex
+                align-items: center
+                justify-content: space-between
+                .Button
+                    padding: 14px 20px
+                    &.GeneralButtonReturn
+                        width: 40px
+                        height: 40px
+                        background-color: #fff
+                        border: 1px solid rgb(209, 209, 209)
+                        color: #000
+                        border-radius: 10px
+                        display: flex
+                        justify-content: center
+                        align-items: center
+                        padding: 0
 .AccountSign
     position: absolute
     bottom: 1rem
