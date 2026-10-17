@@ -35,6 +35,18 @@ import { toast } from 'sonner'
 import phoneIco from '@/../public/ico/ui/phone-solid-full.svg'
 import { HiMiniXMark, HiOutlineCheck } from 'react-icons/hi2'
 
+const LAST_ORDER_KEY = "lastActiveOrderId";
+
+const rememberOrder = (id) => {
+    try { localStorage.setItem(LAST_ORDER_KEY, String(id)); } catch (e) {}
+};
+const forgetOrder = () => {
+    try { localStorage.removeItem(LAST_ORDER_KEY); } catch (e) {}
+};
+const getRememberedOrder = () => {
+    try { return Number(localStorage.getItem(LAST_ORDER_KEY)) || null; } catch (e) { return null; }
+};
+
 export default function ControlDriverPanel({ onLocationSelect }){
     const { userData, loadingStatus, setUserData } = useData()
     const [togglerOpenOrder, setTogglerOpenOrder] = useState(false)
@@ -49,6 +61,7 @@ export default function ControlDriverPanel({ onLocationSelect }){
         if (parts.length === 2) return parts.pop().split(';').shift();
         return null; // Если куки нет
     }
+
     async function decryptData(encodedMessage, messageIv) {
         // Преобразуем ключ и IV из шестнадцатеричного формата
         const key = Buffer.from('16cf126a9dc4e39e405a03ad0fb2f31d91f6b73342c7d7647772e104aa8d7e39', 'hex'); // Ключ AES-256
@@ -74,12 +87,18 @@ export default function ControlDriverPanel({ onLocationSelect }){
         }
     }
     
-    const stompClientRef = useSocket({
+    const { stompClientRef, isConnected } = useSocket({
         onOrderCreated: (orderId) => {
             //console.log("ORDER CREATED for driver", orderId);
             getOrders()
         },
+        onOrderCanceledByPassenger: (orderId) => {
+            if (currentOrderId.current !== Number(orderId)) return;
+            resetActiveOrderUi();
+            toast("Пассажир отменил заказ");
+        },
         onOrderAccepted: (order) => {
+            clearAcceptTimeout()
             setActiveOrder(order)
             currentOrderId.current = order.id
             setPendingOrderId(null)
@@ -102,9 +121,22 @@ export default function ControlDriverPanel({ onLocationSelect }){
             onLocationSelect({ routeCoordinates: null })
             toast("Заказ отменен")
         },
+        onOrderAcceptFailed: () => {
+            clearAcceptTimeout();
+            setPendingOrderId(null);
+            hideLoading();
+            toast("Этот заказ уже взял другой водитель");
+            getOrders();
+        },
+        onError: (message) => {
+            clearAcceptTimeout();
+            setPendingOrderId(null);
+            hideLoading();
+            toast(message || "Произошла ошибка");
+        },
+        onOrdersChanged: getOrders,
         onOrderClaimed: getOrders,
         onNewOrder: getOrders,
-
     });
 
     useEffect(() => () => {
@@ -402,43 +434,124 @@ export default function ControlDriverPanel({ onLocationSelect }){
         return () => subscription.unsubscribe();
     }, [stompClientRef.current?.connected, activeOrder?.id]);
 
-    function checkActiveOrder(){
+    useEffect(() => {
+        if (activeOrder?.id) rememberOrder(activeOrder.id);
+    }, [activeOrder?.id]);
+
+    function resetActiveOrderUi() {
+        forgetOrder();
+        hideLoading();
+        setStep(0);
+        setTogglerOpenOrder(false);
+        setActiveOrder(null);
+        currentOrderId.current = null;
+        onLocationSelect({ routeCoordinates: null });
+        getOrders();
+    }
+    async function checkActiveOrder() {
+        if (!userData) return false;
         const token = getCookie('token');
-        if(userData){
-            fetch(`/api/orders-data/check-order`, {
+        try {
+            const result = await fetch(`/api/orders-data/check-order`, {
                 method: 'GET',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
                 },
-            }).then((result) => {
-                return result.json()
-            })
-            .then((res) => {
-                if(res.length != 0){
-                    //console.log("reZZzz", res)
-                    //console.log("активно принятый", res)
-                    shapeDecoder(res[0].encodedWay)
-                    setActiveOrder(res[0])
-                    currentOrderId.current = res[0].id
-                    setStep(1)
-                    setTogglerOpenOrder(true)
-                }
-            }).catch(error => {
-                //console.log(error)
-            })
+            });
+            const res = await result.json();
+
+            if (Array.isArray(res) && res.length > 0) {
+                shapeDecoder(res[0].encodedWay);
+                setActiveOrder(res[0]);
+                currentOrderId.current = res[0].id;
+                setStep(1);
+                setTogglerOpenOrder(true);
+                return true;
+            }
+
+            // на сервере активного заказа нет, а интерфейс его показывает
+            const lastId = currentOrderId.current || getRememberedOrder();
+            if (Array.isArray(res) && lastId) {
+                resetActiveOrderUi();   // внутри уже forgetOrder()
+                showPopup("Заказ отменён или завершён");
+            }
+            return false;
+        } catch (error) {
+            return false;
         }
     }
+    const activeOrderCheckedRef = useRef(false);
     useEffect(()=>{
+        if (!userData || activeOrderCheckedRef.current) return;
+        activeOrderCheckedRef.current = true;
         checkActiveOrder()
     }, [userData])
 
-    function takeOrder(orderId){
+    /* function takeOrder(orderId){
         showLoading('Бронируем поездку...');
         if (pendingOrderId || activeOrder) return;
         setPendingOrderId(orderId)
         acceptOrder(stompClientRef, orderId);
+    } */
+
+    useEffect(() => {
+        let hiddenAt = null;
+        const onChange = () => {
+            if (document.visibilityState === "hidden") {
+                hiddenAt = Date.now();
+            } else if (hiddenAt && Date.now() - hiddenAt > 30000) {
+                window.location.reload();
+            }
+        };
+        document.addEventListener("visibilitychange", onChange);
+        return () => document.removeEventListener("visibilitychange", onChange);
+    }, []);
+
+    const acceptTimeoutRef = useRef(null);
+
+    function clearAcceptTimeout() {
+        clearTimeout(acceptTimeoutRef.current);
+        acceptTimeoutRef.current = null;
     }
+
+    function takeOrder(orderId){
+        if (pendingOrderId || activeOrder) return;
+
+        const sent = acceptOrder(stompClientRef, orderId);
+        if (!sent) {
+            toast("Нет соединения, попробуйте ещё раз");
+            return;
+        }
+
+        showLoading('Бронируем поездку...');
+        setPendingOrderId(orderId);
+
+        // страховка от вечной загрузки
+        clearAcceptTimeout();
+        acceptTimeoutRef.current = setTimeout(() => {
+            setPendingOrderId(null);
+            hideLoading();
+            toast("Не удалось забронировать, попробуйте снова");
+            getOrders();
+        }, 10000);
+    }
+
+    /* function takeOrder(orderId){
+        if (pendingOrderId || activeOrder) return;
+        showLoading('Бронируем поездку...');
+        setPendingOrderId(orderId);
+        acceptOrder(stompClientRef, orderId);
+
+        // страховка: если ответа нет, не висим вечно
+        clearTimeout(acceptTimeoutRef.current);
+        acceptTimeoutRef.current = setTimeout(() => {
+            setPendingOrderId(null);
+            hideLoading();
+            toast("Не удалось забронировать, попробуйте снова");
+            getOrders();
+        }, 10000);
+    } */
 
     function acceptPassanger(orderId){
         showLoading('Загрузка...');
@@ -514,19 +627,23 @@ export default function ControlDriverPanel({ onLocationSelect }){
                     <div className='OrderWrapper'>
                         <div className='AccountBlock'>
                             {/* <div className='AccountIco' style={{backgroundImage: `url(${orders[orderIteration].CustomerImage !== null ? orders[orderIteration].CustomerImage : '/ico/man-user.svg'})`}}></div> */}
-                            <Avatar className='AccountIco'>
-                            <AvatarImage src={activeOrder?.status ? activeOrder.customerImage : orders && orders[orderIteration]?.customerImage} />
-                            <AvatarFallback>{activeOrder?.customerName?.[0] ?? orders?.[orderIteration]?.customerName?.[0] ?? ''}</AvatarFallback>
-                            </Avatar>
-                            <div className='AccountBlockInfo'>
-                            <div className='OrderInfoBlock'>
-                                <h4 className='AccountName'>{activeOrder ? activeOrder.customerName : orders && userData ? orders?.[orderIteration]?.customerName : "Загрузка"}</h4>
-                                <div className='OrderInfo'>Дистанция: {activeOrder ? activeOrder.routeDistanceKm : orders && userData ? orders?.[orderIteration]?.routeDistanceKm : 'Загрузка'}км</div>
-                                <div className='OrderInfo'>Стоимость: {activeOrder ? activeOrder.price : userData ? Math.round(orders?.[orderIteration]?.price) : 0}₽</div>
-                                <div className='OrderInfo'>Способ оплаты: {activeOrder ? activeOrder.paymentMethod : userData ? orders?.[orderIteration]?.paymentMethod : "Загрузка"}</div>
+                            <div className='flex items-center'>
+                                <Avatar className='AccountIco'>
+                                    <AvatarImage src={activeOrder?.status ? activeOrder.customerImage : orders && orders[orderIteration]?.customerImage} />
+                                    <AvatarFallback>{activeOrder?.customerName?.[0] ?? orders?.[orderIteration]?.customerName?.[0] ?? ''}</AvatarFallback>
+                                </Avatar>
+                                <div className='AccountBlockInfo'>
+                                    <div className='OrderInfoBlock'>
+                                        <h4 className='AccountName'>{activeOrder ? activeOrder.customerName : orders && userData ? orders?.[orderIteration]?.customerName : "Загрузка"}</h4>
+                                        <div className='OrderInfo'>Дистанция: {activeOrder ? activeOrder.routeDistanceKm : orders && userData ? orders?.[orderIteration]?.routeDistanceKm : 'Загрузка'}км</div>
+                                        <div className='OrderInfo'>Стоимость: {activeOrder ? activeOrder.price : userData ? Math.round(orders?.[orderIteration]?.price) : 0}₽</div>
+                                        <div className='OrderInfo'>Способ оплаты: {activeOrder ? activeOrder.paymentMethod : userData ? orders?.[orderIteration]?.paymentMethod : "Загрузка"}</div>
+                                    </div>
+                                </div>
                             </div>
-                            </div>
-                            <Link href={`tel:${activeOrder ? activeOrder.customerPhone : userData ? orders[orderIteration]?.customerPhone : null}`} className='CallUser'><Image src={phoneIco} alt="Позвонить" /></Link>
+                            {activeOrder ? 
+                                <Link href={`tel:8${activeOrder ? activeOrder.customerPhone : userData ? orders[orderIteration]?.customerPhone : null}`} className='CallUser'><Image src={phoneIco} alt="Позвонить" /></Link> : null
+                            }
                         </div>
                         <div className='OrderAddress'>
                             <div className='OrderAddressItem'>

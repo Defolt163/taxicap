@@ -67,10 +67,16 @@ export default function AppHelloLayout({ children }) {
       }, 0); */
       SignIn()
   }, [])
+  useEffect(() => {
+    screen.orientation?.lock?.('portrait').catch(() => {});
+  }, []);
   //<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   return (
     <>
       {children}
+      <div className="orientation-warning">
+        Пожалуйста, поверните устройство в портретный режим.
+      </div>
     </>
   )
 }

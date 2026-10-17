@@ -62,10 +62,17 @@ export default function SignInPage(){
     };
     
     const handleChange = (e) => {
-        const raw = e.target.value.replace(/\D/g, '').substring(0, 10);
-        const formatted = formatPhone(e.target.value);
-        setPhoneNumber(formatted);
-        setRawPhone(raw)
+        let digits = e.target.value.replace(/\D/g, '');
+
+        // убираем 7 или 8 в начале (+7..., 7..., 8...)
+        if (digits.startsWith('7') || digits.startsWith('8')) {
+            digits = digits.substring(1);
+        }
+
+        const raw = digits.substring(0, 10);
+
+        setPhoneNumber(formatPhone(raw));
+        setRawPhone(raw);
     };
 
     const [agreementStatus, setAgreementStatus] = useState(false)

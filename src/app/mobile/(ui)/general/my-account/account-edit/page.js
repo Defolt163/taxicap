@@ -117,10 +117,17 @@ export default function EditAccountPage(){
         .join('');
     };
     const phoneMask = (e) => {
-        const raw = e.target.value.replace(/\D/g, '').substring(0, 10);
-        const formatted = formatPhone(e.target.value);
-        setEditPhone(formatted);
-        setRawPhone(raw)
+        let digits = e.target.value.replace(/\D/g, '');
+
+        // убираем 7 или 8 в начале (+7..., 7..., 8...)
+        if (digits.startsWith('7') || digits.startsWith('8')) {
+            digits = digits.substring(1);
+        }
+
+        const raw = digits.substring(0, 10);
+
+        setEditPhone(formatPhone(raw));
+        setRawPhone(raw);
     };
     async function editInfoProfile(){
         if (isSavingProfile) return
@@ -141,7 +148,7 @@ export default function EditAccountPage(){
                 },
                 body: JSON.stringify({
                     UserName: editName,
-                    UserPhone: "8" + rawPhone,
+                    UserPhone: rawPhone,
                 })
             })
             if (response.status === 429) {

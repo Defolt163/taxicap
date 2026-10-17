@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap')
 
 :root
-    background: rgb(248, 248, 255)
+    background-color: #fff
 
 *
     font-family: "Inter", sans-serif
@@ -112,7 +112,7 @@ form
     top: 50%
     left: 50%
     transform: translate(-50%, -50%)
-    width: 70%
+    width: 80%
     height: fit-content
     background-color: #fff
     border-radius: 10px
@@ -278,3 +278,27 @@ form
     font-size: 32px
     font-weight: 600
     margin-bottom: 10px
+
+.orientation-warning
+    display: none
+    position: fixed
+    top: 0
+    left: 0
+    width: 100vw
+    height: 100vh
+    background: #000
+    color: #fff
+    z-index: 9999
+    align-items: center
+    justify-content: center
+    text-align: center
+    padding: 2rem
+@media (orientation: landscape)
+    .orientation-warning
+        display: flex
+
+@media screen and ( max-width: 392px )
+    .Button 
+        padding: 13px 18px
+    .popup
+        width: 90%

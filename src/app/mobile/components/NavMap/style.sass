@@ -80,18 +80,33 @@
                 display: flex //del
                 gap: 10px //del
                 .FastAddressBlockItem
-                    padding: 10px 0
+                    padding: 15px
                     display: flex
                     flex-direction: column
-                    align-items: center
+                    align-items: flex-start
                     width: 50% // 100%
                     border: 0.5px solid rgba(0, 0, 0, 0.15)
                     border-radius: 10px
                     &:first-child
                         margin-bottom: 0px // mb 10px
-                    img
-                        filter: brightness(0) saturate(100%) invert(6%) sepia(188%) saturate(6422%) hue-rotate(235deg)
+                    .image_wrapper
+                        position: relative
                         width: 20%
+                        margin-bottom: 10px
+                        /* img
+                            filter: brightness(0) saturate(100%) invert(11%) sepia(188%) saturate(6422%) hue-rotate(235deg) */
+                        &::after
+                            padding: 22px
+                            content: ''
+                            position: absolute
+                            top: 50%
+                            left: 50%
+                            transform: translate(-50%, -50%)
+                            z-index: -1
+                            width: 100%
+                            height: 100%
+                            background-color: #499dfc27
+                            border-radius: 50%
                     .FastAddressBlockItemIco
                         font-size: 2rem
                         color: $base-color
@@ -193,15 +208,17 @@
             .AddressOrderItem
                 display: flex
                 align-items: center
+                .AddressInputIco
+                    color: $base-color
+                    width: 22px
+                    height: 22px
                 .AddressOrderText
-                    font-size: 0.75rem
+                    font-size: 0.9rem
                     font-weight: 400
                     line-height: 1rem
                     margin-left: 5px
                 &:first-child
                     margin-bottom: 5px
-                    .AddressInputIco
-                        color: $base-color
         .Payment
             margin-top: 10px
             display: flex
@@ -213,6 +230,7 @@
                     line-height: 1.31rem
                 .PaymentInfo
                     margin: 0
+                    font-weight: 600
                 &:last-child
                     .PaymentInfo
                         color: $base-color
@@ -259,16 +277,16 @@
         justify-content: space-between
         align-items: center
         .AccountIco
-            width: 3.44rem
-            height: 3.44rem
+            width: 60px
+            height: 60px
             background-position: center
             background-size: cover
             background-repeat: no-repeat
             border-radius: 50%
+            margin-right: 15px
         .AccountBlockInfo
             display: flex
             .AccountDescrBlock
-                margin-left: 20px
                 .AccountName
                     margin: 0
                     margin-bottom: 2px
@@ -282,8 +300,8 @@
                             color: #000
         .CallUser
             color: #fff
-            width: 2rem
-            height: 2rem
+            width: 42px
+            height: 42px
             display: flex
             justify-content: center
             align-items: center
@@ -320,3 +338,12 @@
         font-weight: 600
         line-height: 1.5rem
         text-align: left
+
+@media screen and ( max-width: 359px )
+    .MapUi 
+        .AddressInputBlock 
+            .AdvancedMenu 
+                .FastAddressBlock 
+                    .FastAddressBlockItem
+                        align-items: center
+                        padding: 20px 0 10px

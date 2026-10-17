@@ -1,15 +1,57 @@
-'use client'
-import Script from 'next/script'
 import './global.sass'
 import './global.css'
-import { Suspense, useEffect } from 'react'
+import { Suspense } from 'react'
 import { Toaster } from "@/components/ui/sonner"
-import { toast } from "sonner"
-import { ToastAction } from "@/components/ui/toast"
-import Head from 'next/head'
 import CookieBanner from './components/CookieNotification/CookieNotification'
 import YandexMetrika from './components/YandexMetrika/YandexMetrika'
 
+export const metadata = {
+  metadataBase: new URL('https://poehali163.ru'),
+  title: 'Поехали',
+  description: 'Заказ поездок в Шенталинском районе',
+  icons: {
+    icon: [
+      { url: '/favicon/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon/android-chrome-192x192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [{ url: '/favicon/apple-touch-icon.png', sizes: '180x180' }],
+    other: [
+      { rel: 'mask-icon', url: '/favicon/safari-pinned-tab.svg', color: '#5bbad5' },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    title: 'Поехали',
+    statusBarStyle: 'default',
+  },
+  openGraph: {
+    title: 'Поехали',
+    description: 'Заказ поездок в Шенталинском районе',
+    url: '/',
+    siteName: 'Поехали',
+    locale: 'ru_RU',
+    type: 'website',
+    images: [
+      {
+        url: '/landing/image/promo1.jpg',
+        width: 1200,
+        height: 800,
+        alt: 'Поехали',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Поехали',
+    description: 'Заказ поездок в Шенталинском районе',
+    images: ['/landing/image/promo1.jpg'],
+  },
+}
+
+export const viewport = {
+  themeColor: '#ffffff',
+}
 
 export default function RootLayout({ children }) {
   /* useEffect(()=>{
@@ -30,15 +72,6 @@ export default function RootLayout({ children }) {
   return (
       <html lang="ru">
         <body>
-          <Head>
-            <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png"/>
-            <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png"/>
-            <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png"/>
-            <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg" color="#5bbad5"/>
-            <meta name="apple-mobile-web-app-capable" content="yes"/>
-            <meta name="apple-mobile-web-app-title" content="Поехали"/>
-            <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
-          </Head>
           <CookieBanner/>
           {children}
           <Suspense>
@@ -46,7 +79,6 @@ export default function RootLayout({ children }) {
           </Suspense>
           <div><Toaster position="top-center" richColors/></div>
         </body>
-        <Script src="https://kit.fontawesome.com/073ad96d9b.js" crossorigin="anonymous"></Script>
       </html>
   )
 }

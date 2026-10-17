@@ -14,10 +14,19 @@ export default function NavMapTest(){
     const { userData, loadingStatus, setUserData } = useData()
     const [coordinates, setCoordinates] = useState(null);
     const [driverPosition, setDriverPosition] = useState([])
+    const [coordFromPin, setCoordFromPin] = useState(null)
+    const [coordToPin, setCoordToPin] = useState(null)
     //console.log("C", coordinates)
 
     const handleLocationSelect = (routeCoordinates) => {
         setCoordinates(routeCoordinates.routeCoordinates);
+    };
+    const handleCoordFromPin = (fromCoordinate) => {
+        setCoordFromPin(fromCoordinate.fromCoordinate);
+    };
+    const handleCoordToPin = (toCoordinate) => {
+        setCoordToPin(toCoordinate.toCoordinate);
+        //console.log("TO PIN", toCoordinate)
     };
     const handleDriverPosition = (position) => {
         setDriverPosition(position);
@@ -26,9 +35,9 @@ export default function NavMapTest(){
 
     return(
         <>
-            <MapComponent driverPosition={driverPosition} coordinates={coordinates}/>
-            {!userData ? <div className='flex w-[100%] h-[330px] items-center flex-col content-center'><Spinner/> <br/> <h3>Синхронизация</h3> </div> : userData.DriverMode == 0 ? 
-            <ControlPassengerPanel onDriverPosition={handleDriverPosition} onLocationSelect={handleLocationSelect}/> :
+            <MapComponent driverPosition={driverPosition} coordinates={coordinates} coordFrom={coordFromPin} coordTo={coordToPin}/>
+            {!userData ? <div className='pt-8 flex w-[100%] h-[330px] items-center flex-col content-center'><Spinner/> <br/> <h3>Синхронизация</h3> </div> : userData.DriverMode == 0 ? 
+            <ControlPassengerPanel onDriverPosition={handleDriverPosition} onLocationSelect={handleLocationSelect} onCoordFromPin={handleCoordFromPin} onCoordToPin={handleCoordToPin}/> :
             <ControlDriverPanel onLocationSelect={handleLocationSelect}/>
             }
             

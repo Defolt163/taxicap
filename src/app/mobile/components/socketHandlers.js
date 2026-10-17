@@ -118,7 +118,7 @@ export const cancelOrderByDriver = (clientRef, orderId) => {
 };
 
 // Отправка событий от водителя
-export const acceptOrder = (clientRef, orderId) => {
+/* export const acceptOrder = (clientRef, orderId) => {
     const client = clientRef.current;
     //console.log("📤 Sending acceptOrder:", { orderId });
     
@@ -131,6 +131,16 @@ export const acceptOrder = (clientRef, orderId) => {
         destination: "/app/acceptOrder",
         body: body
     });
+}; */
+export const acceptOrder = (clientRef, orderId) => {
+    const client = clientRef.current;
+    if (!client || !client.connected) return false;
+
+    client.publish({
+        destination: "/app/acceptOrder",
+        body: JSON.stringify({ orderId })
+    });
+    return true;
 };
 
 /* export const completeOrder = (stompClient, userId, orderId) => {

@@ -33,9 +33,24 @@ import chevronLeft from '@/../public/ico/ui/chevron-left-solid-full.svg'
 import moneyTransfer from '@/../public/ico/ui/money-bill-transfer-solid-full.svg'
 import phoneIco from '@/../public/ico/ui/phone-solid-full.svg'
 import hospitalIco from '@/../public/ico/ui/hospital-regular-full.svg'
-import documentIco from '@/../public/ico/ui/landmark-solid-full.svg'
+import documentIco from '@/../public/ico/ui/paperclip-solid-full.svg'
+import { FaRegBuilding } from 'react-icons/fa6'
+import { GoChevronRight } from "react-icons/go";
+import { PiMapPin, PiMapPinLight } from "react-icons/pi";
 
-export default function ControlPassengerPanel({ onLocationSelect, onDriverPosition }){
+const LAST_ORDER_KEY = "lastActiveOrderId";
+
+const rememberOrder = (id) => {
+    try { localStorage.setItem(LAST_ORDER_KEY, String(id)); } catch (e) {}
+};
+const forgetOrder = () => {
+    try { localStorage.removeItem(LAST_ORDER_KEY); } catch (e) {}
+};
+const getRememberedOrder = () => {
+    try { return Number(localStorage.getItem(LAST_ORDER_KEY)) || null; } catch (e) { return null; }
+};
+
+export default function ControlPassengerPanel({ onLocationSelect, onDriverPosition, onCoordFromPin, onCoordToPin }){
     const { userData, loadingStatus, setUserData } = useData()
 
     const { showChoicePopup, showPopup, showLoading, hideLoading  } = usePopup();
@@ -45,74 +60,78 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
         if (parts.length === 2) return parts.pop().split(';').shift();
         return null; // Если куки нет
     }
+    function setCookie(name, value, days) {
+        const expires = new Date();
+        expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+        const expiresStr = "expires=" + expires.toUTCString();
+        document.cookie = `${name}=${value}; ${expiresStr}; path=/`;
+    }
+    function deleteCookie(name) {
+        document.cookie = `${name}=; max-age=0; path=/`;
+    }
 
     const [activeOrder, setActiveOrder] = useState(null)
     const [step, setStep] = useState(0)
     const [onlineDrivers, setOnlineDrivers] = useState(null)
     const mapApiKey = process.env.NEXT_PUBLIC_MAP_API_KEY
     const previousOrderStatusRef = useRef(null)
+
+    function resetOrderUi(message) {
+        deleteCookie('orid');
+        previousOrderStatusRef.current = null;
+        setActiveOrder(null);
+        setStep(0);
+        setRouteData(null);
+        onLocationSelect({ routeCoordinates: null });
+        if (message) showPopup(message);
+    }
     const isCreatingOrderRef = useRef(false)
     async function checkActiveOrder() {
-        const token = getCookie("token");
-
         if (!userData) return null;
+
+        const token = getCookie("token");
+        const orid = getCookie("orid");
 
         try {
             const response = await fetch("/api/orders-data/check-order", {
                 method: "GET",
+                cache: "no-store",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`,
                 },
             });
-
             const res = await response.json();
-
-            if (!res.length) {
-                return null;
-            }
+            if (!Array.isArray(res)) return null;
 
             const order = res[0];
-            const previousStatus = previousOrderStatusRef.current;
-            previousOrderStatusRef.current = order.orderStatus;
+            const status = order?.orderStatus;
 
-            if (order.orderStatus === "created") {
+            // заказ в работе: показываем его
+            if (["created", "active", "processed"].includes(status)) {
+                const prev = previousOrderStatusRef.current;
+                previousOrderStatusRef.current = status;
+
                 setActiveOrder(order);
-
+                setCookie("orid", order.id, 1);
                 shapeDecoder(order.encodedWay);
-                setStep(2);
-            } else if (
-                order.orderStatus === "active" ||
-                order.orderStatus === "processed"
-            ) {
-                setActiveOrder(order);
+                setStep(status === "created" ? 2 : 3);
 
-                shapeDecoder(order.encodedWay);
-                setStep(3);
-
-                if (order.orderStatus === "processed" && previousStatus === "active") {
+                if (status === "processed" && prev === "active") {
                     showPopup("Поездка началась! Не забудьте пристегнуться");
                 }
-            } else if (order.orderStatus === "complete") {
-                if (isCreatingOrderRef.current) {
-                    return null;
-                }
-
-                if (previousStatus !== "active" && previousStatus !== "processed") {
-                    return null;
-                }
-
-                showPopup("Водитель завершил поездку");
-                previousOrderStatusRef.current = null;
-                setActiveOrder(null);
-                setStep(0);
-                setRouteData(null);
-                onLocationSelect({ routeCoordinates: null });
-                return null;
+                return order;
             }
 
-            return order; // 👈 ВОТ ЭТО ГЛАВНОЕ
-
+            // заказа в работе нет, а мы его отслеживали: сброс и сообщение
+            if (orid && !isCreatingOrderRef.current) {
+                resetOrderUi(
+                    status === "canceled" ? "Водитель отменил поездку"
+                    : status === "complete" ? "Водитель завершил поездку"
+                    : "Заказ отменён"
+                );
+            }
+            return null;
         } catch (error) {
             console.error(error);
             return null;
@@ -122,27 +141,34 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
         if (userData) checkActiveOrder()
     }, [userData])
 
+    const checkActiveOrderRef = useRef(checkActiveOrder);
+    checkActiveOrderRef.current = checkActiveOrder;
+    
     useEffect(() => {
-        if (!userData || (step < 2 && !activeOrder?.id)) return
+        let hiddenAt = null;
 
-        const checkWhenActive = () => {
-            if (document.visibilityState === "visible") {
-                checkActiveOrder()
-            }
-        }
+        const onChange = () => {
+                if (document.visibilityState === "hidden") {
+                    hiddenAt = Date.now();      // экран заблокирован или вкладку свернули
+                    return;
+                }
 
-        document.addEventListener("visibilitychange", checkWhenActive)
-        window.addEventListener("focus", checkWhenActive)
-        const statusInterval = window.setInterval(checkWhenActive, 5000)
+                const awayMs = hiddenAt ? Date.now() - hiddenAt : 0;
+                hiddenAt = null;
 
-        return () => {
-            document.removeEventListener("visibilitychange", checkWhenActive)
-            window.removeEventListener("focus", checkWhenActive)
-            window.clearInterval(statusInterval)
-        }
-    }, [userData, step, activeOrder?.id])
+                if (awayMs > 30000 && getCookie("orid")) {
+                    window.location.reload();   // долго спали: перезагрузка
+                    return;
+                }
 
-    const stompClientRef = useSocket({
+                checkActiveOrderRef.current();  // недолго: просто проверка
+            };
+
+        document.addEventListener("visibilitychange", onChange);
+        return () => document.removeEventListener("visibilitychange", onChange);
+    }, []);
+
+    const { stompClientRef, isConnected } = useSocket({
         onOrderCreated: (orderId) => {
             hideLoading();
             //console.log("ORDER CREATED", orderId);
@@ -160,6 +186,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
             });
             toast("Заказ отменен");
             setActiveOrder(null);
+            deleteCookie('orid');
         },
 
         onOrderAccepted: (order) => {
@@ -172,10 +199,12 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
 
         onOrderCanceledByDriver: (orderId) => {  // ✅ Новый обработчик
             ////console.log("❌ Order canceled by driver:", orderId);
-            showPopup("Водитель отменил заказ");
+            resetOrderUi("Водитель отменил поездку");
+            /* showPopup("Водитель отменил заказ");
             setActiveOrder(null);
             setStep(0);
             setRouteData(null);
+            deleteCookie('orid') */
         },
 
         /* onOrderInWork: (order) => {
@@ -191,13 +220,17 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
         onOrderCompleted: (orderId) => {  // ✅ Добавить
             //console.log("✅ Order completed:", orderId);
             showPopup("Водитель завершил поездку");
+           //console.log("@")
             setActiveOrder(null);
             previousOrderStatusRef.current = null;
             setStep(0);
             setRouteData(null);
+            deleteCookie('orid')
             onLocationSelect({
                 routeCoordinates: null,
             });
+            onCoordFromPin({ fromCoordinate: null });
+            onCoordToPin({ toCoordinate: null });
         },
     })
 
@@ -224,10 +257,10 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                 }
             }
         );
-        
-        return () => {
+        return () => subscription.unsubscribe();
+        /* return () => {
             if (subscription) subscription.unsubscribe();
-        };
+        }; */
     }, [activeOrder?.id, stompClientRef.current?.connected]);
 
     // Геокодирование водителя
@@ -329,8 +362,8 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
         }
     };
 
-    const [addressFrom, setAddressFrom] = useState("")
-    const [addressTo, setAddressTo] = useState("")
+    const [addressFrom, setAddressFrom] = useState({input: '', coords: null})
+    const [addressTo, setAddressTo] = useState({input: '', coords: null})
 
     function shapeDecoder(encodedMessage) {
         var index = 0,
@@ -393,18 +426,21 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
 
     const [routeData, setRouteData] = useState(null)
     const [paymentMethodValue, setPaymentMethodValue] = useState("Наличные");
-    async function sendDriveData(fastAddress) {
+    useEffect(()=>{
+       //console.log(addressTo)
+    }, [addressTo])
+    async function sendDriveData(fastAddress, lat, lon) {
         const token = getCookie('token');
-        if (fastAddress == "" && (addressFrom === "" || addressTo === "")){
+        if (fastAddress == "" && (addressFrom.input === "" || addressTo.input === "")){
             //console.log("fastAddress", fastAddress)
             showPopup(`${addressFrom == "" ? "Откуда едем?" : "Куда едем?"}`)
         }
-        if (fastAddress && addressFrom == ""){
+        if (fastAddress && addressFrom.input == ""){
             showPopup("Откуда едем?")
             return
         }
         if(fastAddress){
-            setAddressTo(fastAddress)
+            setAddressTo({input: fastAddress})
         }
         showLoading("Загрузка маршрута")
         try {
@@ -415,8 +451,10 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    "from": addressFrom,
-                    "to": addressTo != "" ? addressTo : fastAddress
+                    "from": addressFrom.input,
+                    "to": addressTo.input != "" ? addressTo.input : fastAddress,
+                    "coordsFrom": addressFrom.coords,
+                    "coordsTo": !lat || !lon ? addressTo.coords : {'lat': lat, 'lon': lon}
                 })
             });
             const responseText = await response.text();
@@ -447,7 +485,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
         const existingOrder = await checkActiveOrder();
         if (existingOrder) {
             hideLoading();
-            showPopup("У вас уже есть незавершённый заказ");
+            showPopup("У вас уже есть незавершённый заказ. Обновите страницу");
             return;
         }
 
@@ -460,8 +498,8 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
             lonFrom: 51.46,
             latTo: 54.44,
             lonTo: 51.51,
-            addressFrom,
-            addressTo,
+            addressFrom: addressFrom.input,
+            addressTo: addressTo.input,
             price: routeData.price,
             paymentMethod: paymentMethodValue,
             encodedWay: routeData.shape,
@@ -485,6 +523,59 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
             //console.log("listener removed");
         }
     }, []);
+
+    // Геопоиск
+    const [fromList, setFromList] = useState([]);
+    const [toList, setToList] = useState([]);
+    const [activeAddressInput, setActiveAddressInput] = useState(null);
+
+    const debounceRef = useRef(null);
+    const abortRef = useRef(null);
+
+    function addressHint(q, input) {
+        setActiveAddressInput(input);
+
+        if (debounceRef.current) {
+            clearTimeout(debounceRef.current);
+        }
+
+        if (!q || q.length < 2) {
+            // очищаем именно тот список, который относится к инпуту
+            if (input === "from") setFromList([]);
+            else setToList([]);
+            return;
+        }
+
+        debounceRef.current = setTimeout(async () => {
+            if (abortRef.current) abortRef.current.abort();
+            abortRef.current = new AbortController();
+
+            const token = getCookie("token");
+            if (!userData || !token) return;
+
+            try {
+                const response = await fetch(
+                    `/api/geosearch?q=${encodeURIComponent(q)}`,
+                    {
+                        headers: { "Authorization": `Bearer ${token}` },
+                        signal: abortRef.current.signal,
+                    }
+                );
+                const res = await response.json();
+                const list = Array.isArray(res) ? res : [];
+
+                // ← раскладываем в нужный список
+                if (input === "from") setFromList(list);
+                else setToList(list);
+            } catch (error) {
+                if (error.name === "AbortError") return;
+                console.error(error);
+                if (input === "from") setFromList([]);
+                else setToList([]);
+            }
+        }, 300);
+    }
+
     //Шаги оформления заказа
     function handleNextStep(){
         setStep(step + 1)
@@ -503,22 +594,95 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                         <h3 className='PopupHeader PopupAddressHeader'>Куда едем?</h3>
                         <div className='AddressInputBlockItem'>
                             <label className='AddressInputLabel' htmlFor="input-from"><div className="AddressInputIco"><Image width={25} src={anglesDown} alt='angles down'/></div></label>
-                            <input className='InputUiMap' placeholder='Текущий адрес' id='input-from' value={addressFrom} onChange={(e)=>setAddressFrom(e.target.value)}/>
+                            <input className='InputUiMap' placeholder='Текущий адрес' id='input-from' 
+                                value={addressFrom.input} 
+                                onChange={(e) => {
+                                    setAddressFrom({input:e.target.value});
+                                    addressHint(e.target.value, "from");
+                                }}
+                                onFocus={() => {setActiveAddressInput("from"), setFromList([])}} 
+                                onBlur={() => setTimeout(() => setActiveAddressInput(null), 200)}
+                                />
                         </div>
+                        {activeAddressInput === "from" && fromList.length > 0 && (
+                            <div className='AddressHintBlock overflow-y-scroll max-h-[200px]'>
+                                {fromList.map((item) => {
+                                    const label = item.house ? `${item.street}, ${item.house}` : item.street;
+                                    const coords = item.lat ? {'lat': item.lat, 'lon': item.lon} : null
+                                    return(
+                                    <div
+                                        key={item.id || `${item.street}-${item.house}`}
+                                        className='AddressHintItem flex text-md p-4 items-center border-b justify-between'
+                                        onMouseDown={(e) => {
+                                            e.preventDefault();
+                                            setAddressFrom({input: label+" ", coords: coords});
+                                           //console.log(coords)
+                                            onCoordFromPin({ 
+                                                fromCoordinate: coords
+                                            });
+                                            setFromList([]);
+                                            setActiveAddressInput(null);
+                                        }}
+                                    >
+                                        <div className='flex items-center'>
+                                            <FaRegBuilding className='text-[28px] text-gray-400 mr-2'/>
+                                            {!item.house ? item.street : item.street +`, ` + item.house}
+                                        </div>
+                                        <GoChevronRight/>
+                                    </div>)
+                                })}
+                            </div>
+                        )}
                         <div className='AddressInputBlockItem AddressFuckedInputBlockItem'>
-                            <label className='AddressInputLabel' htmlFor="input-to"><div className="AddressInputIco"><Image width={25} src={shopIco} alt='shop'/></div></label>
-                            <input className='InputUiMap' placeholder='Куда поедете?' id='input-to' value={addressTo} onChange={(e)=>setAddressTo(e.target.value)}/>
+                            <label className='AddressInputLabel' htmlFor="input-to"><div className="AddressInputIco text-[25px]"><PiMapPin />{/* <Image width={25} src={shopIco} alt='shop'/> */}</div></label>
+                            <input className='InputUiMap' 
+                                placeholder='Куда поедете?' 
+                                id='input-to' value={addressTo.input} 
+                                onChange={(e)=>(setAddressTo({input: e.target.value}), addressHint(e.target.value, "to"))}
+                                onFocus={() => {setActiveAddressInput("to"), setToList([])}} 
+                                onBlur={() => setTimeout(() => setActiveAddressInput(null), 200)}
+                                />
                         </div>
+                        {activeAddressInput === "to" && toList.length > 0 && (
+                            <div className='AddressHintBlock overflow-y-scroll max-h-[200px]'>
+                                {toList.map((item) => {
+                                    const label = item.house ? `${item.street}, ${item.house}` : item.street;
+                                    const coords = item.lat ? {'lat': item.lat, 'lon': item.lon} : null
+                                    return(
+                                    <div
+                                        key={item.id || `${item.street}-${item.house}`}
+                                        className='AddressHintItem flex text-md p-4'
+                                        onMouseDown={(e) => {
+                                            e.preventDefault();
+                                            setAddressTo({input: label+" ", coords: coords});
+                                            onCoordToPin({ 
+                                                toCoordinate: coords
+                                            });
+                                            setToList([]);
+                                            setActiveAddressInput(null);
+                                        }}
+                                    >
+                                        <FaRegBuilding className='text-[28px] text-gray-400 mr-2'/>
+                                        {!item.house ? item.street : item.street +`, ` + item.house}
+                                    </div>)
+                                })}
+                            </div>
+                        )}
+                        <h3 className='mb-3 font-bold text-sm text-gray-600'>Популярные места</h3>
                         <div className='AdvancedMenu'>
                         <div className='FastAddressBlock'>
-                            <div className='FastAddressBlockItem' onClick={()=>{sendDriveData("Больничная улица, 4")}}>
-                                <Image src={hospitalIco} alt='shop'/>
+                            <div className='FastAddressBlockItem' onClick={()=>{sendDriveData("Больничная улица, 4", 54.423565, 51.484111)}}>
+                                <div className='image_wrapper'>
+                                    <Image src={hospitalIco} alt='shop'/>
+                                </div>
                                 {/* <i className="fa-solid fa-hospital FastAddressBlockItemIco"></i> */}
                                 <div className='FastAddressBlockItemHeader'>Больница</div>
                                 <div className='FastAddressBlockItemSubHeader'>Больничная ул. 4</div>
                             </div>
-                            <div className='FastAddressBlockItem' onClick={()=>{sendDriveData("Советская улица, 11")}}>
-                                <Image src={documentIco} alt='shop'/>
+                            <div className='FastAddressBlockItem' onClick={()=>{sendDriveData("Советская улица, 11", 54.431626, 51.466153)}}>
+                                <div className='image_wrapper'>
+                                    <Image src={documentIco} alt='shop'/>
+                                </div>
                                 {/* <i className="fa-regular fa-flag FastAddressBlockItemIco"></i> */}
                                 <div className='FastAddressBlockItemHeader'>МФЦ</div>
                                 <div className='FastAddressBlockItemSubHeader'>Советская ул. 11</div>
@@ -596,16 +760,16 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                     <div className='AccountBlock'>
                         {/* <div className='AccountIco' style={{backgroundImage: `url(${activeOrder !== undefined ? activeOrder[0].DriverImage : '/ico/man-user.svg'})`}}></div> */}
                         <div className='AccountBlockInfo'>
-                        <Avatar className='AccountIco'>
-                            <AvatarImage src={activeOrder.driverImage} />
-                            <AvatarFallback>{activeOrder.driverName[0]}</AvatarFallback>
-                        </Avatar>
-                        <div className='AccountDescrBlock'>
-                            <h4 className='AccountName'>{activeOrder !== undefined ? activeOrder.driverName : null}</h4>
-                            <div className='CarInfo'>
-                            <div className='CarModel'>{activeOrder !== undefined ? activeOrder.vehicleColor : null} {activeOrder !== undefined ? activeOrder.vehicleBrand : null} {activeOrder !== undefined ? activeOrder.vehicleModel : null} <br/> <strong>{activeOrder !== undefined ? activeOrder.vehicleNumber : null}</strong></div>
+                            <Avatar className='AccountIco'>
+                                <AvatarImage src={activeOrder.driverImage} />
+                                <AvatarFallback>{activeOrder.driverName[0]}</AvatarFallback>
+                            </Avatar>
+                            <div className='AccountDescrBlock'>
+                                <h4 className='AccountName'>{activeOrder !== undefined ? activeOrder.driverName : null}</h4>
+                                <div className='CarInfo'>
+                                <div className='CarModel'>{activeOrder !== undefined ? activeOrder.vehicleColor : null} {activeOrder !== undefined ? activeOrder.vehicleBrand : null}       {activeOrder !== undefined ? activeOrder.vehicleModel : null} <br/> <strong>{activeOrder !== undefined ? activeOrder.vehicleNumber : null}</strong></div>
+                                </div>
                             </div>
-                        </div>
                         </div>
                         <Link href={`tel:8${activeOrder !== undefined ? activeOrder.driverPhone : null}`} className='CallUser'><Image src={phoneIco} alt='Позвонить'/></Link>
                     </div>
@@ -615,7 +779,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                         <div className='AddressOrderText'>{activeOrder !== undefined ? activeOrder.addressFrom : null}</div>
                         </div>
                         <div className='AddressOrderItem'>
-                            <i className="fa-solid AddressInputIco fa-check"></i>
+                            <div style={{background: 'url(/ico/ui/check-solid-full.svg) center center/cover'}} className="AddressInputIco"></div>
                             <div className='AddressOrderText'>{activeOrder !== undefined ? activeOrder.addressTo : null}</div>
                         </div>
                     </div>

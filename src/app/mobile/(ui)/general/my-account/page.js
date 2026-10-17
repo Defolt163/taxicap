@@ -145,7 +145,7 @@ export default function MyAccountPage(){
                         <div className='AccountCardData'>
                             <div className='AccountCardDataFirst'>{userData && userData.UserName}</div>
                             <div className='AccountCardDataSecond'>{userData && userData.UserEmail}</div>
-                            <div className='AccountCardDataThird flex'><Image className='mr-2' width={15} src={phoneIco} alt='cheevron-left'/> +7 {userData && userData.UserPhone.toString().substring(1)}</div>
+                            <div className='AccountCardDataThird flex'><Image className='mr-2' width={15} src={phoneIco} alt='cheevron-left'/> +7 {userData && userData.UserPhone.toString()}</div>
                         </div>
                         <Link href='my-account/account-edit' className='AccountCardEdit'>
                             <Image src={penIco} alt='pen-ico'/>

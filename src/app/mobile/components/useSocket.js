@@ -80,7 +80,12 @@ const useSocket = ({onOrderCreated,
     onNewOrder,
     onDriverLocation,
     onDriversOnline,
-    onOrderCanceledByDriver }) => {
+    onOrderCanceledByDriver,
+    onOrderCanceledByPassenger, // новое
+    onOrderAcceptFailed,        // новое
+    onError,                    // новое
+    onOrdersChanged,            // новое
+    onConnected }) => {
       const [isConnected, setIsConnected] = useState(false)
       const stompClientRef = useRef(null);
       const handlersRef = useRef({});
@@ -96,6 +101,11 @@ const useSocket = ({onOrderCreated,
         onDriverLocation,
         onDriversOnline,
         onOrderCanceledByDriver,
+        onOrderCanceledByPassenger, // новое
+        onOrderAcceptFailed,        // новое
+        onError,                    // новое
+        onOrdersChanged,            // новое
+        onConnected,  
       };
 
       useEffect(() => {
@@ -107,7 +117,7 @@ const useSocket = ({onOrderCreated,
             Authorization: `Bearer ${token}`,
           },
 
-          reconnectDelay: 5000,
+          reconnectDelay: 2000,
 
           onConnect: () => {
             //console.log("CONNECTED");
@@ -191,6 +201,22 @@ const useSocket = ({onOrderCreated,
 
             handlersRef.current.onNewOrder?.();
             client.publish({ destination: "/app/driversOnline", body: "" });
+
+            client.subscribe("/user/queue/orderAcceptFailed", (msg) => {
+              handlersRef.current.onOrderAcceptFailed?.(Number(msg.body));
+            });
+
+            client.subscribe("/user/queue/errors", (msg) => {
+              handlersRef.current.onError?.(msg.body);
+            });
+
+            client.subscribe("/topic/orderCanceled", () => {
+              handlersRef.current.onOrdersChanged?.();
+            });
+
+            client.subscribe("/user/queue/orderCanceledByPassenger", (msg) => {
+              handlersRef.current.onOrderCanceledByPassenger?.(Number(msg.body));
+            });
           },
           onWebSocketClose: () => setIsConnected(false),
           onDisconnect: () => setIsConnected(false),
@@ -202,7 +228,7 @@ const useSocket = ({onOrderCreated,
         return () => client.deactivate();
   }, []);
 
-  return stompClientRef;
+  return { stompClientRef, isConnected };
 };
 
 export default useSocket;

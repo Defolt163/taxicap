@@ -16,7 +16,7 @@ const mapBounds = L.latLngBounds(
   [Math.max(latUp, latBottom) + 0.04, Math.max(lonUp, lonBottom) + 0.03]
 );
 
-export default function Map({ coordinates, driverPosition }) {
+export default function Map({ coordinates, driverPosition, coordFrom, coordTo }) {
   const [mapKey] = useState(() => `taxi-map-${++mapInstanceId}`);
   const mapRef = useRef(null);
 
@@ -37,6 +37,10 @@ export default function Map({ coordinates, driverPosition }) {
     });
   }, []);
 
+  /* useEffect(()=>{
+    console.log("coordFrom", coordFrom)
+    console.log("coordTo", coordTo)
+  }, [coordFrom, coordTo]) */
   const [markerPosFrom, setMarkerPosFrom] = useState(null)
   const markerIconFrom = new L.Icon({
     iconUrl: '/ico/start-mark.png',
@@ -60,8 +64,8 @@ export default function Map({ coordinates, driverPosition }) {
         setMarkerPosFrom(coordinates[0])
         setMarkerPosTo(coordinates.at(-1))
       }else if(coordinates == null){
-        setMarkerPosFrom([0,0])
-        setMarkerPosTo([0,0])
+        setMarkerPosFrom(null)
+        setMarkerPosTo(null)
       }
     }, [coordinates])
 
@@ -96,13 +100,19 @@ export default function Map({ coordinates, driverPosition }) {
             fillOpacity: 0.05
           }}
         />
-          
-          {markerPosFrom !== null && markerPosTo !== null ? (
-            <>
-              <Marker position={markerPosFrom} icon={markerIconFrom}/>
-              <Marker position={markerPosTo} icon={markerIconTo}/>
-            </>
+
+          {markerPosFrom ? (
+            <Marker position={markerPosFrom} icon={markerIconFrom} />
+          ) : coordFrom ? (
+            <Marker position={[coordFrom.lat, coordFrom.lon]} icon={markerIconFrom} />
           ) : null}
+
+          {markerPosTo ? (
+            <Marker position={markerPosTo} icon={markerIconTo} />
+          ) : coordTo ? (
+            <Marker position={[coordTo.lat, coordTo.lon]} icon={markerIconTo} />
+          ) : null}
+
           {driverPosition.length !== 0 ? (
             <>
               <Marker position={driverPosition} icon={markerIconDriver}/>

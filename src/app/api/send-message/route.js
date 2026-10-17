@@ -340,7 +340,7 @@ export async function POST(req) {
             }
         }else if(authType === 'sign-up' && code !== ''){
             const storedCode = await client.get(userEmail); 
-            //console.log("REDIS CODE", storedCode);
+            console.log("REDIS CODE", storedCode);
             if (!storedCode) {
                 return new Response(JSON.stringify({ success: false, message: 'Код не найден или истек' }), { status: 401 });
             }
