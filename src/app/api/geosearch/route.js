@@ -85,11 +85,22 @@ export async function GET(req) {
             params = [streetPart, streetPart, streetPart, housePart, streetPart];
         }
         }
+        // Предприятия: поиск по названию и альтернативным названиям
+        const [places] = await pool.query(
+            `SELECT id, name, address, lat, lon, 'place' AS type
+             FROM places
+             WHERE name LIKE CONCAT(?, '%')
+                OR name LIKE CONCAT('% ', ?, '%')
+                OR aliases LIKE CONCAT('%', ?, '%')
+             ORDER BY (name LIKE CONCAT(?, '%')) DESC, name
+             LIMIT 5`,
+            [q, q, q, q]
+        );
 
         const [rows] = await pool.query(sql, params);
 
         // Помечаем режим в ответе — удобно для фронта
-        return Response.json(rows);
+        return Response.json([...places, ...rows]);
     } catch (error) {
         console.error('DB error:', error.message);
         return Response.json({ message: 'Ошибка сервера' }, { status: 500 });

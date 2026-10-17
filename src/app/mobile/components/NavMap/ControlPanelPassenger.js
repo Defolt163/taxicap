@@ -607,7 +607,10 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                         {activeAddressInput === "from" && fromList.length > 0 && (
                             <div className='AddressHintBlock overflow-y-scroll max-h-[200px]'>
                                 {fromList.map((item) => {
-                                    const label = item.house ? `${item.street}, ${item.house}` : item.street;
+                                    const isPlace = item.type === 'place';
+                                    const label = isPlace
+                                        ? `${item.name}, ${item.address}`
+                                        : (item.house ? `${item.street}, ${item.house}` : item.street);
                                     const coords = item.lat ? {'lat': item.lat, 'lon': item.lon} : null
                                     return(
                                     <div
@@ -626,7 +629,14 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                                     >
                                         <div className='flex items-center'>
                                             <FaRegBuilding className='text-[28px] text-gray-400 mr-2'/>
-                                            {!item.house ? item.street : item.street +`, ` + item.house}
+                                            {isPlace ? (
+                                                <div>
+                                                    <div>{item.name}</div>
+                                                    <div className='text-sm text-gray-400'>{item.address}</div>
+                                                </div>
+                                            ) : (
+                                                !item.house ? item.street : item.street + `, ` + item.house
+                                            )}
                                         </div>
                                         <GoChevronRight/>
                                     </div>)
@@ -644,14 +654,17 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                                 />
                         </div>
                         {activeAddressInput === "to" && toList.length > 0 && (
-                            <div className='AddressHintBlock overflow-y-scroll max-h-[200px]'>
+                            <div className='AddressHintBlock overflow-y-scroll border-t max-h-[200px] '>
                                 {toList.map((item) => {
-                                    const label = item.house ? `${item.street}, ${item.house}` : item.street;
+                                    const isPlace = item.type === 'place';
+                                    const label = isPlace
+                                        ? `${item.name}, ${item.address}`
+                                        : (item.house ? `${item.street}, ${item.house}` : item.street);
                                     const coords = item.lat ? {'lat': item.lat, 'lon': item.lon} : null
                                     return(
                                     <div
                                         key={item.id || `${item.street}-${item.house}`}
-                                        className='AddressHintItem flex text-md p-4'
+                                        className='AddressHintItem flex text-md p-4 items-center border-b justify-between'
                                         onMouseDown={(e) => {
                                             e.preventDefault();
                                             setAddressTo({input: label+" ", coords: coords});
@@ -662,13 +675,23 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                                             setActiveAddressInput(null);
                                         }}
                                     >
-                                        <FaRegBuilding className='text-[28px] text-gray-400 mr-2'/>
-                                        {!item.house ? item.street : item.street +`, ` + item.house}
+                                        <div className='flex items-center'>
+                                            <FaRegBuilding className='text-[28px] text-gray-400 mr-2'/>
+                                            {isPlace ? (
+                                                <div>
+                                                    <div>{item.name}</div>
+                                                    <div className='text-sm text-gray-400'>{item.address}</div>
+                                                </div>
+                                            ) : (
+                                                !item.house ? item.street : item.street + `, ` + item.house
+                                            )}
+                                        </div>
+                                        <GoChevronRight/>
                                     </div>)
                                 })}
                             </div>
                         )}
-                        <h3 className='mb-3 font-bold text-sm text-gray-600'>Популярные места</h3>
+                        <h3 className='mt-2 mb-3 font-bold text-sm text-gray-600'>Популярные места</h3>
                         <div className='AdvancedMenu'>
                         <div className='FastAddressBlock'>
                             <div className='FastAddressBlockItem' onClick={()=>{sendDriveData("Больничная улица, 4", 54.423565, 51.484111)}}>
