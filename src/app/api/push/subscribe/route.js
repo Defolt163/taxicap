@@ -37,7 +37,7 @@ export async function POST(request) {
       return Response.json({ message: 'Invalid push subscription' }, { status: 400 });
     }
 
-    await ensureTable();
+    //await ensureTable();
     const endpointHash = crypto.createHash('sha256').update(subscription.endpoint).digest('hex');
     await pool.query(
       `INSERT INTO push_subscriptions (user_id, endpoint, endpoint_hash, p256dh, auth)
