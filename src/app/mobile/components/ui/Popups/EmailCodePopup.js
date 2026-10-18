@@ -17,7 +17,7 @@ export default function EmailCodePopup({
   onClose,
   onConfirm,
   confirmLabel = 'Подтвердить',
-  length = 4,
+  length = 6,
 }) {
   if (!isOpen) return null
   const half = Math.ceil(length / 2)
