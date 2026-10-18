@@ -80,41 +80,44 @@ export default function SignInPage(){
     const [ageStatus, setAgeStatus] = useState(false)
 
 
-    async function sendMessage(){
-        if(
-            userName === "" || /\d/.test(userName) || 
-            userEmail === "" || 
-            /\S+@\S+\.\S+/.test(userEmail) === false){
-                showPopup("Убедитесь, правильно ли вы ввели свои данные")
-        }else{
-            setTogglerPopupLoadingData('popup-open')
+    async function sendMessage() {
+        if (
+            userName === "" || /\d/.test(userName) ||
+            userEmail === "" ||
+            /\S+@\S+\.\S+/.test(userEmail) === false
+        ) {
+            showPopup("Убедитесь, правильно ли вы ввели свои данные")
+            return
+        }
+
+        setTogglerPopupLoadingData('popup-open')
+        try {
             const response = await fetch('/api/send-message?type=send-code', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(
-                    { 
-                        userEmail: userEmail,
-                        userName: userName, 
-                        rawPhone: '',
-                        authType: 'sign-up',
-                        ageStatus: ageStatus,
-                        personalDataConsent: agreementStatus
-                    }
-                )
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userEmail: userEmail,
+                    userName: userName,
+                    rawPhone: '',
+                    authType: 'sign-up',
+                    ageStatus: ageStatus,
+                    personalDataConsent: agreementStatus,
+                }),
             })
-            if(response.status == 400){
-                setTogglerPopupLoadingData('')
-                const data = await response.json()
-                showPopup(data.message)
-            }else if(response.ok){
-                setTogglerPopupLoadingData('')
-                setTogglerConfirmEmailPopup('popup-open');
-            }else if(!response.ok){
-                setAlertError(true)
-                showPopup("Ошибка сервера")
+
+            setTogglerPopupLoadingData('')
+
+            if (response.ok) {
+                setTogglerConfirmEmailPopup('popup-open')
+                return
             }
+
+            // 400, 429, 503, 500: показываем сообщение сервера, если оно есть
+            const data = await response.json().catch(() => ({}))
+            showPopup(data.message || 'Ошибка сервера')
+        } catch (error) {
+            setTogglerPopupLoadingData('')
+            showPopup('Нет соединения с сервером')
         }
     }
       
@@ -290,6 +293,7 @@ export default function SignInPage(){
                 errorMessage={errorConfirmEmail}
                 onClose={() => setTogglerConfirmEmailPopup('')}
                 onConfirm={signUpSend}
+                length={6}
             />
             <div>
                 <div className={`popup-background ${togglerPopupLoadingData}`}></div>

@@ -1,4 +1,5 @@
 import { createClient } from 'redis'
+import { getRedisClient } from './redis';
 
 const redisState = globalThis.__taxicapRateLimitRedis || {
   client: null,
@@ -14,7 +15,7 @@ async function ensureRedisConnected() {
       throw new Error('Redis connection settings are not configured')
     }
 
-    redisState.client = createClient({ url: `redis://${REDIS_URL}:${REDIS_PORT}` })
+    redisState.client = getRedisClient({ url: `redis://${REDIS_URL}:${REDIS_PORT}` })
     redisState.client.on('error', (error) => console.error('Rate limit Redis error:', error))
   }
 
@@ -27,17 +28,25 @@ async function ensureRedisConnected() {
   await redisState.connectPromise
 }
 
-export async function checkRateLimit(scope, subject, maxRequests, windowSeconds) {
-  await ensureRedisConnected()
+export async function checkRateLimit(prefix, key, limit, windowSec) {
+    const client = await getRedisClient();
+    const redisKey = `rl:${prefix}:${key}`;
 
-  const window = Math.floor(Date.now() / (windowSeconds * 1000))
-  const key = `rate-limit:${scope}:${subject}:${window}`
-  const count = await redisState.client.incr(key)
-  if (count === 1) await redisState.client.expire(key, windowSeconds)
+    const count = await client.incr(redisKey);
+    if (count === 1) {
+        await client.expire(redisKey, windowSec);
+    }
 
-  const ttl = await redisState.client.ttl(key)
-  return {
-    allowed: count <= maxRequests,
-    retryAfter: Math.max(ttl, 1),
-  }
+    let ttl = await client.ttl(redisKey);
+    if (ttl < 0) {
+        // на случай, если ключ остался без TTL
+        await client.expire(redisKey, windowSec);
+        ttl = windowSec;
+    }
+
+    return {
+        allowed: count <= limit,
+        retryAfter: ttl,
+        remaining: Math.max(0, limit - count),
+    };
 }

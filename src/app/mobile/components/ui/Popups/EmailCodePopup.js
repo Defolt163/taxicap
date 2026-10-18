@@ -3,6 +3,7 @@
 import {
   InputOTP,
   InputOTPGroup,
+  InputOTPSeparator,
   InputOTPSlot,
 } from '@/components/ui/input-otp'
 import { HiMiniXMark } from 'react-icons/hi2'
@@ -19,6 +20,9 @@ export default function EmailCodePopup({
   length = 4,
 }) {
   if (!isOpen) return null
+  const half = Math.ceil(length / 2)
+  const firstGroup = Array.from({ length: half }, (_, i) => i)
+  const secondGroup = Array.from({ length: length - half }, (_, i) => half + i)
 
   return (
     <>
@@ -31,7 +35,16 @@ export default function EmailCodePopup({
         <h5 className="mb-3 text-sm">Проверьте папку спам</h5>
         <InputOTP className="popup-input" maxLength={length} value={value} onChange={onChange}>
           <InputOTPGroup>
-            {Array.from({ length }, (_, index) => <InputOTPSlot key={index} index={index} />)}
+            {/* {Array.from({ length }, (_, index) => <InputOTPSlot key={index} index={index} />)} */}
+            {firstGroup.map((index) => (
+              <InputOTPSlot key={index} index={index} />
+            ))}
+          </InputOTPGroup>
+          <InputOTPSeparator />
+          <InputOTPGroup>
+            {secondGroup.map((index) => (
+              <InputOTPSlot key={index} index={index} />
+            ))}
           </InputOTPGroup>
         </InputOTP>
         <h4 className="popup-input-error__text popup-input-error__text_message">{errorMessage}</h4>

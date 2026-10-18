@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader } from '@/components/ui/alert-dialog';
 import EmailCodePopup from "../../components/ui/Popups/EmailCodePopup";
+import { usePopup } from "../../components/PopupContext";
 
 export default function SignInPage(){
     const router = useRouter()
     const [inputEmail, setInputEmail] = useState('')
     const [alertError, setAlertError] = useState(false)
     const [togglerPopupLoadingData, setTogglerPopupLoadingData] = useState('')
+    const { showPopup } = usePopup();
 
     // Установка куки
     function setCookie(name, value, days) {
@@ -24,29 +26,35 @@ export default function SignInPage(){
         //setEmailCode(Math.floor(1000 + Math.random() * 9000))
     },[])
     //const emailCode = 1111
-    async function sendMessage(){
+    async function sendMessage() {
         setTogglerPopupLoadingData('popup-open')
-        const response = await fetch('/api/send-message?type=send-code', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(
-                { 
+        try {
+            const response = await fetch('/api/send-message?type=send-code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
                     userEmail: inputEmail,
-                    authType: 'sign-in'
-                }
-            )
-        })
-        if(response.ok){
+                    authType: 'sign-in',
+                }),
+            })
+
             setTogglerPopupLoadingData('')
-            setTogglerSendEmail('popup-open')
-        }else if(response.status == 404){
+
+            if (response.ok) {
+                setTogglerSendEmail('popup-open')
+                return
+            }
+
+            if (response.status === 404) {
+                setTogglerPopup('popup-open')
+                return
+            }
+
+            const data = await response.json().catch(() => ({}))
+            showPopup(data.message || 'Не удалось отправить код. Попробуйте позже.')
+        } catch (error) {
             setTogglerPopupLoadingData('')
-            setTogglerPopup('popup-open')
-        }else if(!response.ok){
-            setTogglerPopupLoadingData('')
-            setAlertError(true)
+            showPopup('Нет соединения с сервером')
         }
     }
 
@@ -76,7 +84,7 @@ export default function SignInPage(){
             }
         } catch (error) {
             setTogglerPopupLoadingData('')
-            setAlertError(true)
+            showPopup("Ошибка сервера")
         }
     }
 
@@ -132,8 +140,9 @@ export default function SignInPage(){
                 }}
                 onConfirm={SignIn}
                 confirmLabel="Войти"
+                length={6}
             />
-            <AlertDialog open={alertError} onOpenChange={setAlertError}>
+            {/* <AlertDialog open={alertError} onOpenChange={setAlertError}>
                 <AlertDialogContent className='w-11/12'>
                     <AlertDialogHeader>
                         <AlertDialogDescription>
@@ -144,7 +153,7 @@ export default function SignInPage(){
                         <AlertDialogAction onClick={() => setAlertError(false)}>Закрыть</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
-            </AlertDialog>
+            </AlertDialog> */}
             <div>
                 <div className={`popup-background ${togglerPopupLoadingData}`}></div>
                 <div className={`popup popup-input-error ${togglerPopupLoadingData}`}>

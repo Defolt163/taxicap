@@ -4,6 +4,7 @@ import { randomInt } from 'crypto';
 import { createClient } from 'redis';
 import pool from '../accountDB'
 import { checkRateLimit } from '../rateLimit'
+import { getRedisClient } from '../redis';
 
 const SECRET_KEY = process.env.JWT_SECRET_KEY; // Секрет для JWT
 
@@ -11,10 +12,40 @@ const SMTP_MAIL_SERVICE = process.env.SMTP_SERVICE;
 const SMTP_MAIL_LOGIN = process.env.SMTP_USER;
 const SMTP_MAIL_PASSWORD = process.env.SMTP_PASSWORD;
 
-let client;
-let connectPromise;
+const CODE_TTL = 600;
 
-async function getRedisClient() {
+function generateCode() {
+    return String(randomInt(100000, 1000000));
+}
+function formatCode(code) {
+    return `${code.slice(0, 3)}-${code.slice(3)}`;
+}
+
+function getClientIp(req) {
+    return req.headers.get('x-forwarded-for')?.split(',')[0].trim()
+        || req.headers.get('x-real-ip')
+        || 'unknown';
+}
+
+// Возвращает Response 429, если лимит превышен, иначе null
+async function limitOrResponse(prefix, key, limit, windowSec) {
+    let rl;
+    try {
+        rl = await checkRateLimit(prefix, key, limit, windowSec);
+    } catch (error) {
+        console.error('Rate limiter unavailable:', error);
+        return null;
+    }
+    if (rl.allowed) return null;
+    return Response.json(
+        { message: 'Слишком много запросов. Попробуйте позже.' },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
+    );
+}
+
+/* async function getRedisClient() {
+    if (!client) client = createRedis();
+
     if (!client) {
         const { REDIS_URL, REDIS_PORT } = process.env;
         if (!REDIS_URL || !REDIS_PORT) {
@@ -36,7 +67,7 @@ async function getRedisClient() {
     }
 
     return client;
-}
+} */
 
 export async function POST(req) {
     const { searchParams } = new URL(req.url);
@@ -74,9 +105,26 @@ export async function POST(req) {
             return new Response({ status: 500 });
         }
     }else if(sendType == 'send-code'){
-        const client = await getRedisClient();
-        //const { userEmail, authType, rawPhone, userName } = await req.json();
-        const { userEmail, authType, userName, rawPhone, personalDataConsent, ageStatus } = await req.json();
+        let client;
+        try {
+            client = await getRedisClient();
+        } catch {
+            return Response.json({ message: 'Сервис временно недоступен' }, { status: 503 });
+        }
+        //const client = await getRedisClient();
+        //const { userEmail, authType, userName, rawPhone, personalDataConsent, ageStatus } = await req.json();
+        const body = await req.json();
+        const userEmail = body.userEmail?.trim().toLowerCase();
+        const { authType, userName, rawPhone, personalDataConsent, ageStatus } = body;
+        if (authType !== 'email-change') {
+            if (!userEmail || !/^\S+@\S+\.\S+$/.test(userEmail)) {
+                return Response.json({ message: 'Некорректный email' }, { status: 400 });
+            }
+            const limited =
+                (await limitOrResponse('send-code-email', userEmail, 3, 600)) ||
+                (await limitOrResponse('send-code-ip', getClientIp(req), 10, 600));
+            if (limited) return limited;
+        }
         if (authType === 'email-change') {
             const token = req.headers.get('authorization')?.split(' ')[1];
             if (!token) return Response.json({ message: 'Необходима авторизация' }, { status: 401 });
@@ -124,7 +172,7 @@ export async function POST(req) {
 
             const generatedCode = String(randomInt(100000, 1000000));
             if (process.env.NODE_ENV !== 'production') {
-                console.info('[email-change] Verification code:', generatedCode);
+                console.info('[email-change] Verification code:', formatCode(generatedCode));
             }
             const redisKey = `email-change:${decoded.id}:${normalizedEmail}`;
             await client.setEx(redisKey, 600, generatedCode);
@@ -141,7 +189,7 @@ export async function POST(req) {
                 from: SMTP_MAIL_LOGIN,
                 to: normalizedEmail,
                 subject: 'Подтверждение нового email',
-                html: `<p>Ваш код подтверждения нового адреса email:</p><p style="font-size:24px"><strong>${generatedCode}</strong></p><p>Код действует 10 минут.</p>`,
+                html: `<p>Ваш код подтверждения нового адреса email:</p><p style="font-size:24px"><strong>${formatCode(generatedCode)}</strong></p><p>Код действует 10 минут.</p>`,
             });
 
             return Response.json({ message: 'Код отправлен' });
@@ -164,10 +212,12 @@ export async function POST(req) {
                     { status: 400 }
                 );
             } else {
-                const generatedCode = Math.floor(1000 + Math.random() * 9000)
+                //const generatedCode = Math.floor(1000 + Math.random() * 9000)
                 //console.log(`Код для ${userEmail}: ${generatedCode}`);
-                await client.setEx(userEmail, 6000, String(generatedCode));
+                //await client.setEx(userEmail, 6000, String(generatedCode));
                 //console.log(`Код для ${userEmail} сохранен в Redis`);
+                const generatedCode = generateCode();
+                await client.setEx(userEmail, CODE_TTL, generatedCode);
                 
                 const transporter = nodemailer.createTransport({
                     service: SMTP_MAIL_SERVICE,
@@ -185,7 +235,7 @@ export async function POST(req) {
                         <p>Здравствуйте!</p>
                         <p><span style="font-size: 18pt;">Ваш код для подтверждения Email:</span></p>
                         <p style="padding: 12px; border-left: 4px solid #d0d0d0; font-style: italic;">
-                            <span style="font-size: 24pt;"><strong>${generatedCode}</strong></span>
+                            <span style="font-size: 24pt;"><strong>${formatCode(generatedCode)}</strong></span>
                         </p>
                         <p>Если это сообщение отправлено вам по ошибке, просто проигнорируйте его</p>
                         <p>&nbsp;</p>
@@ -216,10 +266,13 @@ export async function POST(req) {
                     { status: 404 }
                 );
             }
-            const generatedCode = Math.floor(1000 + Math.random() * 9000)
+            //const generatedCode = Math.floor(1000 + Math.random() * 9000)
             //console.log(`Код для ${userEmail}: ${generatedCode}`);
-            await client.setEx(userEmail, 6000, String(generatedCode));
+            //await client.setEx(userEmail, 6000, String(generatedCode));
             //console.log(`Код для ${userEmail} сохранен в Redis`);
+
+            const generatedCode = generateCode();
+            await client.setEx(userEmail, CODE_TTL, generatedCode);
             
             const transporter = nodemailer.createTransport({
                 service: SMTP_MAIL_SERVICE,
@@ -239,7 +292,7 @@ export async function POST(req) {
                     <p>Здравствуйте!</p>
                     <p><span style="font-size: 18pt;">Ваш код для подтверждения Email:</span></p>
                     <p style="padding: 12px; border-left: 4px solid #d0d0d0; font-style: italic;">
-                        <span style="font-size: 24pt;"><strong>${generatedCode}</strong></span>
+                        <span style="font-size: 24pt;"><strong>${formatCode(generatedCode)}</strong></span>
                     </p>
                     <p>Если это сообщение отправлено вам по ошибке, просто проигнорируйте его</p>
                     <p>&nbsp;</p>
@@ -258,8 +311,18 @@ export async function POST(req) {
         }
     }
     if (sendType === 'verify-code') {
-        const client = await getRedisClient();
-        const { userEmail, code, authType, userName, rawPhone, personalDataConsent, ageStatus, userPhone, adverseStatus } = await req.json();
+        //const client = await getRedisClient();
+        let client;
+        try {
+            client = await getRedisClient();
+        } catch {
+            return Response.json({ message: 'Сервис временно недоступен' }, { status: 503 });
+        }
+        //const { userEmail, code, authType, userName, rawPhone, personalDataConsent, ageStatus, userPhone, adverseStatus } = await req.json();
+        const body = await req.json();
+        const userEmail = body.userEmail?.trim().toLowerCase();
+        //const { authType, userName, rawPhone, personalDataConsent, ageStatus } = body;
+        const { authType, code, userName, rawPhone, personalDataConsent, ageStatus, userPhone, adverseStatus } = body;
 
         if (authType === 'email-change' && code !== '') {
             const token = req.headers.get('authorization')?.split(' ')[1];
@@ -268,6 +331,8 @@ export async function POST(req) {
             let decoded;
             try {
                 decoded = jwt.verify(token, SECRET_KEY);
+                const limited = await limitOrResponse('email-change-verify', decoded.id, 5, 600);
+                if (limited) return limited;
             } catch {
                 return Response.json({ message: 'Недействительная сессия' }, { status: 401 });
             }
@@ -308,7 +373,12 @@ export async function POST(req) {
 
             return Response.json({ token: updatedToken, email: updatedUser.UserEmail });
         }
-        
+        if (authType === 'sign-in' || authType === 'sign-up') {
+            const limited =
+                (await limitOrResponse('verify-code-email', userEmail, 5, 600)) ||
+                (await limitOrResponse('verify-code-ip', getClientIp(req), 30, 600));
+            if (limited) return limited;
+        }
         if(authType === 'sign-in'){
             const storedCode = await client.get(userEmail); 
             //console.log("REDIS CODE", storedCode);
@@ -316,7 +386,7 @@ export async function POST(req) {
             return new Response(JSON.stringify({ success: false, message: 'Код не найден или истек' }), { status: 401 });
             }
             // Если код совпал
-            if (storedCode === code) {
+            if (storedCode === String(code).trim()) {
                 //console.log('Код верный');
                 // Удаляем код из Redis, чтобы он больше не использовался
                 await client.del(userEmail);
@@ -344,13 +414,13 @@ export async function POST(req) {
             if (!storedCode) {
                 return new Response(JSON.stringify({ success: false, message: 'Код не найден или истек' }), { status: 401 });
             }
-            if (rawPhone == '' && storedCode === code) {
+            if (rawPhone == '' && storedCode === String(code).trim()) {
                 //console.log('Код 200');
                 return new Response(
                     JSON.stringify({message: 'OK'}),
                     { status: 200 }
                 );
-            } else if(rawPhone !== '' && storedCode === code){
+            } else if(rawPhone !== '' && storedCode === String(code).trim()){
                 if (personalDataConsent !== true) {
                     return new Response(JSON.stringify({ success: false, message: 'Необходимо согласие на обработку персональных данных' }), { status: 400 });
                 }
