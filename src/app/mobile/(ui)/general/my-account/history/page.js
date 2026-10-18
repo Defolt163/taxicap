@@ -94,7 +94,7 @@ export default function MyAccountPage(){
                                 return(
                                     <div key={OrderItem.id} className='history-card'>
                                     <div className='driver driver-name'>Водитель: <span>{OrderItem.driverName}</span></div>
-                                    <div className='driver driver-number'>{OrderItem.driverPhone}</div>
+                                    <div className='driver driver-number'>+7 {OrderItem.driverPhone}</div>
                                     <div className='driver driver-car_number'>Гос-номер: {OrderItem.vehicleNumber}</div>
                                     <div className='address-block'>
                                         <div className='address'>От: {OrderItem.addressFrom}</div>

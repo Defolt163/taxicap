@@ -615,7 +615,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                                     return(
                                     <div
                                         key={item.id || `${item.street}-${item.house}`}
-                                        className='AddressHintItem flex text-md p-4 items-center border-b justify-between'
+                                        className='AddressHintItem flex text-sm p-4 items-center border-b justify-between'
                                         onMouseDown={(e) => {
                                             e.preventDefault();
                                             setAddressFrom({input: label+" ", coords: coords});
@@ -628,11 +628,11 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                                         }}
                                     >
                                         <div className='flex items-center'>
-                                            <FaRegBuilding className='text-[28px] text-gray-400 mr-2'/>
+                                            <FaRegBuilding className='text-[25px] text-gray-400 mr-2'/>
                                             {isPlace ? (
                                                 <div>
-                                                    <div>{item.name}</div>
-                                                    <div className='text-sm text-gray-400'>{item.address}</div>
+                                                    <div className='text-sm'>{item.name}</div>
+                                                    <div className='text-xs text-gray-400'>{item.address}</div>
                                                 </div>
                                             ) : (
                                                 !item.house ? item.street : item.street + `, ` + item.house
@@ -664,7 +664,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                                     return(
                                     <div
                                         key={item.id || `${item.street}-${item.house}`}
-                                        className='AddressHintItem flex text-md p-4 items-center border-b justify-between'
+                                        className='AddressHintItem flex text-sm p-4 items-center border-b justify-between'
                                         onMouseDown={(e) => {
                                             e.preventDefault();
                                             setAddressTo({input: label+" ", coords: coords});
@@ -676,11 +676,11 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
                                         }}
                                     >
                                         <div className='flex items-center'>
-                                            <FaRegBuilding className='text-[28px] text-gray-400 mr-2'/>
+                                            <FaRegBuilding className='text-[25px] text-gray-400 mr-2'/>
                                             {isPlace ? (
                                                 <div>
-                                                    <div>{item.name}</div>
-                                                    <div className='text-sm text-gray-400'>{item.address}</div>
+                                                    <div className='text-sm'>{item.name}</div>
+                                                    <div className='text-xs text-gray-400'>{item.address}</div>
                                                 </div>
                                             ) : (
                                                 !item.house ? item.street : item.street + `, ` + item.house

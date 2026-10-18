@@ -92,7 +92,7 @@ export default function EditAccountPage(){
 
     // Изменение данных
     const [editName, setEditName] = useState(userData && userData.UserName)
-    const [editPhone, setEditPhone] = useState(userData && userData.UserPhone.toString().substring(1))
+    const [editPhone, setEditPhone] = useState(userData && userData.UserPhone.toString())
     const [editEmail, setEditEmail] = useState(userData && userData.UserEmail)
 
     const [togglerChangingPopup, setTogglerChangingPopup] = useState('')
@@ -291,7 +291,7 @@ export default function EditAccountPage(){
                             {selectedFile && (<button className={`Button upload-btn`} onClick={handleUpload}>Загрузить фото</button>)}
                             <input className='input-field' value={editName} onChange={(e)=>{setEditName(e.target.value)}}/>
                             <div className='input-field_phone'>
-                                <input className='input-field input-field_phone__mask' value={editPhone} 
+                                <input className='input-field phone_mask' value={editPhone} 
                                     onChange={phoneMask} placeholder="___-___-__-__"/>
                             </div>
                             <input className='input-field' value={editEmail} onChange={(e)=>{setEditEmail(e.target.value)}}/>
