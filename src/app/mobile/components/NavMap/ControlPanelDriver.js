@@ -53,6 +53,40 @@ export default function ControlDriverPanel({ onLocationSelect }){
     const [pendingOrderId, setPendingOrderId] = useState(null)
     const pendingCancellationOrderIdRef = useRef(null)
     const cancellationTimeoutRef = useRef(null)
+
+    const pendingOrderIdRef = useRef(null)
+    const activeOrderRef = useRef(null)
+    const currentOrderId = useRef(null)
+    const ordersRequestSeqRef = useRef(0)
+    const userDataRef = useRef(userData)
+    userDataRef.current = userData
+
+    function setPending(id) {
+        pendingOrderIdRef.current = id
+        setPendingOrderId(id)
+    }
+
+    // Единственное место, где меняется активный заказ
+    function applyActiveOrder(order) {
+        activeOrderRef.current = order
+        currentOrderId.current = order ? order.id : null
+        setActiveOrder(order)
+    }
+
+    // Единственное место, где заказ завершается (любым способом)
+    function finishActiveOrder(message) {
+        forgetOrder()
+        clearTimeout(cancellationTimeoutRef.current)
+        cancellationTimeoutRef.current = null
+        pendingCancellationOrderIdRef.current = null
+        hideLoading()
+        applyActiveOrder(null)
+        setStep(0)
+        setTogglerOpenOrder(false)
+        onLocationSelect({ routeCoordinates: null })
+        if (message) toast(message)
+        getOrders()
+    }
     
     const { showPopup, showChoicePopup, showLoading, hideLoading } = usePopup();
     function getCookie(name) {
@@ -62,9 +96,10 @@ export default function ControlDriverPanel({ onLocationSelect }){
         return null; // Если куки нет
     }
 
-    async function decryptData(encodedMessage, messageIv) {
+    async function decryptDataOFF(encodedMessage, messageIv, seq) {
+        console.log('[decrypt] start, seq =', seq, 'ref =', ordersRequestSeqRef.current)
         // Преобразуем ключ и IV из шестнадцатеричного формата
-        const key = Buffer.from('16cf126a9dc4e39e405a03ad0fb2f31d91f6b73342c7d7647772e104aa8d7e39', 'hex'); // Ключ AES-256
+        const key = Buffer.from(keyDecipher, 'hex'); // Ключ AES-256
         const iv = Buffer.from(messageIv, 'hex'); // IV (инициализационный вектор)
         // Преобразуем зашифрованные данные в Buffer
         const encryptedBuffer = Buffer.from(encodedMessage, 'hex');
@@ -76,13 +111,45 @@ export default function ControlDriverPanel({ onLocationSelect }){
         let decrypted = decipher.update(encryptedBuffer, 'hex', 'utf8');
         decrypted += decipher.final('utf8');
         let parsedData = JSON.parse(decrypted)
-        if(parsedData.length !== 0){
+        console.log('[decrypt] parsed', parsedData.length)
+        if (seq !== ordersRequestSeqRef.current){
+            console.log('[decrypt] skipped as stale') 
+            return
+        }   // устаревший ответ
+
+        setOrders(parsedData)
+
+        // ГЛАВНОЕ: при активном (или бронируемом) заказе карту не трогаем
+        if (activeOrderRef.current || pendingOrderIdRef.current) return
+
+        if (parsedData.length !== 0) {
+            shapeDecoder(parsedData[0].encodedWay)
+        } else {
+            setOrderIteration(0)
+        }
+        /* if(parsedData.length !== 0){
             setOrders(parsedData)
             shapeDecoder(parsedData[0].encodedWay)
             //setStep(1)
             //orderCreatedSound?.play(); // звуковое уведомление
         }else{
             setOrders([])
+            setOrderIteration(0)
+        } */
+    }
+
+    function applyOrders(list, seq) {
+        if (seq !== ordersRequestSeqRef.current) return
+        if (!Array.isArray(list)) return
+
+        setOrders(list)
+
+        // при активном (или бронируемом) заказе карту не трогаем
+        if (activeOrderRef.current || pendingOrderIdRef.current) return
+
+        if (list.length !== 0) {
+            shapeDecoder(list[0].encodedWay)
+        } else {
             setOrderIteration(0)
         }
     }
@@ -93,11 +160,24 @@ export default function ControlDriverPanel({ onLocationSelect }){
             getOrders()
         },
         onOrderCanceledByPassenger: (orderId) => {
+            if (currentOrderId.current !== Number(orderId)) return
+            finishActiveOrder("Пассажир отменил заказ")
+        },
+        /* onOrderCanceledByPassenger: (orderId) => {
             if (currentOrderId.current !== Number(orderId)) return;
             resetActiveOrderUi();
             toast("Пассажир отменил заказ");
-        },
+        }, */
         onOrderAccepted: (order) => {
+            clearAcceptTimeout()
+            setPending(null)
+            applyActiveOrder(order)
+            setStep(1)
+            setTogglerOpenOrder(true)
+            shapeDecoder(order.encodedWay)
+            hideLoading()
+        },
+        /* onOrderAccepted: (order) => {
             clearAcceptTimeout()
             setActiveOrder(order)
             currentOrderId.current = order.id
@@ -106,8 +186,12 @@ export default function ControlDriverPanel({ onLocationSelect }){
             setTogglerOpenOrder(true)
             shapeDecoder(order.encodedWay)
             hideLoading();
-        },
+        }, */
         onOrderCanceled: (orderId) => {
+            if (pendingCancellationOrderIdRef.current !== Number(orderId)) return
+            finishActiveOrder("Заказ отменен")
+        },
+        /* onOrderCanceled: (orderId) => {
             if (pendingCancellationOrderIdRef.current !== Number(orderId)) return
 
             clearTimeout(cancellationTimeoutRef.current)
@@ -120,20 +204,33 @@ export default function ControlDriverPanel({ onLocationSelect }){
             currentOrderId.current = null
             onLocationSelect({ routeCoordinates: null })
             toast("Заказ отменен")
-        },
+        }, */
         onOrderAcceptFailed: () => {
+            clearAcceptTimeout()
+            setPending(null)
+            hideLoading()
+            toast("Этот заказ уже взял другой водитель")
+            getOrders()
+        },
+        /* onOrderAcceptFailed: () => {
             clearAcceptTimeout();
             setPendingOrderId(null);
             hideLoading();
             toast("Этот заказ уже взял другой водитель");
             getOrders();
-        },
+        }, */
         onError: (message) => {
+            clearAcceptTimeout()
+            setPending(null)
+            hideLoading()
+            toast(message || "Произошла ошибка")
+        },
+        /* onError: (message) => {
             clearAcceptTimeout();
             setPendingOrderId(null);
             hideLoading();
             toast(message || "Произошла ошибка");
-        },
+        }, */
         onOrdersChanged: getOrders,
         onOrderClaimed: getOrders,
         onNewOrder: getOrders,
@@ -224,7 +321,7 @@ export default function ControlDriverPanel({ onLocationSelect }){
         }
     }, [orders.length, activeOrder, onLocationSelect])
 
-    function getOrders(){
+    /* function getOrders(){
         if(!userData.VehicleBrand && !userData.VehicleNumber && !activeOrder){
             return null
         }
@@ -245,6 +342,43 @@ export default function ControlDriverPanel({ onLocationSelect }){
                 //console.log(error)
             })
         }
+    } */
+    function getOrders() {
+        const user = userDataRef.current
+        if (!user) { console.log('[getOrders] stop: no userData'); return null }
+        if (!user.VehicleBrand && !user.VehicleNumber && !activeOrderRef.current) {
+            console.log('[getOrders] stop: no vehicle data'); return null
+        }
+        const token = getCookie('token')
+        if (!token) { console.log('[getOrders] stop: no token'); return null }
+
+        const seq = ++ordersRequestSeqRef.current
+        console.log('[getOrders] request', seq)
+        fetch(`/api/orders-data/get-orders`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        })
+        .then((r) => {
+            if (!r.ok) throw new Error(`get-orders ${r.status}`)
+            return r.json()
+        })
+        .then((res) => applyOrders(res.orders, seq))
+        .catch((e) => console.error('[getOrders] ERROR', e))
+            /* .then(async (r) => {
+                console.log('[getOrders] status', seq, r.status)
+                return r.json()
+            })
+            .then((res) => {
+                if (seq !== ordersRequestSeqRef.current) {
+                    console.log('[getOrders] stale response skipped', seq); return
+                }
+                console.log('[getOrders] response', seq, res)
+                //return decryptData(res.orders.encryptedData, res.orders.iv, seq)
+            })
+            .catch((e) => console.error('[getOrders] ERROR', e)) */
     }
     useEffect(()=>{
         getOrders()
@@ -252,7 +386,7 @@ export default function ControlDriverPanel({ onLocationSelect }){
     }, [userData])
 
     const watchIdRef = useRef(null);
-    const currentOrderId = useRef(null);
+    //const currentOrderId = useRef(null);
     useEffect(() => {
         if (!window.isSecureContext || !navigator.geolocation) {
             console.error('Driver location tracking requires HTTPS and browser geolocation support');
@@ -290,7 +424,7 @@ export default function ControlDriverPanel({ onLocationSelect }){
     }, []);
 
     // Проверка заказа на отмену
-    useEffect(() => {
+    /* useEffect(() => {
         if (!stompClientRef.current?.connected) return;
         
         // Подписка для активных заказов
@@ -323,7 +457,38 @@ export default function ControlDriverPanel({ onLocationSelect }){
             sub1.unsubscribe();
             sub2.unsubscribe();
         };
-    }, [stompClientRef.current?.connected, activeOrder?.id]);
+    }, [stompClientRef.current?.connected, activeOrder?.id]); */
+    useEffect(() => {
+        const client = stompClientRef.current
+        if (!isConnected || !client?.connected) return
+        const sub = client.subscribe("/topic/orderCanceled", () => {
+            getOrders()   // БЕЗ setStep(0): у водителя может быть активный заказ
+        })
+        return () => sub.unsubscribe()
+    }, [isConnected])
+    useEffect(() => {
+        const client = stompClientRef.current
+        if (!isConnected || !client?.connected) return
+        const sub = client.subscribe("/user/queue/orderCompleted", (message) => {
+            if (activeOrderRef.current?.id !== Number(message.body)) return
+            finishActiveOrder("Поездка завершена")
+        })
+        return () => sub.unsubscribe()
+    }, [isConnected])
+
+    useEffect(() => {
+        const client = stompClientRef.current
+        if (!isConnected || !client?.connected || !activeOrder?.id) return
+        const sub = client.subscribe(`/topic/order/${activeOrder.id}/status`, (message) => {
+            if (message.body !== 'processed') return
+            hideLoading()
+            if (activeOrderRef.current) {
+                activeOrderRef.current = { ...activeOrderRef.current, orderStatus: 'processed' }
+            }
+            setActiveOrder((order) => order ? { ...order, orderStatus: 'processed' } : order)
+        })
+        return () => sub.unsubscribe()
+    }, [activeOrder?.id, isConnected])
 
     useEffect(() => {
         if (!stompClientRef.current?.connected) {
@@ -438,7 +603,7 @@ export default function ControlDriverPanel({ onLocationSelect }){
         if (activeOrder?.id) rememberOrder(activeOrder.id);
     }, [activeOrder?.id]);
 
-    function resetActiveOrderUi() {
+    /* function resetActiveOrderUi() {
         forgetOrder();
         hideLoading();
         setStep(0);
@@ -447,8 +612,8 @@ export default function ControlDriverPanel({ onLocationSelect }){
         currentOrderId.current = null;
         onLocationSelect({ routeCoordinates: null });
         getOrders();
-    }
-    async function checkActiveOrder() {
+    } */
+    /* async function checkActiveOrder() {
         if (!userData) return false;
         const token = getCookie('token');
         try {
@@ -479,6 +644,44 @@ export default function ControlDriverPanel({ onLocationSelect }){
             return false;
         } catch (error) {
             return false;
+        }
+    } */
+    async function checkActiveOrder() {
+        if (!userDataRef.current) return false
+        const token = getCookie('token')
+        if (!token) return false
+        try {
+            const result = await fetch(`/api/orders-data/check-order`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            })
+            if (!result.ok) return false          // 401/500 не считаем "заказа нет"
+            const res = await result.json()
+            if (!Array.isArray(res)) return false
+
+            if (res.length > 0) {
+                applyActiveOrder(res[0])
+                shapeDecoder(res[0].encodedWay)
+                setStep(1)
+                setTogglerOpenOrder(true)
+                return true
+            }
+
+            // Сервер говорит "активного нет". Если за время запроса уже появился
+            // активный/бронируемый заказ, ничего не трогаем.
+            if (activeOrderRef.current || pendingOrderIdRef.current) return false
+
+            // Попап только если заказ реально был запомнен и закончился без нас
+            if (getRememberedOrder()) {
+                finishActiveOrder()          // внутри forgetOrder()
+                showPopup("Заказ отменён или завершён")
+            }
+            return false
+        } catch (error) {
+            return false
         }
     }
     const activeOrderCheckedRef = useRef(false);
@@ -515,7 +718,7 @@ export default function ControlDriverPanel({ onLocationSelect }){
         acceptTimeoutRef.current = null;
     }
 
-    function takeOrder(orderId){
+    /* function takeOrder(orderId){
         if (pendingOrderId || activeOrder) return;
 
         const sent = acceptOrder(stompClientRef, orderId);
@@ -535,6 +738,26 @@ export default function ControlDriverPanel({ onLocationSelect }){
             toast("Не удалось забронировать, попробуйте снова");
             getOrders();
         }, 10000);
+    } */
+    function takeOrder(orderId) {
+        if (pendingOrderIdRef.current || activeOrderRef.current) return
+
+        const sent = acceptOrder(stompClientRef, orderId)
+        if (!sent) {
+            toast("Нет соединения, попробуйте ещё раз")
+            return
+        }
+
+        showLoading('Бронируем поездку...')
+        setPending(orderId)
+
+        clearAcceptTimeout()
+        acceptTimeoutRef.current = setTimeout(() => {
+            setPending(null)
+            hideLoading()
+            toast("Не удалось забронировать, попробуйте снова")
+            getOrders()
+        }, 10000)
     }
 
     /* function takeOrder(orderId){

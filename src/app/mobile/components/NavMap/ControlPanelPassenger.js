@@ -176,6 +176,12 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
             setStep(2)
         },
 
+        onError: (message) => {
+            hideLoading();
+            isCreatingOrderRef.current = false;
+            showPopup(message);
+        },
+
         onOrderCanceled: () => {
             hideLoading();
             showPopup(`К сожалению, машина не найдена`)
@@ -501,6 +507,7 @@ export default function ControlPassengerPanel({ onLocationSelect, onDriverPositi
             addressFrom: addressFrom.input,
             addressTo: addressTo.input,
             price: routeData.price,
+            quoteId: routeData.quote_id,
             paymentMethod: paymentMethodValue,
             encodedWay: routeData.shape,
             routeDistanceMeters: routeData.length_meters,

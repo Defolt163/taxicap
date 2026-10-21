@@ -1,5 +1,49 @@
 import { NextRequest, NextResponse } from "next/server"
 import jwt from 'jsonwebtoken';
+import pool from '../../accountDB'
+import { getDataEncryptionKey } from '../../dataEncryption';
+
+const SECRET_KEY = process.env.JWT_SECRET_KEY; // Секрет для JWT
+
+export const dynamic = 'force-dynamic'
+
+export async function GET(req) {
+  const token = req.headers.get('authorization')?.split(' ')[1];
+  if (!token) {
+    return NextResponse.json({ message: 'Токен не предоставлен' }, { status: 401 })
+  }
+
+  let decoded
+  try {
+    decoded = jwt.verify(token, SECRET_KEY);
+  } catch(e) {
+    console.error('[get-orders] jwt error:', e.name, e.message, '| SECRET_KEY defined:', !!SECRET_KEY)
+    return NextResponse.json({ message: 'Ошибка доступа' }, { status: 401 })
+  }
+
+  if (decoded.role !== 1) {
+    return NextResponse.json({ message: 'Недостаточно прав' }, { status: 403 })
+  }
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT id, customerPhone, customerName, userId, driverName, driverId, driverPhone,
+            vehicleBrand, vehicleModel, vehicleColor, vehicleNumber, orderStatus,
+            addressFrom, addressTo, price, paymentMethod, driverImage, customerImage,
+            encodedWay, routeDistanceKm
+      FROM orders WHERE orderStatus = "created"`
+    )
+    return NextResponse.json(
+      { orders: rows },
+      { headers: { 'Cache-Control': 'no-store' } }
+    )
+  } catch (error) {
+    console.error('get-orders DB error', error)
+    return NextResponse.json({ message: 'Ошибка сервера' }, { status: 500 })
+  }
+}
+/* import { NextRequest, NextResponse } from "next/server"
+import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import pool from '../../accountDB'
 import { getDataEncryptionKey } from '../../dataEncryption';
@@ -50,4 +94,5 @@ export async function GET(req) {
         }
       )
     }
-}
+} */
+

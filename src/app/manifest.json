@@ -22,12 +22,12 @@
   "screenshots": [
     {
       "src": "/screenshots-pwa/main.png",
-      "sizes": "1170x2532",
+      "sizes": "1181x2391",
       "type": "image/png"
     },
     {
       "src": "/screenshots-pwa/burger.png",
-      "sizes": "1170x2532",
+      "sizes": "1181x2391",
       "type": "image/png"
   }
   ]
